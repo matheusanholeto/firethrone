@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FireThrone — Rust Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rust-orange: #C8440A;
+  --rust-red: #8B1A1A;
+  --rust-dark: #0D0B09;
+  --rust-darker: #080706;
+  --rust-brown: #2A1A0E;
+  --rust-tan: #8B6914;
+  --rust-metal: #3A3530;
+  --rust-light: #D4B896;
+  --rust-glow: #FF5500;
+  --rust-dim: #1A1510;
+  --border: #3D2E1E;
+  --text-muted: #7A6550;
+  --green: #4CAF50;
+  --yellow: #FFC107;
+  --red: #F44336;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--rust-darker);
+  color: var(--rust-light);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:1000; opacity:.4;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background: var(--rust-darker); }
+::-webkit-scrollbar-thumb { background: var(--rust-orange); border-radius:3px; }
+
+/* ── NAVBAR ── */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:900;
+  background: linear-gradient(180deg, rgba(8,7,6,.98) 0%, rgba(13,11,9,.9) 100%);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 64px;
+  backdrop-filter: blur(12px);
+}
+
+.nav-logo {
+  display:flex; align-items:center; gap:.75rem; cursor:pointer;
+}
+.nav-logo-icon {
+  width:38px; height:38px;
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-red));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; box-shadow: 0 0 20px rgba(200,68,10,.4);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%,100% { box-shadow: 0 0 20px rgba(200,68,10,.4); }
+  50% { box-shadow: 0 0 35px rgba(200,68,10,.7); }
+}
+.nav-logo-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem; letter-spacing: 3px;
+  background: linear-gradient(180deg, #fff 0%, var(--rust-light) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.nav-logo-text span {
+  background: linear-gradient(180deg, var(--rust-orange), var(--rust-red));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+
+.nav-links {
+  display:flex; gap:.25rem; list-style:none;
+}
+.nav-links a {
+  color: var(--text-muted); text-decoration:none;
+  font-weight:600; font-size:.85rem; letter-spacing:1.5px; text-transform:uppercase;
+  padding: .5rem .9rem; border-radius:4px;
+  transition: all .2s; cursor:pointer;
+  position:relative;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: var(--rust-light);
+  background: rgba(200,68,10,.15);
+}
+.nav-links a.active::after {
+  content:''; position:absolute; bottom:-1px; left:0; right:0;
+  height:2px; background: var(--rust-orange);
+}
+
+.nav-actions { display:flex; gap:.75rem; align-items:center; }
+
+.btn {
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.8rem;
+  letter-spacing:1.5px; text-transform:uppercase; cursor:pointer;
+  padding:.5rem 1.2rem; border-radius:3px; border:none;
+  transition: all .2s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-red));
+  color:#fff; box-shadow: 0 2px 12px rgba(200,68,10,.3);
+}
+.btn-primary:hover { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(200,68,10,.5); }
+.btn-outline {
+  background:transparent; color:var(--rust-light);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { border-color:var(--rust-orange); color:var(--rust-orange); }
+.btn-sm { padding:.35rem .8rem; font-size:.75rem; }
+.btn-danger { background: linear-gradient(135deg, #8B1A1A, #600); color:#fff; }
+.btn-success { background: linear-gradient(135deg, #1a5c1a, #0d3d0d); color: var(--green); border:1px solid #1a5c1a; }
+
+/* ── USER CHIP ── */
+.user-chip {
+  display:flex; align-items:center; gap:.5rem;
+  background: rgba(42,26,14,.6); border: 1px solid var(--border);
+  border-radius:4px; padding:.35rem .75rem; cursor:pointer;
+}
+.user-chip img { width:24px; height:24px; border-radius:50%; object-fit:cover; }
+.user-chip .username { font-weight:700; font-size:.85rem; }
+.user-chip .balance { font-family:'Share Tech Mono'; font-size:.75rem; color:var(--rust-tan); }
+
+/* ── MAIN CONTENT ── */
+main { padding-top:64px; }
+
+.page { display:none; }
+.page.active { display:block; }
+
+/* ── HERO ── */
+.hero {
+  position:relative; min-height:90vh;
+  display:flex; align-items:center; overflow:hidden;
+}
+.hero-bg {
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 80%, rgba(139,26,26,.15) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 50%, rgba(200,68,10,.08) 0%, transparent 60%),
+    linear-gradient(180deg, var(--rust-darker) 0%, #0F0A06 50%, var(--rust-darker) 100%);
+}
+.hero-grid {
+  position:absolute; inset:0; opacity:.06;
+  background-image:
+    linear-gradient(rgba(200,68,10,.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,68,10,.5) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.hero-content {
+  position:relative; z-index:2;
+  max-width:1200px; margin:0 auto; padding:4rem 2rem;
+  display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center;
+}
+.hero-left {}
+.hero-tag {
+  display:inline-flex; align-items:center; gap:.5rem;
+  font-family:'Share Tech Mono'; font-size:.7rem; letter-spacing:3px; text-transform:uppercase;
+  color:var(--rust-orange); border: 1px solid rgba(200,68,10,.3);
+  padding:.3rem .8rem; border-radius:2px; margin-bottom:1.5rem;
+}
+.hero-title {
+  font-family:'Bebas Neue'; font-size:clamp(3.5rem,7vw,6rem);
+  line-height:.95; letter-spacing:2px; margin-bottom:1.5rem;
+}
+.hero-title .line1 { display:block; color:#fff; }
+.hero-title .line2 {
+  display:block;
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-tan));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.hero-sub {
+  font-size:1rem; color:var(--text-muted); line-height:1.7; margin-bottom:2rem; max-width:480px;
+}
+.hero-buttons { display:flex; gap:1rem; flex-wrap:wrap; }
+.hero-stats {
+  display:flex; gap:2rem; margin-top:3rem;
+}
+.hero-stat {}
+.hero-stat-num {
+  font-family:'Bebas Neue'; font-size:2.2rem; color:var(--rust-orange);
+  letter-spacing:1px; line-height:1;
+}
+.hero-stat-label { font-size:.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+
+.hero-right {
+  display:flex; flex-direction:column; gap:1rem;
+}
+.live-server-card {
+  background: linear-gradient(135deg, rgba(42,26,14,.8), rgba(26,21,16,.8));
+  border: 1px solid var(--border); border-radius:6px; padding:1.25rem;
+  transition: border-color .2s, transform .2s;
+  cursor:pointer;
+}
+.live-server-card:hover { border-color:var(--rust-orange); transform:translateX(4px); }
+.live-server-card .s-name { font-weight:700; font-size:.95rem; margin-bottom:.3rem; }
+.live-server-card .s-meta { display:flex; gap:1rem; font-size:.75rem; color:var(--text-muted); }
+.live-server-card .s-bar { margin-top:.75rem; }
+.progress-bar { height:4px; background:rgba(255,255,255,.05); border-radius:2px; overflow:hidden; }
+.progress-fill {
+  height:100%; border-radius:2px;
+  background: linear-gradient(90deg, var(--rust-orange), var(--rust-red));
+  transition: width .5s ease;
+}
+.status-dot {
+  width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:.3rem;
+}
+.status-dot.online { background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s infinite; }
+.status-dot.offline { background:var(--red); }
+.status-dot.restarting { background:var(--yellow); animation:blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── SECTION WRAPPER ── */
+.section { max-width:1200px; margin:0 auto; padding:4rem 2rem; }
+.section-header { margin-bottom:2.5rem; }
+.section-tag {
+  font-family:'Share Tech Mono'; font-size:.7rem; letter-spacing:3px; color:var(--rust-orange);
+  text-transform:uppercase; margin-bottom:.5rem;
+}
+.section-title {
+  font-family:'Bebas Neue'; font-size:clamp(2rem,4vw,3rem); letter-spacing:2px;
+  color:#fff;
+}
+.section-divider {
+  height:2px; width:60px; margin-top:.75rem;
+  background: linear-gradient(90deg, var(--rust-orange), transparent);
+}
+
+/* ── SERVER CARDS ── */
+.servers-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.25rem; }
+.server-card {
+  background: linear-gradient(160deg, rgba(42,26,14,.6), rgba(13,11,9,.8));
+  border: 1px solid var(--border); border-radius:6px; padding:1.5rem;
+  transition:all .25s; cursor:pointer; position:relative; overflow:hidden;
+}
+.server-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, var(--rust-orange), transparent);
+  opacity:0; transition:.25s;
+}
+.server-card:hover { border-color:rgba(200,68,10,.5); transform:translateY(-3px); box-shadow:0 8px 30px rgba(0,0,0,.4); }
+.server-card:hover::before { opacity:1; }
+.server-card.modded::after {
+  content:'MOD'; position:absolute; top:.75rem; right:.75rem;
+  font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:2px;
+  background:rgba(200,68,10,.2); color:var(--rust-orange);
+  border: 1px solid rgba(200,68,10,.3); padding:.2rem .4rem; border-radius:2px;
+}
+.s-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.75rem; }
+.s-title { font-weight:700; font-size:1.05rem; }
+.s-map { font-size:.75rem; color:var(--text-muted); margin-top:.2rem; }
+.s-players { font-family:'Bebas Neue'; font-size:1.4rem; color:var(--rust-orange); text-align:right; }
+.s-players span { font-family:'Rajdhani'; font-size:.75rem; color:var(--text-muted); display:block; }
+.s-tags { display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.75rem; }
+.tag {
+  font-size:.65rem; font-family:'Share Tech Mono'; letter-spacing:1px;
+  padding:.2rem .5rem; border-radius:2px;
+  background:rgba(255,255,255,.04); color:var(--text-muted); border: 1px solid var(--border);
+}
+.s-footer { display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:.75rem; border-top:1px solid var(--border); }
+.wipe-info { font-size:.75rem; color:var(--text-muted); }
+.wipe-info strong { color:var(--rust-light); }
+.connect-btn {
+  font-family:'Rajdhani'; font-weight:700; font-size:.75rem; letter-spacing:1.5px;
+  text-transform:uppercase; background:rgba(200,68,10,.15); color:var(--rust-orange);
+  border:1px solid rgba(200,68,10,.3); padding:.35rem .75rem; border-radius:3px; cursor:pointer;
+  transition:all .2s;
+}
+.connect-btn:hover { background:var(--rust-orange); color:#fff; }
+
+/* ── STORE ── */
+.store-filters { display:flex; gap:.5rem; margin-bottom:2rem; flex-wrap:wrap; }
+.filter-btn {
+  font-family:'Rajdhani'; font-weight:700; font-size:.8rem; letter-spacing:1px; text-transform:uppercase;
+  padding:.4rem 1rem; border-radius:3px; border: 1px solid var(--border);
+  background:transparent; color:var(--text-muted); cursor:pointer; transition:all .2s;
+}
+.filter-btn.active, .filter-btn:hover {
+  border-color:var(--rust-orange); color:var(--rust-orange);
+  background:rgba(200,68,10,.1);
+}
+.store-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.25rem; }
+.store-item {
+  background: linear-gradient(160deg, rgba(42,26,14,.5), rgba(13,11,9,.7));
+  border: 1px solid var(--border); border-radius:6px; overflow:hidden;
+  transition:all .25s; position:relative;
+}
+.store-item.featured { border-color:rgba(200,68,10,.4); }
+.store-item.featured::before {
+  content:'★ DESTAQUE'; position:absolute; top:.6rem; right:.6rem;
+  font-family:'Share Tech Mono'; font-size:.55rem; letter-spacing:1px;
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-red));
+  color:#fff; padding:.2rem .4rem; border-radius:2px;
+}
+.store-item:hover { transform:translateY(-3px); box-shadow:0 8px 30px rgba(0,0,0,.4); border-color:rgba(200,68,10,.4); }
+.item-img {
+  height:140px; display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(135deg, rgba(42,26,14,.8), rgba(26,21,16,.9));
+  font-size:3.5rem; border-bottom: 1px solid var(--border);
+}
+.item-body { padding:1.25rem; }
+.item-name { font-weight:700; font-size:1rem; margin-bottom:.3rem; }
+.item-desc { font-size:.8rem; color:var(--text-muted); line-height:1.5; margin-bottom:1rem; }
+.item-footer { display:flex; align-items:center; justify-content:space-between; }
+.item-price {
+  font-family:'Bebas Neue'; font-size:1.4rem; color:var(--rust-orange); letter-spacing:1px;
+}
+.item-price small { font-family:'Rajdhani'; font-size:.65rem; color:var(--text-muted); display:block; }
+
+/* ── LEADERBOARD ── */
+.lb-filters { display:flex; gap:.5rem; margin-bottom:1.5rem; }
+.lb-table-wrap {
+  background: rgba(13,11,9,.6); border: 1px solid var(--border); border-radius:6px; overflow:hidden;
+}
+.lb-table { width:100%; border-collapse:collapse; }
+.lb-table th {
+  font-family:'Share Tech Mono'; font-size:.7rem; letter-spacing:2px; text-transform:uppercase;
+  color:var(--text-muted); padding:.75rem 1rem; background:rgba(0,0,0,.3);
+  border-bottom: 1px solid var(--border); text-align:left;
+}
+.lb-table td { padding:.85rem 1rem; border-bottom: 1px solid rgba(61,46,30,.3); font-size:.9rem; }
+.lb-table tr:last-child td { border-bottom:none; }
+.lb-table tr:hover td { background:rgba(200,68,10,.05); }
+.lb-rank { font-family:'Bebas Neue'; font-size:1.2rem; color:var(--text-muted); width:50px; }
+.lb-rank.gold { color:#FFD700; }
+.lb-rank.silver { color:#C0C0C0; }
+.lb-rank.bronze { color:#CD7F32; }
+.lb-player { display:flex; align-items:center; gap:.75rem; }
+.lb-avatar { width:32px; height:32px; border-radius:50%; background:var(--rust-metal); display:flex; align-items:center; justify-content:center; font-size:.8rem; }
+.lb-username { font-weight:700; }
+.role-badge {
+  font-family:'Share Tech Mono'; font-size:.55rem; letter-spacing:1px;
+  padding:.1rem .35rem; border-radius:2px; margin-left:.4rem;
+}
+.role-badge.vip { background:rgba(200,68,10,.2); color:var(--rust-orange); border:1px solid rgba(200,68,10,.3); }
+.role-badge.admin { background:rgba(139,26,26,.3); color:#ff6b6b; border:1px solid rgba(139,26,26,.4); }
+.lb-num { font-family:'Share Tech Mono'; font-size:.85rem; }
+
+/* ── AUTH MODAL ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,.8); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background: linear-gradient(160deg, #1A1208, var(--rust-dark));
+  border: 1px solid var(--border); border-radius:8px; padding:2.5rem;
+  width:100%; max-width:420px; position:relative;
+  animation: slide-up .25s ease;
+}
+@keyframes slide-up { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-close {
+  position:absolute; top:1rem; right:1rem;
+  background:rgba(255,255,255,.05); border:none; color:var(--text-muted);
+  width:28px; height:28px; border-radius:4px; cursor:pointer; font-size:1rem;
+  display:flex; align-items:center; justify-content:center; transition:.2s;
+}
+.modal-close:hover { background:rgba(200,68,10,.2); color:var(--rust-orange); }
+.modal-title { font-family:'Bebas Neue'; font-size:1.8rem; letter-spacing:2px; margin-bottom:.3rem; }
+.modal-sub { font-size:.85rem; color:var(--text-muted); margin-bottom:1.75rem; }
+.form-group { margin-bottom:1rem; }
+.form-label { font-size:.75rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:.4rem; display:block; }
+.form-input {
+  width:100%; background:rgba(0,0,0,.3); border: 1px solid var(--border);
+  border-radius:4px; padding:.7rem 1rem; color:var(--rust-light);
+  font-family:'Rajdhani'; font-size:.95rem; outline:none; transition:.2s;
+}
+.form-input:focus { border-color:var(--rust-orange); background:rgba(200,68,10,.05); }
+.form-input::placeholder { color:var(--text-muted); }
+.form-switch { text-align:center; margin-top:1rem; font-size:.85rem; color:var(--text-muted); }
+.form-switch a { color:var(--rust-orange); cursor:pointer; text-decoration:none; }
+.form-error { font-size:.8rem; color:var(--red); margin-top:.25rem; }
+.form-success { font-size:.8rem; color:var(--green); margin-top:.25rem; }
+
+/* ── ADMIN PANEL ── */
+.admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; margin-bottom:2.5rem; }
+.stat-card {
+  background: linear-gradient(135deg, rgba(42,26,14,.7), rgba(13,11,9,.8));
+  border: 1px solid var(--border); border-radius:6px; padding:1.25rem;
+}
+.stat-card-icon { font-size:1.5rem; margin-bottom:.5rem; }
+.stat-card-num { font-family:'Bebas Neue'; font-size:2rem; color:var(--rust-orange); }
+.stat-card-label { font-size:.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+
+.admin-tabs { display:flex; gap:.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); }
+.admin-tab {
+  font-weight:700; font-size:.8rem; letter-spacing:1px; text-transform:uppercase;
+  padding:.6rem 1rem; border:none; background:transparent; color:var(--text-muted);
+  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:.2s;
+}
+.admin-tab.active { color:var(--rust-orange); border-bottom-color:var(--rust-orange); }
+
+.data-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+.data-table th {
+  font-family:'Share Tech Mono'; font-size:.65rem; letter-spacing:2px; text-transform:uppercase;
+  color:var(--text-muted); padding:.6rem 1rem; text-align:left; border-bottom:1px solid var(--border);
+}
+.data-table td { padding:.7rem 1rem; border-bottom:1px solid rgba(61,46,30,.2); }
+.data-table tr:hover td { background:rgba(200,68,10,.04); }
+
+/* ── NEWS CARDS ── */
+.news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:1.25rem; }
+.news-card {
+  background: linear-gradient(160deg, rgba(42,26,14,.5), rgba(13,11,9,.7));
+  border: 1px solid var(--border); border-radius:6px; padding:1.5rem;
+  transition:.2s;
+}
+.news-card:hover { border-color:rgba(200,68,10,.3); }
+.news-badge {
+  font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:2px; text-transform:uppercase;
+  padding:.2rem .5rem; border-radius:2px; margin-bottom:.75rem; display:inline-block;
+}
+.news-badge.wipe { background:rgba(200,68,10,.15); color:var(--rust-orange); border:1px solid rgba(200,68,10,.2); }
+.news-badge.update { background:rgba(76,175,80,.1); color:var(--green); border:1px solid rgba(76,175,80,.2); }
+.news-badge.event { background:rgba(255,193,7,.1); color:var(--yellow); border:1px solid rgba(255,193,7,.2); }
+.news-badge.maintenance { background:rgba(244,67,54,.1); color:var(--red); border:1px solid rgba(244,67,54,.2); }
+.news-title { font-weight:700; font-size:1rem; margin-bottom:.5rem; }
+.news-content { font-size:.85rem; color:var(--text-muted); line-height:1.6; }
+.news-footer { display:flex; justify-content:space-between; margin-top:1rem; font-size:.75rem; color:var(--text-muted); padding-top:.75rem; border-top:1px solid var(--border); }
+
+/* ── TOAST ── */
+.toast-container { position:fixed; bottom:1.5rem; right:1.5rem; z-index:2000; display:flex; flex-direction:column; gap:.5rem; }
+.toast {
+  background: linear-gradient(135deg, #1A1208, var(--rust-dark));
+  border: 1px solid var(--border); border-radius:6px; padding:.75rem 1.25rem;
+  font-size:.85rem; min-width:280px; animation: toast-in .3s ease;
+  display:flex; align-items:center; gap:.75rem;
+}
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error { border-left: 3px solid var(--red); }
+.toast.info { border-left: 3px solid var(--rust-orange); }
+@keyframes toast-in { from{transform:translateX(100px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+/* ── PROFILE ── */
+.profile-header {
+  background: linear-gradient(160deg, rgba(42,26,14,.8), rgba(13,11,9,.9));
+  border: 1px solid var(--border); border-radius:8px; padding:2rem; margin-bottom:2rem;
+  display:flex; align-items:center; gap:2rem;
+}
+.profile-avatar {
+  width:80px; height:80px; border-radius:50%;
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-red));
+  display:flex; align-items:center; justify-content:center; font-size:2rem;
+  border: 3px solid var(--rust-orange);
+}
+.profile-info h2 { font-family:'Bebas Neue'; font-size:1.8rem; letter-spacing:2px; }
+.profile-info p { color:var(--text-muted); font-size:.85rem; }
+.profile-stats { display:flex; gap:2rem; margin-top:1rem; }
+.profile-stat-num { font-family:'Bebas Neue'; font-size:1.4rem; color:var(--rust-orange); }
+.profile-stat-label { font-size:.7rem; color:var(--text-muted); text-transform:uppercase; }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--rust-darker); border-top:1px solid var(--border);
+  padding:2rem; text-align:center; font-size:.8rem; color:var(--text-muted);
+  margin-top:4rem;
+}
+footer .footer-logo { font-family:'Bebas Neue'; font-size:1.4rem; letter-spacing:3px; margin-bottom:.5rem; }
+footer .footer-logo span { color:var(--rust-orange); }
+
+/* ── LOADING SKELETON ── */
+.skeleton {
+  background: linear-gradient(90deg, rgba(42,26,14,.4) 25%, rgba(58,42,28,.6) 50%, rgba(42,26,14,.4) 75%);
+  background-size:200% 100%; border-radius:4px;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ── SEPARATOR ── */
+.divider { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align:center; padding:4rem 2rem; color:var(--text-muted);
+}
+.empty-state .icon { font-size:3rem; margin-bottom:1rem; opacity:.4; }
+.empty-state p { font-size:.9rem; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">
+    <div class="nav-logo-icon">🔥</div>
+    <div class="nav-logo-text">Fire<span>Throne</span></div>
+  </div>
+  <ul class="nav-links">
+    <li><a onclick="showPage('home')" id="nav-home" class="active">Início</a></li>
+    <li><a onclick="showPage('servers')" id="nav-servers">Servidores</a></li>
+    <li><a onclick="showPage('store')" id="nav-store">Loja</a></li>
+    <li><a onclick="showPage('leaderboard')" id="nav-leaderboard">Ranking</a></li>
+    <li><a onclick="showPage('news')" id="nav-news">Notícias</a></li>
+    <li id="nav-admin-link" style="display:none"><a onclick="showPage('admin')" id="nav-admin">Admin</a></li>
+  </ul>
+  <div class="nav-actions">
+    <div id="auth-buttons">
+      <button class="btn btn-outline btn-sm" onclick="openModal('login')">Entrar</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('register')">Cadastrar</button>
+    </div>
+    <div id="user-menu" style="display:none">
+      <div class="user-chip" onclick="showPage('profile')">
+        <span id="nav-avatar">🪖</span>
+        <span class="username" id="nav-username">—</span>
+        <span class="balance" id="nav-balance">0 CR</span>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="logout()" style="margin-left:.5rem">Sair</button>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══ HOME ═══ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-left">
+        <div class="hero-tag">🔴 Servidores Online</div>
+        <h1 class="hero-title">
+          <span class="line1">Sobreviva.</span>
+          <span class="line2">Construa. Domine.</span>
+        </h1>
+        <p class="hero-sub">FireThrone é a rede de servidores de Rust mais competitiva do Brasil. Servidores vanilla e modificados com economia balanceada e comunidade ativa.</p>
+        <div class="hero-buttons">
+          <button class="btn btn-primary" onclick="showPage('servers')">🎮 Ver Servidores</button>
+          <button class="btn btn-outline" onclick="showPage('store')">🛒 Loja VIP</button>
+        </div>
+        <div class="hero-stats" id="hero-stats">
+          <div class="hero-stat"><div class="hero-stat-num" id="stat-players">—</div><div class="hero-stat-label">Jogadores Online</div></div>
+          <div class="hero-stat"><div class="hero-stat-num" id="stat-servers">—</div><div class="hero-stat-label">Servidores Ativos</div></div>
+          <div class="hero-stat"><div class="hero-stat-num">24/7</div><div class="hero-stat-label">Disponibilidade</div></div>
+        </div>
+      </div>
+      <div class="hero-right" id="hero-servers">
+        <div class="skeleton" style="height:90px;border-radius:6px;"></div>
+        <div class="skeleton" style="height:90px;border-radius:6px;"></div>
+        <div class="skeleton" style="height:90px;border-radius:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- News strip -->
+  <div style="background:rgba(200,68,10,.08); border-top:1px solid rgba(200,68,10,.2); border-bottom:1px solid rgba(200,68,10,.2); padding:1rem 0;">
+    <div class="section" style="padding:0 2rem;">
+      <div style="display:flex; gap:2rem; overflow-x:auto; padding:.5rem 0;" id="home-news"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SERVERS ═══ -->
+<div id="page-servers" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Network Status</div>
+      <h2 class="section-title">Servidores</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="servers-grid" id="servers-grid">
+      <div class="skeleton" style="height:200px;border-radius:6px;"></div>
+      <div class="skeleton" style="height:200px;border-radius:6px;"></div>
+      <div class="skeleton" style="height:200px;border-radius:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STORE ═══ -->
+<div id="page-store" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Itens & VIP</div>
+      <h2 class="section-title">Loja</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+      <div class="store-filters" id="store-filters">
+        <button class="filter-btn active" onclick="filterStore('all',this)">Todos</button>
+        <button class="filter-btn" onclick="filterStore('vip',this)">VIP</button>
+        <button class="filter-btn" onclick="filterStore('kits',this)">Kits</button>
+        <button class="filter-btn" onclick="filterStore('cosmetics',this)">Cosméticos</button>
+        <button class="filter-btn" onclick="filterStore('credits',this)">Créditos</button>
+      </div>
+      <div style="font-size:.85rem; color:var(--text-muted)">
+        Seu saldo: <span id="store-balance" style="color:var(--rust-orange); font-family:'Share Tech Mono';">—</span>
+      </div>
+    </div>
+    <div class="store-grid" id="store-grid"></div>
+  </div>
+</div>
+
+<!-- ═══ LEADERBOARD ═══ -->
+<div id="page-leaderboard" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Melhores Jogadores</div>
+      <h2 class="section-title">Ranking</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="lb-filters">
+      <button class="filter-btn active" onclick="sortLB('kills',this)">Kills</button>
+      <button class="filter-btn" onclick="sortLB('deaths',this)">Mortes</button>
+      <button class="filter-btn" onclick="sortLB('hours_played',this)">Horas</button>
+      <button class="filter-btn" onclick="sortLB('resources_gathered',this)">Recursos</button>
+      <button class="filter-btn" onclick="sortLB('raids_won',this)">Raids</button>
+    </div>
+    <div class="lb-table-wrap">
+      <table class="lb-table" id="lb-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Jogador</th><th id="lb-col-kills">Kills</th>
+            <th id="lb-col-deaths">Mortes</th><th id="lb-col-hours">Horas</th>
+            <th id="lb-col-raids">Raids</th>
+          </tr>
+        </thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NEWS ═══ -->
+<div id="page-news" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Atualizações & Eventos</div>
+      <h2 class="section-title">Notícias</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="news-grid" id="news-grid"></div>
+  </div>
+</div>
+
+<!-- ═══ PROFILE ═══ -->
+<div id="page-profile" class="page">
+  <div class="section">
+    <div id="profile-content">
+      <div class="empty-state"><div class="icon">🪖</div><p>Faça login para ver seu perfil.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN ═══ -->
+<div id="page-admin" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Painel de Controle</div>
+      <h2 class="section-title">Administração</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="admin-grid" id="admin-stats-grid"></div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="adminTab('users',this)">Usuários</button>
+      <button class="admin-tab" onclick="adminTab('servers',this)">Servidores</button>
+    </div>
+    <div id="admin-tab-users"></div>
+    <div id="admin-tab-servers" style="display:none"></div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div class="footer-logo">Fire<span>Throne</span></div>
+  <p>© 2024 FireThrone Network. Todos os direitos reservados.</p>
+  <p style="margin-top:.3rem; font-size:.7rem;">Este servidor não é afiliado à Facepunch Studios.</p>
+</footer>
+
+<!-- ═══ MODALS ═══ -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('login')">✕</button>
+    <div class="modal-title">Entrar</div>
+    <div class="modal-sub">Acesse sua conta FireThrone</div>
+    <div class="form-group">
+      <label class="form-label">Usuário ou Email</label>
+      <input class="form-input" id="login-identifier" type="text" placeholder="seu_usuario">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha</label>
+      <input class="form-input" id="login-password" type="password" placeholder="••••••••">
+    </div>
+    <div id="login-msg"></div>
+    <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="doLogin()">Entrar</button>
+    <div class="form-switch">Não tem conta? <a onclick="switchModal('login','register')">Cadastre-se</a></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-register">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('register')">✕</button>
+    <div class="modal-title">Cadastrar</div>
+    <div class="modal-sub">Crie sua conta e entre para a batalha</div>
+    <div class="form-group">
+      <label class="form-label">Usuário</label>
+      <input class="form-input" id="reg-username" type="text" placeholder="SurvivorKing">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="reg-email" type="email" placeholder="seu@email.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha</label>
+      <input class="form-input" id="reg-password" type="password" placeholder="••••••••">
+    </div>
+    <div id="reg-msg"></div>
+    <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="doRegister()">Criar Conta</button>
+    <div class="form-switch">Já tem conta? <a onclick="switchModal('register','login')">Entre aqui</a></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const API = 'http://localhost:5000/api';
+let currentUser = null;
+let allStoreItems = [];
+let lbSort = 'kills';
+
+// ── NAVIGATION ────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const navEl = document.getElementById('nav-'+name);
+  if(navEl) navEl.classList.add('active');
+  window.scrollTo(0,0);
+  if(name==='servers') loadServers();
+  if(name==='store') loadStore();
+  if(name==='leaderboard') loadLeaderboard();
+  if(name==='news') loadNews();
+  if(name==='profile') loadProfile();
+  if(name==='admin') loadAdmin();
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+async function checkAuth() {
+  try {
+    const r = await fetch(`${API}/auth/me`, {credentials:'include'});
+    const d = await r.json();
+    if(d.user) setUser(d.user);
+  } catch(e) {}
+}
+
+function setUser(user) {
+  currentUser = user;
+  document.getElementById('auth-buttons').style.display = 'none';
+  document.getElementById('user-menu').style.display = 'flex';
+  document.getElementById('nav-username').textContent = user.username;
+  document.getElementById('nav-balance').textContent = user.balance + ' CR';
+  document.getElementById('nav-avatar').textContent = '🪖';
+  document.getElementById('store-balance').textContent = user.balance + ' CR';
+  if(user.role === 'admin') {
+    document.getElementById('nav-admin-link').style.display = 'block';
+  }
+}
+
+function clearUser() {
+  currentUser = null;
+  document.getElementById('auth-buttons').style.display = 'flex';
+  document.getElementById('user-menu').style.display = 'none';
+  document.getElementById('nav-admin-link').style.display = 'none';
+  document.getElementById('store-balance').textContent = '—';
+}
+
+async function doLogin() {
+  const identifier = document.getElementById('login-identifier').value;
+  const password = document.getElementById('login-password').value;
+  const msg = document.getElementById('login-msg');
+  try {
+    const r = await fetch(`${API}/auth/login`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({identifier, password})
+    });
+    const d = await r.json();
+    if(!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
+    setUser(d.user);
+    closeModal('login');
+    toast('Bem-vindo de volta, ' + d.user.username + '!', 'success');
+  } catch(e) { msg.innerHTML = '<div class="form-error">Erro de conexão com o servidor</div>'; }
+}
+
+async function doRegister() {
+  const username = document.getElementById('reg-username').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+  const msg = document.getElementById('reg-msg');
+  try {
+    const r = await fetch(`${API}/auth/register`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, email, password})
+    });
+    const d = await r.json();
+    if(!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
+    setUser(d.user);
+    closeModal('register');
+    toast('Conta criada! Bem-vindo ao FireThrone!', 'success');
+  } catch(e) { msg.innerHTML = '<div class="form-error">Erro de conexão com o servidor</div>'; }
+}
+
+async function logout() {
+  await fetch(`${API}/auth/logout`, {method:'POST', credentials:'include'});
+  clearUser();
+  showPage('home');
+  toast('Você saiu da conta', 'info');
+}
+
+// ── MODALS ────────────────────────────────────────────────
+function openModal(name) {
+  document.getElementById('modal-'+name).classList.add('open');
+}
+function closeModal(name) {
+  document.getElementById('modal-'+name).classList.remove('open');
+}
+function switchModal(from, to) {
+  closeModal(from); openModal(to);
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+
+// ── SERVERS ───────────────────────────────────────────────
+async function loadServers() {
+  try {
+    const r = await fetch(`${API}/servers`);
+    const d = await r.json();
+    renderServers(d.servers);
+    renderHeroServers(d.servers);
+    updateHeroStats(d.servers);
+  } catch(e) { console.error(e); }
+}
+
+function renderServers(servers) {
+  const grid = document.getElementById('servers-grid');
+  if(!servers?.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">🖥️</div><p>Nenhum servidor encontrado.</p></div>'; return; }
+  grid.innerHTML = servers.map(s => {
+    const pct = Math.round(s.current_players/s.max_players*100);
+    const tags = safeParseJSON(s.tags, []);
+    return `
+    <div class="server-card ${s.modded?'modded':''}" onclick="">
+      <div class="s-header">
+        <div>
+          <div class="s-title">${s.name}</div>
+          <div class="s-map">🗺️ ${s.map}</div>
+        </div>
+        <div>
+          <div class="s-players">${s.current_players}<span>/ ${s.max_players}</span></div>
+          <div style="text-align:right; margin-top:.3rem; font-size:.7rem;">
+            <span class="status-dot ${s.status}"></span>${s.status==='online'?'Online':s.status==='restarting'?'Reiniciando':'Offline'}
+          </div>
+        </div>
+      </div>
+      <div class="s-bar"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
+      <div class="s-tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="s-footer">
+        <div class="wipe-info">🔄 Wipe: <strong>${s.wipe_schedule}</strong></div>
+        <button class="connect-btn" onclick="copyConnect('${s.ip}',${s.port})">▶ Conectar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHeroServers(servers) {
+  const el = document.getElementById('hero-servers');
+  el.innerHTML = servers.slice(0,3).map(s => {
+    const pct = Math.round(s.current_players/s.max_players*100);
+    return `
+    <div class="live-server-card" onclick="showPage('servers')">
+      <div class="s-header" style="margin-bottom:0">
+        <div>
+          <div class="s-name">${s.name}</div>
+          <div class="s-meta">
+            <span><span class="status-dot ${s.status}"></span>${s.status}</span>
+            <span>🗺️ ${s.map}</span>
+          </div>
+        </div>
+        <div style="font-family:'Bebas Neue';font-size:1.3rem;color:var(--rust-orange)">
+          ${s.current_players}<span style="font-family:'Rajdhani';font-size:.7rem;color:var(--text-muted)">/${s.max_players}</span>
+        </div>
+      </div>
+      <div class="s-bar"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
+    </div>`;
+  }).join('');
+}
+
+function updateHeroStats(servers) {
+  const online = servers.filter(s=>s.status==='online');
+  const players = online.reduce((a,s)=>a+s.current_players,0);
+  document.getElementById('stat-players').textContent = players;
+  document.getElementById('stat-servers').textContent = online.length;
+}
+
+function copyConnect(ip, port) {
+  const addr = `client.connect ${ip}:${port}`;
+  navigator.clipboard.writeText(addr).then(()=>toast(`Copiado: ${addr}`, 'success'));
+}
+
+// ── STORE ─────────────────────────────────────────────────
+async function loadStore() {
+  try {
+    const r = await fetch(`${API}/store`);
+    const d = await r.json();
+    allStoreItems = d.items;
+    renderStore(allStoreItems);
+    if(currentUser) document.getElementById('store-balance').textContent = currentUser.balance + ' CR';
+  } catch(e) {}
+}
+
+const itemEmojis = { vip:'👑', kits:'⚔️', cosmetics:'🎨', credits:'💰' };
+const itemColors = { vip:'gold', kits:'#cc3300', cosmetics:'#7c3aed', credits:'var(--rust-orange)' };
+
+function renderStore(items) {
+  const grid = document.getElementById('store-grid');
+  if(!items?.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">🛒</div><p>Sem itens disponíveis.</p></div>'; return; }
+  grid.innerHTML = items.map(item => `
+    <div class="store-item ${item.featured?'featured':''}" data-category="${item.category}">
+      <div class="item-img" style="color:${itemColors[item.category]||'var(--rust-orange)'}">
+        ${itemEmojis[item.category]||'📦'}
+      </div>
+      <div class="item-body">
+        <div class="item-name">${item.name}</div>
+        <div class="item-desc">${item.description}</div>
+        <div class="item-footer">
+          <div class="item-price">
+            ${item.price.toLocaleString()}
+            <small>créditos</small>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="buyItem(${item.id},'${item.name}',${item.price})">Comprar</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterStore(cat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = cat==='all' ? allStoreItems : allStoreItems.filter(i=>i.category===cat);
+  renderStore(filtered);
+}
+
+async function buyItem(id, name, price) {
+  if(!currentUser) { openModal('login'); toast('Faça login para comprar', 'info'); return; }
+  if(currentUser.balance < price) { toast('Saldo insuficiente!', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/store/buy`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({item_id:id})
+    });
+    const d = await r.json();
+    if(!r.ok) { toast(d.error, 'error'); return; }
+    currentUser.balance = d.new_balance;
+    document.getElementById('nav-balance').textContent = d.new_balance + ' CR';
+    document.getElementById('store-balance').textContent = d.new_balance + ' CR';
+    toast(d.message, 'success');
+  } catch(e) { toast('Erro ao processar compra', 'error'); }
+}
+
+// ── LEADERBOARD ───────────────────────────────────────────
+async function loadLeaderboard(sort) {
+  lbSort = sort || lbSort;
+  try {
+    const r = await fetch(`${API}/leaderboard?sort=${lbSort}`, {credentials:'include'});
+    const d = await r.json();
+    renderLeaderboard(d.leaderboard);
+  } catch(e) {}
+}
+
+function sortLB(by, btn) {
+  document.querySelectorAll('.lb-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadLeaderboard(by);
+}
+
+const rankEmojis = ['🥇','🥈','🥉'];
+function renderLeaderboard(rows) {
+  const tbody = document.getElementById('lb-body');
+  if(!rows?.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted)">Sem dados disponíveis.</td></tr>'; return; }
+  tbody.innerHTML = rows.map((r,i) => {
+    const rankClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const role = r.role !== 'player' ? `<span class="role-badge ${r.role}">${r.role.toUpperCase()}</span>` : '';
+    return `
+    <tr>
+      <td class="lb-rank ${rankClass}">${i<3 ? rankEmojis[i] : '#'+(i+1)}</td>
+      <td><div class="lb-player">
+        <div class="lb-avatar">${r.username[0].toUpperCase()}</div>
+        <div><span class="lb-username">${r.username}</span>${role}</div>
+      </div></td>
+      <td class="lb-num" style="color:var(--red)">${r.kills.toLocaleString()}</td>
+      <td class="lb-num" style="color:var(--text-muted)">${r.deaths.toLocaleString()}</td>
+      <td class="lb-num">${r.hours_played.toFixed(0)}h</td>
+      <td class="lb-num" style="color:var(--rust-orange)">${r.raids_won}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── NEWS ──────────────────────────────────────────────────
+async function loadNews() {
+  try {
+    const r = await fetch(`${API}/news`);
+    const d = await r.json();
+    renderNews(d.news);
+    renderHomeNews(d.news);
+  } catch(e) {}
+}
+
+function renderNews(news) {
+  const grid = document.getElementById('news-grid');
+  if(!news?.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">📰</div><p>Nenhuma notícia.</p></div>'; return; }
+  grid.innerHTML = news.map(n => `
+    <div class="news-card">
+      <div class="news-badge ${n.category}">${n.category.toUpperCase()}</div>
+      <div class="news-title">${n.title}</div>
+      <div class="news-content">${n.content}</div>
+      <div class="news-footer">
+        <span>Por ${n.author_name}</span>
+        <span>${new Date(n.created_at).toLocaleDateString('pt-BR')}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderHomeNews(news) {
+  const el = document.getElementById('home-news');
+  if(!news?.length) return;
+  el.innerHTML = news.map(n => `
+    <div style="min-width:280px; padding:.5rem 1rem; border-left:2px solid rgba(200,68,10,.3); cursor:pointer;" onclick="showPage('news')">
+      <div style="font-size:.65rem; color:var(--rust-orange); font-family:'Share Tech Mono'; letter-spacing:2px; margin-bottom:.2rem">${n.category.toUpperCase()}</div>
+      <div style="font-size:.85rem; font-weight:700;">${n.title}</div>
+    </div>`).join('');
+}
+
+// ── PROFILE ───────────────────────────────────────────────
+async function loadProfile() {
+  if(!currentUser) return;
+  try {
+    const [meR, lbR] = await Promise.all([
+      fetch(`${API}/auth/me`, {credentials:'include'}),
+      fetch(`${API}/leaderboard?sort=kills`, {credentials:'include'})
+    ]);
+    const meD = await meR.json();
+    const lbD = await lbR.json();
+    const user = meD.user;
+    const myStats = lbD.leaderboard?.find(r=>r.user_id===user.id);
+    const el = document.getElementById('profile-content');
+    el.innerHTML = `
+      <div class="profile-header">
+        <div class="profile-avatar">${user.username[0].toUpperCase()}</div>
+        <div class="profile-info">
+          <h2>${user.username} ${user.role!=='player'?`<span class="role-badge ${user.role}" style="vertical-align:middle">${user.role.toUpperCase()}</span>`:''}</h2>
+          <p>📧 ${user.email}</p>
+          <p style="margin-top:.2rem">📅 Membro desde ${new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
+          <div class="profile-stats">
+            <div><div class="profile-stat-num">${user.balance.toLocaleString()}</div><div class="profile-stat-label">Créditos</div></div>
+            ${myStats?`
+            <div><div class="profile-stat-num">${myStats.kills}</div><div class="profile-stat-label">Kills</div></div>
+            <div><div class="profile-stat-num">${myStats.raids_won}</div><div class="profile-stat-label">Raids</div></div>
+            <div><div class="profile-stat-num">${myStats.hours_played.toFixed(0)}h</div><div class="profile-stat-label">Horas</div></div>
+            `:''}
+          </div>
+        </div>
+      </div>
+      ${myStats?`
+      <div style="background:rgba(13,11,9,.6);border:1px solid var(--border);border-radius:6px;padding:1.5rem;">
+        <div style="font-family:'Bebas Neue';font-size:1.2rem;letter-spacing:2px;margin-bottom:1rem;">Estatísticas de Combate</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;">
+          ${[['⚔️ Kills',myStats.kills,'var(--red)'],['💀 Mortes',myStats.deaths,'var(--text-muted)'],
+             ['⏰ Horas',myStats.hours_played.toFixed(1)+'h','var(--rust-light)'],
+             ['🪨 Recursos',myStats.resources_gathered.toLocaleString(),'var(--rust-tan)'],
+             ['🏚️ Raids',myStats.raids_won,'var(--rust-orange)'],
+             ['K/D',myStats.deaths>0?(myStats.kills/myStats.deaths).toFixed(2):'∞','var(--green)']
+          ].map(([l,v,c])=>`
+          <div style="background:rgba(42,26,14,.4);border:1px solid var(--border);border-radius:4px;padding:1rem;text-align:center;">
+            <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem">${l}</div>
+            <div style="font-family:'Bebas Neue';font-size:1.6rem;color:${c}">${v}</div>
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+    `;
+  } catch(e) {}
+}
+
+// ── ADMIN ─────────────────────────────────────────────────
+async function loadAdmin() {
+  if(!currentUser || currentUser.role !== 'admin') {
+    document.getElementById('page-admin').innerHTML = '<div class="section"><div class="empty-state"><div class="icon">🔒</div><p>Acesso negado.</p></div></div>';
+    return;
+  }
+  try {
+    const r = await fetch(`${API}/admin/stats`, {credentials:'include'});
+    const d = await r.json();
+    const statsEl = document.getElementById('admin-stats-grid');
+    statsEl.innerHTML = [
+      ['👥','Total de Usuários', d.stats.total_users],
+      ['🛒','Compras Realizadas', d.stats.total_purchases],
+      ['💰','Receita Total', 'R$ ' + (d.stats.total_revenue/100).toFixed(2)],
+      ['🖥️','Servidores Online', d.stats.online_servers],
+      ['🎮','Jogadores Agora', d.stats.total_players],
+    ].map(([icon,label,val])=>`
+      <div class="stat-card">
+        <div class="stat-card-icon">${icon}</div>
+        <div class="stat-card-num">${val}</div>
+        <div class="stat-card-label">${label}</div>
+      </div>`).join('');
+    loadAdminUsers();
+  } catch(e) {}
+}
+
+async function loadAdminUsers() {
+  try {
+    const r = await fetch(`${API}/admin/users`, {credentials:'include'});
+    const d = await r.json();
+    document.getElementById('admin-tab-users').innerHTML = `
+      <div style="overflow-x:auto;background:rgba(13,11,9,.6);border:1px solid var(--border);border-radius:6px;">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Usuário</th><th>Email</th><th>Role</th><th>Saldo</th><th>Cadastro</th><th>Ações</th></tr></thead>
+          <tbody>
+            ${d.users.map(u=>`
+            <tr>
+              <td style="color:var(--text-muted)">${u.id}</td>
+              <td style="font-weight:700">${u.username}</td>
+              <td style="color:var(--text-muted);font-size:.8rem">${u.email}</td>
+              <td><span class="role-badge ${u.role}">${u.role.toUpperCase()}</span></td>
+              <td style="font-family:'Share Tech Mono';color:var(--rust-orange)">${u.balance.toLocaleString()}</td>
+              <td style="color:var(--text-muted);font-size:.8rem">${new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
+              <td>
+                <select onchange="updateUserRole(${u.id},this.value,${u.balance})" style="background:var(--rust-dark);border:1px solid var(--border);color:var(--rust-light);padding:.2rem .4rem;border-radius:3px;font-size:.75rem;">
+                  <option value="player" ${u.role==='player'?'selected':''}>Player</option>
+                  <option value="vip" ${u.role==='vip'?'selected':''}>VIP</option>
+                  <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+                </select>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) {}
+}
+
+async function updateUserRole(uid, role, balance) {
+  try {
+    await fetch(`${API}/admin/users/${uid}`, {
+      method:'PUT', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({role, balance})
+    });
+    toast('Usuário atualizado!', 'success');
+  } catch(e) {}
+}
+
+function adminTab(tab, btn) {
+  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('admin-tab-users').style.display = tab==='users'?'block':'none';
+  document.getElementById('admin-tab-servers').style.display = tab==='servers'?'block':'none';
+  if(tab==='servers') loadAdminServers();
+}
+
+async function loadAdminServers() {
+  try {
+    const r = await fetch(`${API}/admin/servers`, {credentials:'include'});
+    const d = await r.json();
+    document.getElementById('admin-tab-servers').innerHTML = `
+      <div style="overflow-x:auto;background:rgba(13,11,9,.6);border:1px solid var(--border);border-radius:6px;">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Nome</th><th>IP:Porta</th><th>Mapa</th><th>Players</th><th>Status</th></tr></thead>
+          <tbody>
+            ${d.servers.map(s=>`
+            <tr>
+              <td style="color:var(--text-muted)">${s.id}</td>
+              <td style="font-weight:700">${s.name}</td>
+              <td style="font-family:'Share Tech Mono';font-size:.8rem;color:var(--text-muted)">${s.ip}:${s.port}</td>
+              <td>${s.map}</td>
+              <td>${s.current_players}/${s.max_players}</td>
+              <td><span class="status-dot ${s.status}"></span>${s.status}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) {}
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const container = document.getElementById('toasts');
+  const icons = {success:'✅', error:'❌', info:'🔥'};
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type]||'🔥'}</span> ${msg}`;
+  container.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function safeParseJSON(str, fallback) {
+  try { return JSON.parse(str); } catch(e) { return fallback; }
+}
+
+// ── INIT ──────────────────────────────────────────────────
+async function init() {
+  await checkAuth();
+  loadServers();
+  loadNews();
+}
+
+init();
+setInterval(()=>{ if(document.getElementById('page-home').classList.contains('active')) loadServers(); }, 30000);
+</script>
+</body>
+</html>
