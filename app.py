@@ -21,7 +21,7 @@ CORS(app, supports_credentials=True, origins=[ALLOWED_ORIGIN])
 
 # ── MONGODB ───────────────────────────────────────────────
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/firethrone')
-client = MongoClient(MONGO_URI)
+client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000, connectTimeoutMS=5000)
 db = client.get_database()
 
 users_col       = db['users']
