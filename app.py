@@ -1,9 +1,13 @@
-from flask import Flask, jsonify, request, session, render_template, send_from_directory
+from flask import Flask, jsonify, request, session, send_from_directory, redirect, url_for
 from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
-import hashlib, os, random
-from datetime import datetime
+import hashlib, os, random, secrets, smtplib, re, json
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime, timedelta
+from urllib.parse import urlencode, parse_qs
+import urllib.request
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'firethrone-secret-2024')
@@ -21,6 +25,52 @@ purchases_col   = db['purchases']
 leaderboard_col = db['leaderboard']
 news_col        = db['news']
 tickets_col     = db['tickets']
+tokens_col      = db['email_tokens']   # verificação de email
+
+# ── EMAIL HELPER ──────────────────────────────────────────
+SITE_URL    = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
+EMAIL_HOST  = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT  = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USER  = os.environ.get('EMAIL_USER', '')
+EMAIL_PASS  = os.environ.get('EMAIL_PASS', '')
+EMAIL_FROM  = os.environ.get('EMAIL_FROM', EMAIL_USER)
+
+def send_email(to, subject, html_body):
+    if not EMAIL_USER or not EMAIL_PASS:
+        print(f'[EMAIL SKIP] Para: {to} | {subject}')
+        return
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From']    = f'FireThrone <{EMAIL_FROM}>'
+        msg['To']      = to
+        msg.attach(MIMEText(html_body, 'html'))
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as s:
+            s.starttls()
+            s.login(EMAIL_USER, EMAIL_PASS)
+            s.sendmail(EMAIL_FROM, to, msg.as_string())
+    except Exception as e:
+        print(f'[EMAIL ERROR] {e}')
+
+def send_verification_email(to_email, username, token):
+    link = f'{SITE_URL}/api/auth/verify-email?token={token}'
+    html = f'''
+    <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;background:#0D0B09;color:#D4B896;border:1px solid #3D2E1E;border-radius:8px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#C8440A,#8B1A1A);padding:24px;text-align:center">
+        <h1 style="color:#fff;font-size:28px;margin:0;letter-spacing:4px">🔥 FIRETHRONE</h1>
+      </div>
+      <div style="padding:32px">
+        <h2 style="color:#fff;margin-top:0">Olá, {username}!</h2>
+        <p>Obrigado por se cadastrar no FireThrone Network. Clique no botão abaixo para confirmar seu email:</p>
+        <div style="text-align:center;margin:28px 0">
+          <a href="{link}" style="background:linear-gradient(135deg,#C8440A,#8B1A1A);color:#fff;padding:14px 32px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:16px;letter-spacing:1px">
+            ✅ CONFIRMAR EMAIL
+          </a>
+        </div>
+        <p style="font-size:13px;color:#7A6550">Este link expira em 24 horas. Se você não criou uma conta, ignore este email.</p>
+      </div>
+    </div>'''
+    send_email(to_email, '🔥 FireThrone — Confirme seu email', html)
 
 def hash_password(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
@@ -70,39 +120,86 @@ def health():
     return jsonify({'status': 'ok'}), 200
 
 # ── AUTH ──────────────────────────────────────────────────
+def is_valid_email(email):
+    return bool(re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email))
+
+@app.route('/api/auth/check-email')
+def check_email():
+    email = request.args.get('email','').strip().lower()
+    exists = bool(users_col.find_one({'email': email}))
+    return jsonify({'exists': exists})
+
 @app.route('/api/auth/register', methods=['POST'])
 def register():
-    data = request.json
-    username = data.get('username','').strip()
-    email    = data.get('email','').strip()
-    password = data.get('password','')
-    if not username or not email or not password:
+    data      = request.json or {}
+    firstname = data.get('firstname','').strip()
+    lastname  = data.get('lastname','').strip()
+    email     = data.get('email','').strip().lower()
+    password  = data.get('password','')
+
+    if not firstname or not lastname or not email or not password:
         return jsonify({'error': 'Preencha todos os campos'}), 400
-    if users_col.find_one({'$or': [{'username': username}, {'email': email}]}):
-        return jsonify({'error': 'Usuário ou email já cadastrado'}), 409
+    if not is_valid_email(email):
+        return jsonify({'error': 'Email inválido'}), 400
+    if len(password) < 6:
+        return jsonify({'error': 'Senha deve ter no mínimo 6 caracteres'}), 400
+    if users_col.find_one({'email': email}):
+        return jsonify({'error': 'Email já cadastrado'}), 409
+
+    username = f'{firstname} {lastname}'
     result = users_col.insert_one({
+        'firstname': firstname, 'lastname': lastname,
         'username': username, 'email': email,
         'password_hash': hash_password(password),
         'role': 'player', 'balance': 0,
         'avatar': '/static/default_avatar.png',
+        'email_verified': False,
         'created_at': datetime.utcnow()
     })
-    session['user_id'] = str(result.inserted_id)
-    return jsonify({'message': 'Cadastro realizado!', 'user': {'id': str(result.inserted_id), 'username': username, 'role': 'player', 'balance': 0}})
+    uid = str(result.inserted_id)
+
+    # Gerar token de verificação
+    token = secrets.token_urlsafe(32)
+    tokens_col.insert_one({
+        'user_id': uid, 'token': token, 'type': 'email_verify',
+        'expires_at': datetime.utcnow() + timedelta(hours=24),
+        'used': False
+    })
+    send_verification_email(email, firstname, token)
+
+    return jsonify({'message': 'Conta criada! Verifique seu email para ativar.'}), 201
+
+@app.route('/api/auth/verify-email')
+def verify_email():
+    token = request.args.get('token','')
+    rec   = tokens_col.find_one({'token': token, 'type': 'email_verify', 'used': False})
+    if not rec:
+        return redirect(f'/?already_verified=1')
+    if rec['expires_at'] < datetime.utcnow():
+        return redirect(f'/?steam_error=token_expired')
+    tokens_col.update_one({'_id': rec['_id']}, {'$set': {'used': True}})
+    users_col.update_one({'_id': ObjectId(rec['user_id'])}, {'$set': {'email_verified': True}})
+    return redirect(f'/?email_verified=1')
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    data       = request.json
-    identifier = data.get('identifier','').strip()
+    data       = request.json or {}
+    identifier = data.get('identifier','').strip().lower()
     password   = data.get('password','')
     user = users_col.find_one({
-        '$or': [{'username': identifier}, {'email': identifier}],
+        '$or': [{'email': identifier}, {'username': identifier}],
         'password_hash': hash_password(password)
     })
     if not user:
         return jsonify({'error': 'Credenciais inválidas'}), 401
+    if not user.get('email_verified', False):
+        return jsonify({'error': 'Confirme seu email antes de entrar.', 'need_verify': True}), 403
     session['user_id'] = str(user['_id'])
-    return jsonify({'user': {'id': str(user['_id']), 'username': user['username'], 'role': user['role'], 'balance': user['balance'], 'avatar': user.get('avatar','')}})
+    return jsonify({'user': {
+        'id': str(user['_id']), 'username': user['username'],
+        'role': user['role'], 'balance': user['balance'],
+        'avatar': user.get('avatar','')
+    }})
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():
@@ -116,6 +213,72 @@ def me():
         return jsonify({'user': None})
     user = users_col.find_one({'_id': ObjectId(uid)}, {'password_hash': 0})
     return jsonify({'user': fix_id(user)})
+
+# ── STEAM OPENID ──────────────────────────────────────────
+STEAM_OPENID = 'https://steamcommunity.com/openid/login'
+STEAM_API_KEY = os.environ.get('STEAM_API_KEY', '')
+
+@app.route('/api/auth/steam')
+def steam_login():
+    callback = f'{SITE_URL}/api/auth/steam/callback'
+    params = {
+        'openid.ns':         'http://specs.openid.net/auth/2.0',
+        'openid.mode':       'checkid_setup',
+        'openid.return_to':  callback,
+        'openid.realm':      SITE_URL,
+        'openid.identity':   'http://specs.openid.net/auth/2.0/identifier_select',
+        'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
+    }
+    return redirect(f'{STEAM_OPENID}?{urlencode(params)}')
+
+@app.route('/api/auth/steam/callback')
+def steam_callback():
+    params = dict(request.args)
+    params['openid.mode'] = 'check_authentication'
+    try:
+        data = urlencode({k: v[0] if isinstance(v, list) else v for k, v in params.items()}).encode()
+        req  = urllib.request.Request(STEAM_OPENID, data=data)
+        resp = urllib.request.urlopen(req, timeout=10).read().decode()
+        if 'is_valid:true' not in resp:
+            return redirect('/?steam_error=invalid')
+    except Exception as e:
+        return redirect(f'/?steam_error=1')
+
+    # Extrair Steam ID da URL claimed_id
+    claimed = request.args.get('openid.claimed_id', '')
+    steam_id = claimed.split('/')[-1]
+    if not steam_id.isdigit():
+        return redirect('/?steam_error=id')
+
+    # Buscar perfil Steam
+    username = f'Steam_{steam_id[-6:]}'
+    avatar   = ''
+    if STEAM_API_KEY:
+        try:
+            url  = f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={STEAM_API_KEY}&steamids={steam_id}'
+            data = json.loads(urllib.request.urlopen(url, timeout=8).read())
+            p    = data['response']['players'][0]
+            username = p.get('personaname', username)
+            avatar   = p.get('avatarfull', '')
+        except:
+            pass
+
+    # Criar ou atualizar usuário
+    user = users_col.find_one({'steam_id': steam_id})
+    if not user:
+        uid = users_col.insert_one({
+            'username': username, 'steam_id': steam_id,
+            'email': '', 'password_hash': '',
+            'role': 'player', 'balance': 0,
+            'avatar': avatar, 'email_verified': True,
+            'created_at': datetime.utcnow()
+        }).inserted_id
+    else:
+        uid = user['_id']
+        users_col.update_one({'_id': uid}, {'$set': {'username': username, 'avatar': avatar}})
+
+    session['user_id'] = str(uid)
+    return redirect('/?steam_ok=1')
 
 # ── SERVERS ───────────────────────────────────────────────
 @app.route('/api/servers')
@@ -352,6 +515,7 @@ def setup_admin_on_start():
             'password_hash': hash_password('compass2210'),
             'role': 'admin',
             'balance': 99999,
+            'email_verified': True,
         }},
         upsert=True
     )

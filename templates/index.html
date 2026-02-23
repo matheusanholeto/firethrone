@@ -923,6 +923,24 @@ select.form-input {
 .priority-badge.normal { background:rgba(255,255,255,.05); color:var(--text-muted); border:1px solid var(--border); }
 .priority-badge.high   { background:rgba(255,193,7,.1); color:var(--yellow); border:1px solid rgba(255,193,7,.3); }
 .priority-badge.urgent { background:rgba(244,67,54,.15); color:#f44336; border:1px solid rgba(244,67,54,.3); }
+/* ── AUTH STEAM ── */
+.btn-steam {
+  display:flex; align-items:center; justify-content:center; gap:.6rem;
+  width:100%; padding:.6rem 1rem; border-radius:4px; cursor:pointer;
+  background: linear-gradient(135deg, #1b2838, #2a475e);
+  color:#c6d4df; border:1px solid #4c6b8a;
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem;
+  letter-spacing:1px; text-transform:uppercase; text-decoration:none;
+  transition:all .2s; margin-bottom:.1rem;
+}
+.btn-steam:hover { background:linear-gradient(135deg,#2a475e,#1b2838); border-color:#66c0f4; color:#fff; }
+.auth-divider {
+  display:flex; align-items:center; gap:.75rem;
+  margin:.9rem 0; color:var(--text-muted); font-size:.75rem;
+}
+.auth-divider::before, .auth-divider::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
 
 </style>
 </head>
@@ -1199,13 +1217,23 @@ select.form-input {
     <button class="modal-close" onclick="closeModal('login')">✕</button>
     <div id="login-title" class="modal-title">Entrar</div>
     <div id="login-sub" class="modal-sub">Acesse sua conta FireThrone</div>
+
+    <!-- Steam login -->
+    <a href="/api/auth/steam" class="btn-steam" id="btn-steam-login">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.606 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.298-.249-1.878-.03l1.523.63c.956.4 1.409 1.497 1.009 2.455-.397.957-1.497 1.41-2.455 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.252 0-2.265-1.014-2.265-2.265z"/></svg>
+      Entrar com Steam
+    </a>
+
+    <div class="auth-divider"><span>ou</span></div>
+
     <div class="form-group">
-      <label id="login-field-label" class="form-label">Usuário ou Email</label>
-      <input class="form-input" id="login-identifier" type="text" placeholder="seu_usuario">
+      <label id="login-field-label" class="form-label">Email</label>
+      <input class="form-input" id="login-identifier" type="email" placeholder="seu@email.com">
     </div>
     <div class="form-group">
       <label id="login-pass-label" class="form-label">Senha</label>
-      <input class="form-input" id="login-password" type="password" placeholder="••••••••">
+      <input class="form-input" id="login-password" type="password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') doLogin()">
     </div>
     <div id="login-msg"></div>
     <button id="login-btn" class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="doLogin()">Entrar</button>
@@ -1214,25 +1242,63 @@ select.form-input {
 </div>
 
 <div class="modal-overlay" id="modal-register">
-  <div class="modal">
+  <div class="modal" style="max-width:460px;">
     <button class="modal-close" onclick="closeModal('register')">✕</button>
-    <div id="reg-title" class="modal-title">Cadastrar</div>
-    <div id="reg-sub" class="modal-sub">Crie sua conta e entre para a batalha</div>
-    <div class="form-group">
-      <label id="reg-user-label" class="form-label">Usuário</label>
-      <input class="form-input" id="reg-username" type="text" placeholder="SurvivorKing">
+    <div id="reg-title" class="modal-title">Criar Conta</div>
+    <div id="reg-sub" class="modal-sub">Junte-se ao FireThrone Network</div>
+
+    <!-- Steam -->
+    <a href="/api/auth/steam" class="btn-steam" id="btn-steam-register">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.606 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.298-.249-1.878-.03l1.523.63c.956.4 1.409 1.497 1.009 2.455-.397.957-1.497 1.41-2.455 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.252 0-2.265-1.014-2.265-2.265z"/></svg>
+      Cadastrar com Steam
+    </a>
+
+    <div class="auth-divider"><span>ou cadastre com email</span></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-input" id="reg-firstname" type="text" placeholder="João">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sobrenome</label>
+        <input class="form-input" id="reg-lastname" type="text" placeholder="Silva">
+      </div>
     </div>
     <div class="form-group">
       <label id="reg-email-label" class="form-label">Email</label>
-      <input class="form-input" id="reg-email" type="email" placeholder="seu@email.com">
+      <input class="form-input" id="reg-email" type="email" placeholder="joao@email.com"
+        oninput="checkEmailAvailable(this.value)">
+      <div id="reg-email-status" style="font-size:.72rem;margin-top:.25rem;"></div>
     </div>
     <div class="form-group">
       <label id="reg-pass-label" class="form-label">Senha</label>
-      <input class="form-input" id="reg-password" type="password" placeholder="••••••••">
+      <input class="form-input" id="reg-password" type="password" placeholder="Mínimo 6 caracteres"
+        oninput="checkPassMatch()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirmar Senha</label>
+      <input class="form-input" id="reg-password2" type="password" placeholder="Repita a senha"
+        oninput="checkPassMatch()">
+      <div id="reg-pass-status" style="font-size:.72rem;margin-top:.25rem;"></div>
     </div>
     <div id="reg-msg"></div>
-    <button id="reg-btn" class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="doRegister()">Criar Conta</button>
+    <button id="reg-btn" class="btn btn-primary" style="width:100%; margin-top:.5rem;" onclick="doRegister()">Criar Conta</button>
     <div id="reg-switch" class="form-switch">Já tem conta? <a onclick="switchModal('register','login')">Entre aqui</a></div>
+  </div>
+</div>
+
+<!-- Email verification notice modal -->
+<div class="modal-overlay" id="modal-verify-email">
+  <div class="modal" style="text-align:center;max-width:400px;">
+    <div style="font-size:3rem;margin-bottom:1rem;">📧</div>
+    <div class="modal-title" style="font-size:1.4rem;">Verifique seu Email</div>
+    <div class="modal-sub" style="margin-bottom:1.5rem;">
+      Enviamos um link de confirmação para <strong id="verify-email-addr"></strong>.<br>
+      Clique no link para ativar sua conta.
+    </div>
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.5rem;">Não recebeu? Verifique a pasta de spam.</p>
+    <button class="btn btn-outline" onclick="closeModal('verify-email')">Fechar</button>
   </div>
 </div>
 
@@ -1496,10 +1562,36 @@ function clearUser() {
   document.getElementById('store-balance').textContent = '—';
 }
 
+let emailCheckTimer = null;
+function checkEmailAvailable(val) {
+  const st = document.getElementById('reg-email-status');
+  if (!val || !val.includes('@')) { st.innerHTML=''; return; }
+  clearTimeout(emailCheckTimer);
+  st.innerHTML = '<span style="color:var(--text-muted)">Verificando...</span>';
+  emailCheckTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(`${API}/auth/check-email?email=${encodeURIComponent(val)}`);
+      const d = await r.json();
+      if (d.exists) st.innerHTML = '<span style="color:var(--red)">❌ Email já cadastrado</span>';
+      else          st.innerHTML = '<span style="color:var(--green)">✅ Email disponível</span>';
+    } catch(e) { st.innerHTML = ''; }
+  }, 600);
+}
+
+function checkPassMatch() {
+  const p1 = document.getElementById('reg-password')?.value || '';
+  const p2 = document.getElementById('reg-password2')?.value || '';
+  const st = document.getElementById('reg-pass-status');
+  if (!p2) { st.innerHTML=''; return; }
+  if (p1 === p2) st.innerHTML = '<span style="color:var(--green)">✅ Senhas coincidem</span>';
+  else           st.innerHTML = '<span style="color:var(--red)">❌ Senhas não coincidem</span>';
+}
+
 async function doLogin() {
-  const identifier = document.getElementById('login-identifier').value;
-  const password = document.getElementById('login-password').value;
-  const msg = document.getElementById('login-msg');
+  const identifier = document.getElementById('login-identifier').value.trim();
+  const password   = document.getElementById('login-password').value;
+  const msg        = document.getElementById('login-msg');
+  if (!identifier || !password) { msg.innerHTML='<div class="form-error">Preencha todos os campos</div>'; return; }
   try {
     const r = await fetch(`${API}/auth/login`, {
       method:'POST', credentials:'include',
@@ -1507,7 +1599,11 @@ async function doLogin() {
       body: JSON.stringify({identifier, password})
     });
     const d = await r.json();
-    if(!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
+    if (!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
+    if (d.need_verify) {
+      msg.innerHTML = '<div class="form-error">⚠️ Confirme seu email antes de entrar. Verifique sua caixa de entrada.</div>';
+      return;
+    }
     setUser(d.user);
     closeModal('login');
     toast('Bem-vindo de volta, ' + d.user.username + '!', 'success');
@@ -1515,23 +1611,46 @@ async function doLogin() {
 }
 
 async function doRegister() {
-  const username = document.getElementById('reg-username').value;
-  const email = document.getElementById('reg-email').value;
-  const password = document.getElementById('reg-password').value;
-  const msg = document.getElementById('reg-msg');
+  const firstname = document.getElementById('reg-firstname').value.trim();
+  const lastname  = document.getElementById('reg-lastname').value.trim();
+  const email     = document.getElementById('reg-email').value.trim();
+  const password  = document.getElementById('reg-password').value;
+  const password2 = document.getElementById('reg-password2').value;
+  const msg       = document.getElementById('reg-msg');
+
+  if (!firstname || !lastname || !email || !password || !password2) {
+    msg.innerHTML = '<div class="form-error">Preencha todos os campos</div>'; return;
+  }
+  if (password !== password2) {
+    msg.innerHTML = '<div class="form-error">As senhas não coincidem</div>'; return;
+  }
+  if (password.length < 6) {
+    msg.innerHTML = '<div class="form-error">Senha deve ter no mínimo 6 caracteres</div>'; return;
+  }
   try {
     const r = await fetch(`${API}/auth/register`, {
       method:'POST', credentials:'include',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username, email, password})
+      body: JSON.stringify({firstname, lastname, email, password})
     });
     const d = await r.json();
-    if(!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
-    setUser(d.user);
+    if (!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
     closeModal('register');
-    toast('Conta criada! Bem-vindo ao FireThrone!', 'success');
+    document.getElementById('verify-email-addr').textContent = email;
+    openModal('verify-email');
   } catch(e) { msg.innerHTML = '<div class="form-error">Erro de conexão com o servidor</div>'; }
 }
+
+// Verificar se veio de login Steam com erro
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('steam_error')) toast('Erro ao autenticar com Steam. Tente novamente.', 'error');
+  if (params.get('email_verified')) toast('Email confirmado! Você já pode entrar.', 'success');
+  if (params.get('already_verified')) toast('Email já confirmado anteriormente.', 'info');
+  if (params.get('steam_ok')) { checkAuth(); toast('Login com Steam realizado!', 'success'); }
+  // Limpar params da URL sem recarregar
+  if ([...params].length) window.history.replaceState({}, '', '/');
+});
 
 async function logout() {
   await fetch(`${API}/auth/logout`, {method:'POST', credentials:'include'});
@@ -1687,7 +1806,10 @@ function renderStore(items) {
 }
 
 // ── RUST ITEM CLASSIFICATION ─────────────────────────────
-const WEAR_ITEMS = ['metal.facemask','metal.plate.torso','roadsign.jacket','roadsign.kilt',
+
+// Roupas e mochilas → Clothing
+const CLOTHING_SNS = new Set([
+  'metal.facemask','metal.plate.torso','roadsign.jacket','roadsign.kilt',
   'coffeecan.helmet','hoodie','pants','shoes.boots','tactical.gloves','burlap.shoes',
   'attire.hide.poncho','attire.hide.vest','attire.hide.pants','wood.armor.helmet',
   'wood.armor.pants','mask.bandana','hat.beenie','hat.boonie','burlap.headwrap',
@@ -1695,52 +1817,99 @@ const WEAR_ITEMS = ['metal.facemask','metal.plate.torso','roadsign.jacket','road
   'heavy.plate.helmet','heavy.plate.jacket','heavy.plate.pants','attire.hide.boots',
   'attire.hide.helterneck','shirt.collared','shirt.tanktop','pants.shorts','mask.balaclava',
   'nightvisiongoggles','hazmatsuit','hazmatsuit.nomadsuit','attire.banditguard',
-  'largebackpack','smallbackpack'];
-
-// Shortnames com prioridade para hotbar (armas + meds)
-const HOTBAR_PRIORITY_SNS = new Set([
-  'rifle.ak','rifle.lr300','rifle.bolt','rifle.semiauto','lmg.m249','rifle.l96',
-  'smg.thompson','smg.mp5','smg.2',
-  'pistol.semiauto','pistol.revolver','pistol.python','pistol.eoka','pistol.nailgun',
-  'shotgun.pump','shotgun.spas12','shotgun.double','shotgun.waterpipe',
-  'rocket.launcher','multiplegrenadelauncher','grenade.f1','grenade.beancan','explosive.timed',
-  'crossbow','bow.hunting','bow.compound',
-  'salvaged.sword','longsword','mace','machete','knife.combat','bone.club',
-  'chainsaw','jackhammer',
-  'syringe.medical','largemedkit','bandage',
-  'torch','supply.signal',
+  'largebackpack','smallbackpack','burlap.suit','halloween.mummy.suit','scarecrow.suit',
+  'scarecrow.gloves','ghost.costume','clatter.helmet','riot.helmet','jumpsuit',
 ]);
-const HOTBAR_PRIORITY_KEYWORDS = [
-  'rifle','pistol','shotgun','smg','lmg','revolver','launcher','grenade',
-  'crossbow','bow','sword','machete','mace','knife','chainsaw','jackhammer',
-  'syringe','medkit','bandage',
+const CLOTHING_KEYWORDS = [
+  'helmet','jacket','pants','shirt','boots','gloves','kilt','vest','poncho',
+  'backpack','facemask','hazmat','hoodie','balaclava','costume','suit','goggles',
 ];
 
-function isHotbarPriority(item) {
-  const sn = (item.shortname || item.Shortname || '').toLowerCase();
-  if (sn && HOTBAR_PRIORITY_SNS.has(sn)) return true;
+// Armas, médicos e comida → Hotbar (prioridade)
+const HOTBAR_SNS = new Set([
+  // Rifles
+  'rifle.ak','rifle.lr300','rifle.bolt','rifle.semiauto','lmg.m249','rifle.l96',
+  // SMGs
+  'smg.thompson','smg.mp5','smg.2',
+  // Pistols
+  'pistol.semiauto','pistol.revolver','pistol.python','pistol.eoka','pistol.nailgun',
+  // Shotguns
+  'shotgun.pump','shotgun.spas12','shotgun.double','shotgun.waterpipe',
+  // Lançadores / explosivos
+  'rocket.launcher','multiplegrenadelauncher','grenade.f1','grenade.beancan','explosive.timed',
+  // Arcos
+  'crossbow','bow.hunting','bow.compound',
+  // Corpo-a-corpo
+  'salvaged.sword','longsword','mace','machete','knife.combat','bone.club','salvaged.cleaver',
+  // Ferramentas ofensivas
+  'chainsaw','jackhammer','flamethrower',
+  // Médicos
+  'syringe.medical','largemedkit','bandage','antiradpills',
+  // Comida
+  'can.tuna','can.beans','chocolate','grub','apple','orange','pumpkin','corn',
+  'chicken.cooked','chicken.raw','chicken.burned','bearmeat.cooked','bearmeat',
+  'deermeat.cooked','deermeat.raw','wolfmeat.cooked','wolfmeat.raw',
+  'humanmeat.cooked','humanmeat.raw','fish.cooked','fish.raw','fish.minnows','fish.troutsmall',
+  'smallwaterbottle','waterjug','water.purified','water.salt','black.raspberries',
+  'mushroom','corn.clone','potato','potato.clone','pumpkin.seed',
+  // Utilitários hotbar
+  'torch','supply.signal','fun.guitar','fun.trumpet',
+]);
+const HOTBAR_KEYWORDS = [
+  'rifle','pistol','shotgun','smg','lmg','revolver','launcher','grenade',
+  'crossbow','bow','sword','machete','mace','knife','chainsaw','flamethrower',
+  'syringe','medkit','bandage','antirad',
+  'cooked','can.tuna','can.beans','chocolate','apple','orange','mushroom','corn',
+  'chicken','bearmeat','deermeat','wolfmeat','humanmeat','fish','water bottle','waterjug',
+];
+
+function getItemSection(item) {
+  const sn   = (item.shortname || item.Shortname || item.sn || '').toLowerCase();
   const name = (item.name || item.Name || '').toLowerCase();
-  return HOTBAR_PRIORITY_KEYWORDS.some(k => name.includes(k));
+  const cont = (item.Container || item.container || '').toLowerCase();
+
+  // Container explícito tem prioridade máxima
+  if (cont === 'wear') return 'Clothing';
+  if (cont === 'belt') return 'Hotbar';
+  if (cont === 'main') {
+    // Mesmo vindo como main, arma/med/comida vai pra hotbar
+    if (sn && HOTBAR_SNS.has(sn)) return 'Hotbar';
+    if (HOTBAR_KEYWORDS.some(k => name.includes(k) || sn.includes(k))) return 'Hotbar';
+    return 'Inventory';
+  }
+
+  // Sem container — auto-detectar por shortname
+  if (sn && CLOTHING_SNS.has(sn)) return 'Clothing';
+  if (sn && HOTBAR_SNS.has(sn))   return 'Hotbar';
+
+  // Auto-detectar por keywords no nome
+  if (CLOTHING_KEYWORDS.some(k => name.includes(k) || sn.includes(k))) return 'Clothing';
+  if (HOTBAR_KEYWORDS.some(k => name.includes(k) || sn.includes(k)))   return 'Hotbar';
+
+  return 'Inventory';
 }
 
 function classifyKitItems(items) {
   const HOTBAR_SLOTS = 6;
-  const clothing = [], hotbar = [], inventory = [];
+  const clothing = [], hotbarExplicit = [], hotbarPromoted = [], inventory = [];
 
-  const wearItems = items.filter(i => (i.Container || i.container || '').toLowerCase() === 'wear'
-    || (!( (i.Container||i.container||'').toLowerCase() ) && WEAR_ITEMS.some(w => (i.shortname||i.Shortname||'').toLowerCase().includes(w))));
-  const beltItems = items.filter(i => (i.Container || i.container || '').toLowerCase() === 'belt');
-  const mainItems = items.filter(i => !wearItems.includes(i) && !beltItems.includes(i));
+  items.forEach(i => {
+    const section = getItemSection(i);
+    if      (section === 'Clothing') clothing.push(i);
+    else if (section === 'Hotbar') {
+      const cont = (i.Container || i.container || '').toLowerCase();
+      if (cont === 'belt') hotbarExplicit.push(i); // belt sempre vai
+      else hotbarPromoted.push(i);                 // promovidos da main
+    }
+    else inventory.push(i);
+  });
 
-  clothing.push(...wearItems);
-  hotbar.push(...beltItems);
-
-  const hotbarFree   = Math.max(0, HOTBAR_SLOTS - hotbar.length);
-  const mainPriority = mainItems.filter(i => isHotbarPriority(i));
-  const mainNormal   = mainItems.filter(i => !isHotbarPriority(i));
-
-  hotbar.push(...mainPriority.slice(0, hotbarFree));
-  inventory.push(...mainPriority.slice(hotbarFree), ...mainNormal);
+  // Belt explícito sempre entra; promovidos preenchem até 6 slots
+  const hotbar = [...hotbarExplicit];
+  const free   = Math.max(0, HOTBAR_SLOTS - hotbar.length);
+  hotbar.push(...hotbarPromoted.slice(0, free));
+  // Excedente vai pro inventory
+  inventory.unshift(...hotbarPromoted.slice(free));
 
   return { clothing, hotbar, inventory };
 }
