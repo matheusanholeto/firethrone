@@ -489,6 +489,199 @@ footer .footer-logo span { color:var(--rust-orange); }
 }
 .empty-state .icon { font-size:3rem; margin-bottom:1rem; opacity:.4; }
 .empty-state p { font-size:.9rem; }
+
+/* ── KIT ITEMS MODAL ─────────────────────────────────── */
+.kit-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.kit-item-card {
+  background: var(--rust-dim);
+  border: 1px solid rgba(200,68,10,.2);
+  border-radius: 6px;
+  padding: 0.5rem;
+  text-align: center;
+  transition: border-color .2s;
+}
+.kit-item-card:hover { border-color: var(--rust-orange); }
+.kit-item-card img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.kit-item-card .item-label {
+  font-size: 0.65rem;
+  color: var(--rust-light);
+  margin-top: 0.25rem;
+  line-height: 1.2;
+}
+.kit-item-card .item-amount {
+  font-size: 0.7rem;
+  color: var(--rust-orange);
+  font-weight: 700;
+}
+.modal-kit-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.modal-kit-image {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--rust-dim);
+  padding: 4px;
+}
+
+
+/* ── ADMIN PRICE EDIT ─────────────────────────────────── */
+.admin-price-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  background: rgba(200,68,10,.1);
+  border: 1px dashed rgba(200,68,10,.4);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+}
+.admin-price-edit label {
+  font-size: 0.65rem;
+  color: var(--rust-orange);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+.admin-price-edit input {
+  background: transparent;
+  border: none;
+  color: var(--rust-light);
+  font-size: 0.85rem;
+  font-weight: 700;
+  width: 80px;
+  outline: none;
+}
+.admin-price-edit button {
+  background: var(--rust-orange);
+  border: none;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.admin-price-edit button:hover { opacity: .85; }
+
+
+/* ── LANGUAGE SELECTOR ───────────────────────────────── */
+.lang-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.lang-btn {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--rust-light);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: border-color .2s;
+}
+.lang-btn:hover { border-color: var(--rust-orange); }
+.lang-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--rust-brown);
+  border: 1px solid rgba(200,68,10,.3);
+  border-radius: 8px;
+  min-width: 140px;
+  z-index: 1000;
+  overflow: hidden;
+}
+.lang-dropdown.open { display: block; }
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--rust-light);
+  transition: background .15s;
+}
+.lang-option:hover { background: rgba(200,68,10,.15); }
+.lang-option.active { color: var(--rust-orange); font-weight: 700; }
+
+
+/* ── ADMIN IMAGE EDIT ────────────────────────────────── */
+.admin-img-edit {
+  margin-bottom: 0.4rem;
+  background: rgba(200,68,10,.08);
+  border: 1px dashed rgba(200,68,10,.3);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+}
+.admin-img-edit label {
+  font-size: 0.65rem;
+  color: var(--rust-orange);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.admin-img-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.admin-img-edit input[type="text"] {
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--rust-light);
+  font-size: 0.75rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  flex: 1;
+  outline: none;
+  min-width: 0;
+}
+.admin-img-edit input[type="file"] { display: none; }
+.admin-img-edit .img-btn {
+  background: var(--rust-orange);
+  border: none;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 3px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.admin-img-edit .img-btn:hover { opacity: .85; }
+.admin-img-preview {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: var(--rust-dim);
+  flex-shrink: 0;
+}
+
 </style>
 </head>
 <body>
@@ -508,9 +701,20 @@ footer .footer-logo span { color:var(--rust-orange); }
     <li id="nav-admin-link" style="display:none"><a onclick="showPage('admin')" id="nav-admin">Admin</a></li>
   </ul>
   <div class="nav-actions">
+  <div class="lang-selector">
+    <button class="lang-btn" onclick="toggleLangDropdown()" id="lang-current">🇧🇷 Português</button>
+    <div class="lang-dropdown" id="lang-dropdown">
+      <div class="lang-option active" data-lang="pt" onclick="setLang('pt')">🇧🇷 Português</div>
+      <div class="lang-option" data-lang="en" onclick="setLang('en')">🇺🇸 English</div>
+      <div class="lang-option" data-lang="de" onclick="setLang('de')">🇩🇪 Deutsch</div>
+      <div class="lang-option" data-lang="ru" onclick="setLang('ru')">🇷🇺 Русский</div>
+      <div class="lang-option" data-lang="es" onclick="setLang('es')">🇪🇸 Español</div>
+    </div>
+  </div>
+  
     <div id="auth-buttons">
-      <button class="btn btn-outline btn-sm" onclick="openModal('login')">Entrar</button>
-      <button class="btn btn-primary btn-sm" onclick="openModal('register')">Cadastrar</button>
+      <button id="btn-login" class="btn btn-outline btn-sm" onclick="openModal('login')">Entrar</button>
+      <button id="btn-register" class="btn btn-primary btn-sm" onclick="openModal('register')">Cadastrar</button>
     </div>
     <div id="user-menu" style="display:none">
       <div class="user-chip" onclick="showPage('profile')">
@@ -532,20 +736,20 @@ footer .footer-logo span { color:var(--rust-orange); }
     <div class="hero-grid"></div>
     <div class="hero-content">
       <div class="hero-left">
-        <div class="hero-tag">🔴 Servidores Online</div>
+        <div id="hero-tag" class="hero-tag">🔴 Servidores Online</div>
         <h1 class="hero-title">
           <span class="line1">Sobreviva.</span>
           <span class="line2">Construa. Domine.</span>
         </h1>
-        <p class="hero-sub">FireThrone é a rede de servidores de Rust mais competitiva do Brasil. Servidores vanilla e modificados com economia balanceada e comunidade ativa.</p>
+        <p id="hero-sub" class="hero-sub">FireThrone é a rede de servidores de Rust mais competitiva do Brasil. Servidores vanilla e modificados com economia balanceada e comunidade ativa.</p>
         <div class="hero-buttons">
-          <button class="btn btn-primary" onclick="showPage('servers')">🎮 Ver Servidores</button>
-          <button class="btn btn-outline" onclick="showPage('store')">🛒 Loja VIP</button>
+          <button id="hero-btn-servers" class="btn btn-primary" onclick="showPage('servers')">🎮 Ver Servidores</button>
+          <button id="hero-btn-store" class="btn btn-outline" onclick="showPage('store')">🛒 Loja VIP</button>
         </div>
         <div class="hero-stats" id="hero-stats">
-          <div class="hero-stat"><div class="hero-stat-num" id="stat-players">—</div><div class="hero-stat-label">Jogadores Online</div></div>
-          <div class="hero-stat"><div class="hero-stat-num" id="stat-servers">—</div><div class="hero-stat-label">Servidores Ativos</div></div>
-          <div class="hero-stat"><div class="hero-stat-num">24/7</div><div class="hero-stat-label">Disponibilidade</div></div>
+          <div class="hero-stat"><div class="hero-stat-num" id="stat-players">—</div><div id="stat-players-label" class="hero-stat-label">Jogadores Online</div></div>
+          <div class="hero-stat"><div class="hero-stat-num" id="stat-servers">—</div><div id="stat-servers-label" class="hero-stat-label">Servidores Ativos</div></div>
+          <div class="hero-stat"><div class="hero-stat-num">24/7</div><div id="stat-uptime-label" class="hero-stat-label">Disponibilidade</div></div>
         </div>
       </div>
       <div class="hero-right" id="hero-servers">
@@ -569,7 +773,7 @@ footer .footer-logo span { color:var(--rust-orange); }
   <div class="section">
     <div class="section-header">
       <div class="section-tag">// Network Status</div>
-      <h2 class="section-title">Servidores</h2>
+      <h2 id="sec-servers" class="section-title">Servidores</h2>
       <div class="section-divider"></div>
     </div>
     <div class="servers-grid" id="servers-grid">
@@ -585,12 +789,12 @@ footer .footer-logo span { color:var(--rust-orange); }
   <div class="section">
     <div class="section-header">
       <div class="section-tag">// Planos & Benefícios</div>
-      <h2 class="section-title">Loja VIP</h2>
+      <h2 id="sec-store" class="section-title">Loja VIP</h2>
       <div class="section-divider"></div>
     </div>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
       <div class="store-filters" id="store-filters">
-        <button class="filter-btn active" onclick="filterStore('vip',this)">👑 Planos VIP</button>
+        <button id="filter-vip" class="filter-btn active" onclick="filterStore('vip',this)">👑 Planos VIP</button>
       </div>
       <div style="font-size:.85rem; color:var(--text-muted)">
         Seu saldo: <span id="store-balance" style="color:var(--rust-orange); font-family:'Share Tech Mono';">—</span>
@@ -605,7 +809,7 @@ footer .footer-logo span { color:var(--rust-orange); }
   <div class="section">
     <div class="section-header">
       <div class="section-tag">// Melhores Jogadores</div>
-      <h2 class="section-title">Ranking</h2>
+      <h2 id="sec-lb" class="section-title">Ranking</h2>
       <div class="section-divider"></div>
     </div>
     <div class="lb-filters">
@@ -635,7 +839,7 @@ footer .footer-logo span { color:var(--rust-orange); }
   <div class="section">
     <div class="section-header">
       <div class="section-tag">// Atualizações & Eventos</div>
-      <h2 class="section-title">Notícias</h2>
+      <h2 id="sec-news" class="section-title">Notícias</h2>
       <div class="section-divider"></div>
     </div>
     <div class="news-grid" id="news-grid"></div>
@@ -656,13 +860,13 @@ footer .footer-logo span { color:var(--rust-orange); }
   <div class="section">
     <div class="section-header">
       <div class="section-tag">// Painel de Controle</div>
-      <h2 class="section-title">Administração</h2>
+      <h2 id="sec-admin" class="section-title">Administração</h2>
       <div class="section-divider"></div>
     </div>
     <div class="admin-grid" id="admin-stats-grid"></div>
     <div class="admin-tabs">
-      <button class="admin-tab active" onclick="adminTab('users',this)">Usuários</button>
-      <button class="admin-tab" onclick="adminTab('servers',this)">Servidores</button>
+      <button id="tab-users" class="admin-tab active" onclick="adminTab('users',this)">Usuários</button>
+      <button id="tab-servers" class="admin-tab" onclick="adminTab('servers',this)">Servidores</button>
     </div>
     <div id="admin-tab-users"></div>
     <div id="admin-tab-servers" style="display:none"></div>
@@ -681,42 +885,62 @@ footer .footer-logo span { color:var(--rust-orange); }
 <div class="modal-overlay" id="modal-login">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('login')">✕</button>
-    <div class="modal-title">Entrar</div>
-    <div class="modal-sub">Acesse sua conta FireThrone</div>
+    <div id="login-title" class="modal-title">Entrar</div>
+    <div id="login-sub" class="modal-sub">Acesse sua conta FireThrone</div>
     <div class="form-group">
-      <label class="form-label">Usuário ou Email</label>
+      <label id="login-field-label" class="form-label">Usuário ou Email</label>
       <input class="form-input" id="login-identifier" type="text" placeholder="seu_usuario">
     </div>
     <div class="form-group">
-      <label class="form-label">Senha</label>
+      <label id="login-pass-label" class="form-label">Senha</label>
       <input class="form-input" id="login-password" type="password" placeholder="••••••••">
     </div>
     <div id="login-msg"></div>
-    <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="doLogin()">Entrar</button>
-    <div class="form-switch">Não tem conta? <a onclick="switchModal('login','register')">Cadastre-se</a></div>
+    <button id="login-btn" class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="doLogin()">Entrar</button>
+    <div id="login-switch" class="form-switch">Não tem conta? <a onclick="switchModal('login','register')">Cadastre-se</a></div>
   </div>
 </div>
 
 <div class="modal-overlay" id="modal-register">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('register')">✕</button>
-    <div class="modal-title">Cadastrar</div>
-    <div class="modal-sub">Crie sua conta e entre para a batalha</div>
+    <div id="reg-title" class="modal-title">Cadastrar</div>
+    <div id="reg-sub" class="modal-sub">Crie sua conta e entre para a batalha</div>
     <div class="form-group">
-      <label class="form-label">Usuário</label>
+      <label id="reg-user-label" class="form-label">Usuário</label>
       <input class="form-input" id="reg-username" type="text" placeholder="SurvivorKing">
     </div>
     <div class="form-group">
-      <label class="form-label">Email</label>
+      <label id="reg-email-label" class="form-label">Email</label>
       <input class="form-input" id="reg-email" type="email" placeholder="seu@email.com">
     </div>
     <div class="form-group">
-      <label class="form-label">Senha</label>
+      <label id="reg-pass-label" class="form-label">Senha</label>
       <input class="form-input" id="reg-password" type="password" placeholder="••••••••">
     </div>
     <div id="reg-msg"></div>
-    <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="doRegister()">Criar Conta</button>
-    <div class="form-switch">Já tem conta? <a onclick="switchModal('register','login')">Entre aqui</a></div>
+    <button id="reg-btn" class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="doRegister()">Criar Conta</button>
+    <div id="reg-switch" class="form-switch">Já tem conta? <a onclick="switchModal('register','login')">Entre aqui</a></div>
+  </div>
+</div>
+
+
+<!-- KIT ITEMS MODAL -->
+<div class="modal-overlay" id="modal-kit-items">
+  <div class="modal" style="max-width:550px; width:95%;">
+    <button class="modal-close" onclick="closeModal('kit-items')">✕</button>
+    <div class="modal-kit-header">
+      <img id="kit-modal-image" class="modal-kit-image" src="" alt="" onerror="this.style.display='none'">
+      <div>
+        <div class="modal-title" id="kit-modal-name" style="margin-bottom:0.25rem;"></div>
+        <div class="modal-sub" id="kit-modal-desc"></div>
+      </div>
+    </div>
+    <div id="kit-modal-items" class="kit-items-grid"></div>
+    <div style="margin-top:1.5rem; display:flex; gap:.75rem;">
+      <button class="btn btn-outline" style="flex:1;" onclick="closeModal('kit-items')">Fechar</button>
+      <button class="btn btn-primary" style="flex:1;" id="kit-modal-buy-btn">Comprar</button>
+    </div>
   </div>
 </div>
 
@@ -724,7 +948,7 @@ footer .footer-logo span { color:var(--rust-orange); }
 <div class="toast-container" id="toasts"></div>
 
 <script>
-const API = '/api';
+const API = 'https://firethrone-server.onrender.com/api';
 let currentUser = null;
 let allStoreItems = [];
 let lbSort = 'kills';
@@ -930,21 +1154,132 @@ function renderStore(items) {
   grid.innerHTML = items.map(item => `
     <div class="store-item ${item.featured?'featured':''}" data-category="${item.category}">
       <div class="item-img" style="color:${itemColors[item.category]||'var(--rust-orange)'}">
-        ${itemEmojis[item.category]||'📦'}
+        ${item.image ? `<img src="${item.image}" style="width:64px;height:64px;object-fit:contain;" onerror="this.parentElement.innerHTML='${itemEmojis[item.category]||'📦'}'">` : (itemEmojis[item.category]||'📦')}
       </div>
       <div class="item-body">
         <div class="item-name">${item.name}</div>
         <div class="item-desc">${item.description}</div>
+        ${currentUser?.role === 'admin' ? `
+        <div class="admin-price-edit">
+          <label>💰 Preço</label>
+          <input type="number" id="price-${item.id}" value="${item.price}" min="0">
+          <button onclick="saveItemPrice('${item.id}')">Salvar</button>
+        </div>
+        <div class="admin-img-edit">
+          <label>🖼️ Imagem do Kit</label>
+          <div class="admin-img-edit-row">
+            ${item.image ? `<img class="admin-img-preview" id="img-preview-${item.id}" src="${item.image}" onerror="this.src=''">` : `<img class="admin-img-preview" id="img-preview-${item.id}" src="" style="opacity:.3">`}
+            <input type="text" id="img-url-${item.id}" placeholder="URL da imagem..." value="${item.image||''}">
+            <button class="img-btn" onclick="document.getElementById('img-file-${item.id}').click()">📁</button>
+            <input type="file" id="img-file-${item.id}" accept="image/*" onchange="previewImgFile('${item.id}', this)">
+            <button class="img-btn" onclick="saveItemImage('${item.id}')">Salvar</button>
+          </div>
+        </div>` : ''}
         <div class="item-footer">
           <div class="item-price">
-            ${item.price.toLocaleString()}
-            <small>créditos</small>
+            ${item.price > 0 ? item.price.toLocaleString() + '<small>créditos</small>' : '<small>Grátis</small>'}
           </div>
-          <button class="btn btn-primary btn-sm" onclick="buyItem(${item.id},'${item.name}',${item.price})">Comprar</button>
+          <div style="display:flex;gap:0.4rem;">
+            ${(item.items && item.items.length > 0) ? `<button class="btn btn-outline btn-sm" onclick="openKitModal(${JSON.stringify(item).replace(/"/g,'&quot;')})" title="Ver itens do kit">📦 Itens</button>` : ''}
+            <button class="btn btn-primary btn-sm" onclick="buyItem('${item.id}','${item.name}',${item.price})">Comprar</button>
+          </div>
         </div>
       </div>
     </div>
   `).join('');
+}
+
+function openKitModal(item) {
+  document.getElementById('kit-modal-name').textContent = item.name;
+  document.getElementById('kit-modal-desc').textContent = item.description || '';
+  const img = document.getElementById('kit-modal-image');
+  if (item.image) { img.src = item.image; img.style.display = 'block'; }
+  else img.style.display = 'none';
+
+  const grid = document.getElementById('kit-modal-items');
+  if (item.items && item.items.length > 0) {
+    grid.innerHTML = item.items.map(i => `
+      <div class="kit-item-card">
+        <img src="${i.image}" alt="${i.name}" title="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
+        <div class="item-label">${i.name}</div>
+        <div class="item-amount">x${i.amount}</div>
+      </div>
+    `).join('');
+  } else {
+    grid.innerHTML = '<p style="color:var(--rust-light);text-align:center;">Nenhum item encontrado.</p>';
+  }
+
+  const buyBtn = document.getElementById('kit-modal-buy-btn');
+  buyBtn.onclick = () => { closeModal('kit-items'); buyItem(item.id, item.name, item.price); };
+  buyBtn.textContent = item.price > 0 ? `Comprar — ${item.price.toLocaleString()} créditos` : 'Pegar Kit';
+
+  openModal('kit-items');
+}
+
+
+
+function previewImgFile(itemId, input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const url = e.target.result;
+    document.getElementById(`img-url-${itemId}`).value = url;
+    const preview = document.getElementById(`img-preview-${itemId}`);
+    if (preview) { preview.src = url; preview.style.opacity = '1'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveItemImage(itemId) {
+  const input = document.getElementById(`img-url-${itemId}`);
+  const image = input.value.trim();
+  if (!image) { toast('Cole uma URL ou selecione um arquivo', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/admin/store/${itemId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({ image })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      toast('Imagem atualizada!', 'success');
+      const idx = allStoreItems.findIndex(i => i.id === itemId);
+      if (idx !== -1) { allStoreItems[idx].image = image; }
+      const preview = document.getElementById(`img-preview-${itemId}`);
+      if (preview) { preview.src = image; preview.style.opacity = '1'; }
+    } else {
+      toast(d.error || 'Erro ao salvar', 'error');
+    }
+  } catch(e) {
+    toast('Erro de conexão', 'error');
+  }
+}
+
+async function saveItemPrice(itemId) {
+  const input = document.getElementById(`price-${itemId}`);
+  const price = parseInt(input.value);
+  if (isNaN(price) || price < 0) { toast('Preço inválido!', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/admin/store/${itemId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({ price })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      toast(`Preço atualizado para ${price.toLocaleString()} créditos!`, 'success');
+      // Atualiza o item na lista local
+      const idx = allStoreItems.findIndex(i => i.id === itemId);
+      if (idx !== -1) allStoreItems[idx].price = price;
+    } else {
+      toast(d.error || 'Erro ao salvar', 'error');
+    }
+  } catch(e) {
+    toast('Erro de conexão', 'error');
+  }
 }
 
 function filterStore(cat, btn) {
