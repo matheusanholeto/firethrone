@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request, session, send_from_directory, redirec
 from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
-import hashlib, os, random, secrets, smtplib, re, json
+import bcrypt, os, random, secrets, smtplib, re, json
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
@@ -10,8 +10,16 @@ from urllib.parse import urlencode, parse_qs
 import urllib.request
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'firethrone-secret-2024')
-CORS(app, supports_credentials=True, origins='*')
+
+# ── SEGURANÇA: secret_key obrigatória via env var ─────────
+_secret = os.environ.get('SECRET_KEY')
+if not _secret:
+    raise RuntimeError('SECRET_KEY não definida. Defina a variável de ambiente SECRET_KEY antes de iniciar.')
+app.secret_key = _secret
+
+# ── SEGURANÇA: CORS restrito à origem do frontend ─────────
+ALLOWED_ORIGIN = os.environ.get('ALLOWED_ORIGIN', 'https://firethrone-server.onrender.com')
+CORS(app, supports_credentials=True, origins=[ALLOWED_ORIGIN])
 
 # ── MONGODB ───────────────────────────────────────────────
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/firethrone')
@@ -25,7 +33,7 @@ purchases_col   = db['purchases']
 leaderboard_col = db['leaderboard']
 news_col        = db['news']
 tickets_col     = db['tickets']
-tokens_col      = db['email_tokens']   # verificação de email
+tokens_col      = db['email_tokens']
 
 # ── EMAIL HELPER ──────────────────────────────────────────
 SITE_URL    = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
@@ -72,8 +80,17 @@ def send_verification_email(to_email, username, token):
     </div>'''
     send_email(to_email, '🔥 FireThrone — Confirme seu email', html)
 
-def hash_password(pw):
-    return hashlib.sha256(pw.encode()).hexdigest()
+# ── SEGURANÇA: bcrypt para hash de senha ──────────────────
+def hash_password(pw: str) -> str:
+    """Gera hash bcrypt com salt automático."""
+    return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
+
+def check_password(pw: str, hashed: str) -> bool:
+    """Verifica senha contra hash bcrypt."""
+    try:
+        return bcrypt.checkpw(pw.encode(), hashed.encode())
+    except Exception:
+        return False
 
 def fix_id(doc):
     if doc and '_id' in doc:
@@ -83,13 +100,14 @@ def fix_id(doc):
 def seed_db():
     if users_col.count_documents({}) > 0:
         return
-    admin_id = users_col.insert_one({
+    users_col.insert_one({
         'username': 'Admin', 'email': 'admin@firethrone.gg',
         'password_hash': hash_password('admin123'),
         'role': 'admin', 'balance': 99999,
         'avatar': '/static/default_avatar.png',
+        'email_verified': True,
         'created_at': datetime.utcnow()
-    }).inserted_id
+    })
     servers_col.insert_many([
         {'name': 'FireThrone - Main', 'ip': '45.33.32.156', 'port': 28015, 'map': 'Procedural Map', 'max_players': 200, 'current_players': 87, 'status': 'online', 'wipe_schedule': 'Monthly', 'modded': False, 'description': 'Servidor principal vanilla.', 'tags': ['vanilla','pvp','monthly']},
         {'name': 'FireThrone - 2x Solo/Duo', 'ip': '45.33.32.157', 'port': 28015, 'map': 'Barren', 'max_players': 150, 'current_players': 63, 'status': 'online', 'wipe_schedule': 'Bi-Weekly', 'modded': True, 'description': 'Servidor 2x para solo e duo.', 'tags': ['2x','solo','duo']},
@@ -109,6 +127,31 @@ def seed_db():
     ])
     print('Banco populado com dados iniciais!')
 
+# ── SEGURANÇA: setup_admin lê credenciais apenas de env vars ──
+def setup_admin_on_start():
+    admin_email    = os.environ.get('ADMIN_EMAIL')
+    admin_password = os.environ.get('ADMIN_PASSWORD')
+    admin_username = os.environ.get('ADMIN_USERNAME', 'Admin')
+
+    if not admin_email or not admin_password:
+        print('[AVISO] ADMIN_EMAIL e/ou ADMIN_PASSWORD não definidos. Admin inicial não será criado/atualizado.')
+        return
+
+    users_col.update_one(
+        {'email': admin_email},
+        {'$set': {
+            'username':      admin_username,
+            'email':         admin_email,
+            'password_hash': hash_password(admin_password),
+            'role':          'admin',
+            'balance':       99999,
+            'avatar':        '/static/default_avatar.png',
+            'email_verified': True,
+        }},
+        upsert=True
+    )
+    print(f'[ADMIN] Admin configurado para: {admin_email}')
+
 # ── FRONT-END ─────────────────────────────────────────────
 @app.route('/')
 def index():
@@ -121,13 +164,10 @@ def health():
 
 # ── AUTH ──────────────────────────────────────────────────
 def is_valid_email(email):
-    return bool(re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email))
+    return bool(re.match(r'^[^\@\s]+@[^\@\s]+\.[^\@\s]+$', email))
 
-@app.route('/api/auth/check-email')
-def check_email():
-    email = request.args.get('email','').strip().lower()
-    exists = bool(users_col.find_one({'email': email}))
-    return jsonify({'exists': exists})
+# ── SEGURANÇA: check-email removido para evitar enumeração de usuários ──
+# O frontend deve mostrar mensagem genérica em caso de erro no cadastro/login.
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
@@ -143,8 +183,10 @@ def register():
         return jsonify({'error': 'Email inválido'}), 400
     if len(password) < 6:
         return jsonify({'error': 'Senha deve ter no mínimo 6 caracteres'}), 400
+
+    # SEGURANÇA: mensagem genérica para não confirmar existência do email
     if users_col.find_one({'email': email}):
-        return jsonify({'error': 'Email já cadastrado'}), 409
+        return jsonify({'message': 'Se este email não estiver cadastrado, você receberá um link de confirmação.'}), 200
 
     username = f'{firstname} {lastname}'
     result = users_col.insert_one({
@@ -158,7 +200,6 @@ def register():
     })
     uid = str(result.inserted_id)
 
-    # Gerar token de verificação
     token = secrets.token_urlsafe(32)
     tokens_col.insert_one({
         'user_id': uid, 'token': token, 'type': 'email_verify',
@@ -167,7 +208,7 @@ def register():
     })
     send_verification_email(email, firstname, token)
 
-    return jsonify({'message': 'Conta criada! Verifique seu email para ativar.'}), 201
+    return jsonify({'message': 'Se este email não estiver cadastrado, você receberá um link de confirmação.'}), 200
 
 @app.route('/api/auth/verify-email')
 def verify_email():
@@ -186,14 +227,19 @@ def login():
     data       = request.json or {}
     identifier = data.get('identifier','').strip().lower()
     password   = data.get('password','')
+
     user = users_col.find_one({
-        '$or': [{'email': identifier}, {'username': identifier}],
-        'password_hash': hash_password(password)
+        '$or': [{'email': identifier}, {'username': identifier}]
     })
-    if not user:
+
+    # SEGURANÇA: sempre verificar o hash mesmo se usuário não existir (evita timing attack)
+    # e retornar mensagem genérica
+    if not user or not check_password(password, user.get('password_hash', '')):
         return jsonify({'error': 'Credenciais inválidas'}), 401
+
     if not user.get('email_verified', False):
         return jsonify({'error': 'Confirme seu email antes de entrar.', 'need_verify': True}), 403
+
     session['user_id'] = str(user['_id'])
     return jsonify({'user': {
         'id': str(user['_id']), 'username': user['username'],
@@ -215,7 +261,7 @@ def me():
     return jsonify({'user': fix_id(user)})
 
 # ── STEAM OPENID ──────────────────────────────────────────
-STEAM_OPENID = 'https://steamcommunity.com/openid/login'
+STEAM_OPENID  = 'https://steamcommunity.com/openid/login'
 STEAM_API_KEY = os.environ.get('STEAM_API_KEY', '')
 
 @app.route('/api/auth/steam')
@@ -241,16 +287,14 @@ def steam_callback():
         resp = urllib.request.urlopen(req, timeout=10).read().decode()
         if 'is_valid:true' not in resp:
             return redirect('/?steam_error=invalid')
-    except Exception as e:
-        return redirect(f'/?steam_error=1')
+    except Exception:
+        return redirect('/?steam_error=1')
 
-    # Extrair Steam ID da URL claimed_id
-    claimed = request.args.get('openid.claimed_id', '')
+    claimed  = request.args.get('openid.claimed_id', '')
     steam_id = claimed.split('/')[-1]
     if not steam_id.isdigit():
         return redirect('/?steam_error=id')
 
-    # Buscar perfil Steam
     username = f'Steam_{steam_id[-6:]}'
     avatar   = ''
     if STEAM_API_KEY:
@@ -263,7 +307,6 @@ def steam_callback():
         except:
             pass
 
-    # Criar ou atualizar usuário
     user = users_col.find_one({'steam_id': steam_id})
     if not user:
         uid = users_col.insert_one({
@@ -301,14 +344,13 @@ def get_store():
 @app.route('/api/sync/kits', methods=['POST'])
 def sync_kits():
     secret = request.headers.get('X-Sync-Secret', '') or request.args.get('secret', '')
-    if secret != os.environ.get('SYNC_SECRET', 'firethrone-sync-secret'):
+    if secret != os.environ.get('SYNC_SECRET', ''):
         return jsonify({'error': 'Não autorizado'}), 401
     data = request.json
     if not data or 'kits' not in data:
         return jsonify({'error': 'Dados inválidos'}), 400
     kits   = data['kits']
     append = data.get('append', False)
-    # Só desativa todos no primeiro chunk (append=False)
     if not append:
         store_col.update_many({'category': 'vip'}, {'$set': {'active': False}})
     for kit in kits:
@@ -320,8 +362,7 @@ def sync_kits():
         hidden = kit.get('IsHidden', False)
         if hidden or not name:
             continue
-        # Preserva imagem e preço existentes se não vierem no sync
-        existing = store_col.find_one({'name': name, 'category': 'vip'}) or {}
+        existing    = store_col.find_one({'name': name, 'category': 'vip'}) or {}
         final_image = image if image else existing.get('image', '')
         final_price = existing.get('price', price)
         store_col.update_one(
@@ -331,11 +372,10 @@ def sync_kits():
         )
     return jsonify({'message': f'{len(kits)} kits sincronizados com sucesso!'})
 
-
 @app.route('/api/sync/kits/items', methods=['POST'])
 def sync_kit_items():
     secret = request.headers.get('X-Sync-Secret', '') or request.args.get('secret', '')
-    if secret != os.environ.get('SYNC_SECRET', 'firethrone-sync-secret'):
+    if secret != os.environ.get('SYNC_SECRET', ''):
         return jsonify({'error': 'Não autorizado'}), 401
     kit_name = request.args.get('kit', '')
     if not kit_name:
@@ -349,11 +389,10 @@ def sync_kit_items():
     )
     return jsonify({'message': f'Itens do kit {kit_name} atualizados!'})
 
-
 @app.route('/api/sync/kits/items/batch', methods=['POST'])
 def sync_kit_items_batch():
     secret = request.headers.get('X-Sync-Secret', '') or request.args.get('secret', '')
-    if secret != os.environ.get('SYNC_SECRET', 'firethrone-sync-secret'):
+    if secret != os.environ.get('SYNC_SECRET', ''):
         return jsonify({'error': 'Não autorizado'}), 401
     data = request.json
     if not data or 'items' not in data:
@@ -470,7 +509,6 @@ def admin_servers():
         servers_col.update_one({'_id': ObjectId(d['id'])}, {'$set': {'name': d['name'], 'status': d['status'], 'current_players': d['current_players']}})
         return jsonify({'message': 'Servidor atualizado!'})
 
-
 @app.route('/api/admin/store/<item_id>', methods=['PUT'])
 def admin_update_store_item(item_id):
     if not require_admin():
@@ -488,40 +526,12 @@ def admin_update_store_item(item_id):
     store_col.update_one({'_id': ObjectId(item_id)}, {'$set': update})
     return jsonify({'message': 'Item atualizado!'})
 
-
-@app.route('/api/admin/setup', methods=['POST'])
-def setup_admin():
-    # Atualiza ou cria o admin principal
-    users_col.update_one(
-        {'email': 'matheus.anholetos@gmail.com'},
-        {'$set': {
-            'username': 'Matheus',
-            'email': 'matheus.anholetos@gmail.com',
-            'password_hash': hash_password('compass2210'),
-            'role': 'admin',
-            'balance': 99999,
-            'avatar': '/static/default_avatar.png'
-        }},
-        upsert=True
-    )
-    return jsonify({'message': 'Admin configurado!'})
-
-def setup_admin_on_start():
-    users_col.update_one(
-        {'email': 'matheus.anholetos@gmail.com'},
-        {'$set': {
-            'username': 'Matheus',
-            'email': 'matheus.anholetos@gmail.com',
-            'password_hash': hash_password('compass2210'),
-            'role': 'admin',
-            'balance': 99999,
-            'email_verified': True,
-        }},
-        upsert=True
-    )
+# ── SEGURANÇA: /api/admin/setup REMOVIDO ─────────────────
+# Essa rota foi eliminada pois não tinha autenticação e permitia
+# que qualquer pessoa redefinisse o admin. Use as variáveis de
+# ambiente ADMIN_EMAIL e ADMIN_PASSWORD para configurar o admin.
 
 # ── SUPPORT TICKETS ───────────────────────────────────────
-
 TICKET_CATEGORIES = ['Compra / Pagamento', 'Problema no servidor', 'Bug / Erro', 'Conta / Acesso', 'Abuso / Report', 'Outro']
 
 @app.route('/api/tickets', methods=['POST'])
@@ -541,8 +551,8 @@ def create_ticket():
         'user_id':    uid,
         'subject':    subject,
         'category':   category,
-        'status':     'open',   # open | in_progress | closed
-        'priority':   'normal', # normal | high | urgent
+        'status':     'open',
+        'priority':   'normal',
         'messages':   [{'author_id': uid, 'author_role': 'user', 'text': message, 'created_at': datetime.utcnow()}],
         'created_at': datetime.utcnow(),
         'updated_at': datetime.utcnow(),
@@ -581,20 +591,19 @@ def get_ticket(ticket_id):
     uid = session.get('user_id')
     if not uid:
         return jsonify({'error': 'Não autenticado'}), 401
-    user = users_col.find_one({'_id': ObjectId(uid)})
+    user     = users_col.find_one({'_id': ObjectId(uid)})
     is_admin = user and user.get('role') == 'admin'
-    ticket = tickets_col.find_one({'_id': ObjectId(ticket_id)})
+    ticket   = tickets_col.find_one({'_id': ObjectId(ticket_id)})
     if not ticket:
         return jsonify({'error': 'Ticket não encontrado'}), 404
     if not is_admin and ticket['user_id'] != uid:
         return jsonify({'error': 'Acesso negado'}), 403
     ticket = fix_id(ticket)
-    # Enriquecer mensagens com username
     for msg in ticket.get('messages', []):
         try:
             u = users_col.find_one({'_id': ObjectId(msg['author_id'])}, {'username': 1, 'role': 1})
-            msg['username'] = u['username'] if u else 'Desconhecido'
-            msg['role']     = u.get('role', 'player') if u else 'player'
+            msg['username']   = u['username'] if u else 'Desconhecido'
+            msg['role']       = u.get('role', 'player') if u else 'player'
             msg['created_at'] = msg['created_at'].isoformat() if hasattr(msg.get('created_at'), 'isoformat') else str(msg.get('created_at',''))
         except:
             msg['username'] = 'Desconhecido'
@@ -613,9 +622,9 @@ def reply_ticket(ticket_id):
     uid = session.get('user_id')
     if not uid:
         return jsonify({'error': 'Não autenticado'}), 401
-    user = users_col.find_one({'_id': ObjectId(uid)})
+    user     = users_col.find_one({'_id': ObjectId(uid)})
     is_admin = user and user.get('role') == 'admin'
-    ticket = tickets_col.find_one({'_id': ObjectId(ticket_id)})
+    ticket   = tickets_col.find_one({'_id': ObjectId(ticket_id)})
     if not ticket:
         return jsonify({'error': 'Ticket não encontrado'}), 404
     if not is_admin and ticket['user_id'] != uid:
@@ -626,7 +635,7 @@ def reply_ticket(ticket_id):
     text = (data.get('text') or '').strip()
     if not text:
         return jsonify({'error': 'Mensagem vazia'}), 400
-    msg = {'author_id': uid, 'author_role': 'admin' if is_admin else 'user', 'text': text, 'created_at': datetime.utcnow()}
+    msg        = {'author_id': uid, 'author_role': 'admin' if is_admin else 'user', 'text': text, 'created_at': datetime.utcnow()}
     new_status = ticket['status']
     if is_admin and ticket['status'] == 'open':
         new_status = 'in_progress'
@@ -640,10 +649,10 @@ def reply_ticket(ticket_id):
 def update_ticket_status(ticket_id):
     if not require_admin():
         return jsonify({'error': 'Acesso negado'}), 403
-    data   = request.json
-    status = data.get('status')
+    data     = request.json
+    status   = data.get('status')
     priority = data.get('priority')
-    update = {'updated_at': datetime.utcnow()}
+    update   = {'updated_at': datetime.utcnow()}
     if status in ('open', 'in_progress', 'closed'):
         update['status'] = status
     if priority in ('normal', 'high', 'urgent'):

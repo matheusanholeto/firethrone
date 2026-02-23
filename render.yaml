@@ -5,7 +5,43 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     envVars:
-      - key: SECRET_KEY
-        generateValue: true
       - key: PYTHON_VERSION
         value: 3.11.0
+
+      # ── GERADOS AUTOMATICAMENTE PELO RENDER ───────────────
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: SYNC_SECRET
+        generateValue: true
+
+      # ── PREENCHER NO PAINEL DO RENDER (não colocar aqui) ──
+      - key: ADMIN_EMAIL
+        sync: false
+
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      - key: ADMIN_USERNAME
+        sync: false
+
+      - key: MONGO_URI
+        sync: false
+
+      - key: STEAM_API_KEY
+        sync: false
+
+      - key: ALLOWED_ORIGIN
+        sync: false
+
+      - key: SITE_URL
+        sync: false
+
+      - key: EMAIL_USER
+        sync: false
+
+      - key: EMAIL_PASS
+        sync: false
+
+      - key: EMAIL_FROM
+        sync: false
