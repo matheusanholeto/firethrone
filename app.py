@@ -38,7 +38,7 @@ tokens_col      = db['email_tokens']
 # ── EMAIL HELPER ──────────────────────────────────────────
 SITE_URL    = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
 EMAIL_HOST  = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT  = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_PORT  = int(os.environ.get('EMAIL_PORT', 465))
 EMAIL_USER  = os.environ.get('EMAIL_USER', '')
 EMAIL_PASS  = os.environ.get('EMAIL_PASS', '')
 EMAIL_FROM  = os.environ.get('EMAIL_FROM', EMAIL_USER)
@@ -57,10 +57,9 @@ def send_email(to, subject, html_body):
         msg['From']    = f'FireThrone <{EMAIL_FROM}>'
         msg['To']      = to
         msg.attach(MIMEText(html_body, 'html'))
-        print(f'[EMAIL] Conectando ao SMTP...')
-        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as s:
-            s.starttls()
-            print(f'[EMAIL] TLS OK, fazendo login...')
+        print(f'[EMAIL] Conectando ao SMTP SSL...')
+        with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT) as s:
+            print(f'[EMAIL] SSL OK, fazendo login...')
             s.login(EMAIL_USER, EMAIL_PASS)
             print(f'[EMAIL] Login OK, enviando...')
             s.sendmail(EMAIL_FROM, to, msg.as_string())
