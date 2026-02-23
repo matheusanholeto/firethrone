@@ -64,6 +64,11 @@ def seed_db():
 def index():
     return render_template('index.html')
 
+@app.route('/health')
+@app.route('/ping')
+def health():
+    return jsonify({'status': 'ok'}), 200
+
 # ── AUTH ──────────────────────────────────────────────────
 @app.route('/api/auth/register', methods=['POST'])
 def register():
