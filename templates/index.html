@@ -1447,6 +1447,48 @@ function renderStore(items) {
   `).join('');
 }
 
+// ── RUST ITEM CLASSIFICATION ─────────────────────────────
+const WEAR_ITEMS = ['metal.facemask','metal.plate.torso','roadsign.jacket','roadsign.kilt',
+  'coffeecan.helmet','hoodie','pants','shoes.boots','tactical.gloves','burlap.shoes',
+  'attire.hide.poncho','attire.hide.vest','attire.hide.pants','wood.armor.helmet',
+  'wood.armor.pants','mask.bandana','hat.beenie','hat.boonie','burlap.headwrap',
+  'burlap.shirt','burlap.trousers','burlap.gloves','deer.skull.mask','bone.armor.suit',
+  'heavy.plate.helmet','heavy.plate.jacket','heavy.plate.pants','attire.hide.boots',
+  'attire.hide.helterneck','shirt.collared','shirt.tanktop','pants.shorts','mask.balaclava',
+  'nightvisiongoggles','hazmatsuit','hazmatsuit.nomadsuit','attire.banditguard',
+  'largebackpack','smallbackpack'];
+
+const BELT_ITEMS = ['rifle.ak','rifle.lr300','lmg.m249','rifle.bolt','rifle.semiauto',
+  'smg.thompson','smg.mp5','pistol.semiauto','pistol.revolver','pistol.python',
+  'shotgun.pump','shotgun.spas12','shotgun.double','shotgun.waterpipe',
+  'crossbow','bow.hunting','bow.compound','rocket.launcher','multiplegrenadelauncher',
+  'syringe.medical','largemedkit','bandage','pickaxe','hatchet','stone.pickaxe',
+  'stone.hatchet','hammer','salvaged.icepick','salvaged.axe','salvaged.sword',
+  'longsword','mace','machete','bone.club','knife.combat','chainsaw','jackhammer',
+  'fun.guitar','fun.trumpet','snowball','torch','supply.signal'];
+
+function getItemSection(item) {
+  // 1. Check explicit section field
+  if (item.section && ['Clothing','Inventory','Hotbar'].includes(item.section)) return item.section;
+  // 2. Check Container field from Rust plugin (wear/main/belt)
+  const container = (item.Container || item.container || '').toLowerCase();
+  if (container === 'wear') return 'Clothing';
+  if (container === 'belt') return 'Hotbar';
+  if (container === 'main') return 'Inventory';
+  // 3. Auto-detect by shortname
+  const sn = (item.shortname || item.Shortname || '').toLowerCase();
+  if (sn && WEAR_ITEMS.some(w => sn.includes(w))) return 'Clothing';
+  if (sn && BELT_ITEMS.some(b => sn.includes(b))) return 'Hotbar';
+  // 4. Auto-detect by item name as fallback
+  const name = (item.name || item.Name || '').toLowerCase();
+  const wearKeywords = ['facemask','chest plate','hoodie','pants','kilt','boots','gloves','poncho','vest','helmet','armor','mask','backpack','hazmat'];
+  const beltKeywords = ['rifle','pistol','shotgun','smg','lmg','syringe','medkit','pickaxe','hatchet','sword','axe','machete','chainsaw','jackhammer','bow','crossbow'];
+  if (wearKeywords.some(k => name.includes(k))) return 'Clothing';
+  if (beltKeywords.some(k => name.includes(k))) return 'Hotbar';
+  // 5. Default to Inventory
+  return 'Inventory';
+}
+
 function openKitModal(item) {
   document.getElementById('kit-modal-name').textContent = item.name;
   document.getElementById('kit-modal-desc').textContent = item.description || '';
@@ -1456,6 +1498,9 @@ function openKitModal(item) {
 
   const container = document.getElementById('kit-modal-items');
   if (item.items && item.items.length > 0) {
+    // Classify all items
+    const classified = item.items.map(i => ({ ...i, _section: getItemSection(i) }));
+
     const sectionConfig = [
       { key: 'Clothing', icon: '👕', label: 'CLOTHING', cssClass: 'kit-section-clothing', layout: 'row' },
       { key: 'Inventory', icon: '🎒', label: 'INVENTORY', cssClass: 'kit-section-inventory', layout: 'grid' },
@@ -1465,14 +1510,14 @@ function openKitModal(item) {
     let html = '';
     
     sectionConfig.forEach(sec => {
-      const secItems = item.items.filter(i => i.section === sec.key);
+      const secItems = classified.filter(i => i._section === sec.key);
       if (!secItems.length) return;
       
       const itemsHtml = secItems.map(i => `
-        <div class="kit-item-card" title="${i.name} x${i.amount}">
-          <img src="${i.image}" alt="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
-          <div class="item-label">${i.name}</div>
-          <div class="item-amount">x${i.amount.toLocaleString()}</div>
+        <div class="kit-item-card" title="${i.name || i.Name || i.shortname} x${i.amount || i.Amount || 1}">
+          <img src="${i.image || i.Image || ''}" alt="${i.name || i.Name || ''}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
+          <div class="item-label">${i.name || i.Name || i.shortname || ''}</div>
+          <div class="item-amount">x${(i.amount || i.Amount || 1).toLocaleString()}</div>
         </div>
       `).join('');
       
@@ -1488,28 +1533,6 @@ function openKitModal(item) {
         </div>
       `;
     });
-    
-    // Items without a defined section
-    const noSec = item.items.filter(i => !i.section || !['Clothing','Inventory','Hotbar'].includes(i.section));
-    if (noSec.length) {
-      const itemsHtml = noSec.map(i => `
-        <div class="kit-item-card" title="${i.name} x${i.amount}">
-          <img src="${i.image}" alt="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
-          <div class="item-label">${i.name}</div>
-          <div class="item-amount">x${i.amount.toLocaleString()}</div>
-        </div>
-      `).join('');
-      
-      html += `
-        <div class="kit-section kit-section-inventory">
-          <div class="kit-section-title">
-            📦 ITENS
-            <span class="section-count">${noSec.length} ${noSec.length === 1 ? 'ITEM' : 'ITENS'}</span>
-          </div>
-          <div class="kit-items-grid">${itemsHtml}</div>
-        </div>
-      `;
-    }
     
     container.innerHTML = html;
   } else {
