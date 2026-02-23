@@ -502,7 +502,7 @@ footer .footer-logo span { color:var(--rust-orange); }
   <ul class="nav-links">
     <li><a onclick="showPage('home')" id="nav-home" class="active">Início</a></li>
     <li><a onclick="showPage('servers')" id="nav-servers">Servidores</a></li>
-    <li><a onclick="showPage('store')" id="nav-store">Loja</a></li>
+    <li><a onclick="showPage('store')" id="nav-store">Loja VIP</a></li>
     <li><a onclick="showPage('leaderboard')" id="nav-leaderboard">Ranking</a></li>
     <li><a onclick="showPage('news')" id="nav-news">Notícias</a></li>
     <li id="nav-admin-link" style="display:none"><a onclick="showPage('admin')" id="nav-admin">Admin</a></li>
@@ -584,17 +584,13 @@ footer .footer-logo span { color:var(--rust-orange); }
 <div id="page-store" class="page">
   <div class="section">
     <div class="section-header">
-      <div class="section-tag">// Itens & VIP</div>
-      <h2 class="section-title">Loja</h2>
+      <div class="section-tag">// Planos & Benefícios</div>
+      <h2 class="section-title">Loja VIP</h2>
       <div class="section-divider"></div>
     </div>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
       <div class="store-filters" id="store-filters">
-        <button class="filter-btn active" onclick="filterStore('all',this)">Todos</button>
-        <button class="filter-btn" onclick="filterStore('vip',this)">VIP</button>
-        <button class="filter-btn" onclick="filterStore('kits',this)">Kits</button>
-        <button class="filter-btn" onclick="filterStore('cosmetics',this)">Cosméticos</button>
-        <button class="filter-btn" onclick="filterStore('credits',this)">Créditos</button>
+        <button class="filter-btn active" onclick="filterStore('vip',this)">👑 Planos VIP</button>
       </div>
       <div style="font-size:.85rem; color:var(--text-muted)">
         Seu saldo: <span id="store-balance" style="color:var(--rust-orange); font-family:'Share Tech Mono';">—</span>
@@ -728,7 +724,7 @@ footer .footer-logo span { color:var(--rust-orange); }
 <div class="toast-container" id="toasts"></div>
 
 <script>
-const API = 'http://localhost:5000/api';
+const API = '/api';
 let currentUser = null;
 let allStoreItems = [];
 let lbSort = 'kills';
@@ -919,7 +915,8 @@ async function loadStore() {
     const r = await fetch(`${API}/store`);
     const d = await r.json();
     allStoreItems = d.items;
-    renderStore(allStoreItems);
+    const vipItems = allStoreItems.filter(i=>i.category==='vip');
+    renderStore(vipItems);
     if(currentUser) document.getElementById('store-balance').textContent = currentUser.balance + ' CR';
   } catch(e) {}
 }
