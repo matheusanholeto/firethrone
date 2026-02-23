@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, session, render_template
+from flask import Flask, jsonify, request, session, render_template, send_from_directory
 from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
@@ -62,7 +62,7 @@ def seed_db():
 # ── FRONT-END ─────────────────────────────────────────────
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return send_from_directory('templates', 'index.html')
 
 @app.route('/health')
 @app.route('/ping')
