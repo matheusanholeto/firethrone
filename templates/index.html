@@ -491,59 +491,131 @@ footer .footer-logo span { color:var(--rust-orange); }
 .empty-state p { font-size:.9rem; }
 
 /* ── KIT ITEMS MODAL ─────────────────────────────────── */
-.kit-items-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 0.6rem;
-  margin-top: 0.5rem;
-  max-height: none;
-  overflow-y: visible;
+.kit-inventory-wrapper {
+  margin-top: 0.3rem;
 }
+
+.kit-section {
+  margin-bottom: 0.4rem;
+}
+.kit-section:last-child { margin-bottom: 0; }
+
 .kit-section-title {
-  grid-column: 1 / -1;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 1rem;
+  font-size: 0.9rem;
   letter-spacing: 2px;
-  color: var(--rust-orange);
-  border-bottom: 1px solid rgba(200,68,10,.3);
-  padding-bottom: 0.3rem;
-  margin-top: 0.5rem;
+  color: #fff;
+  padding: 0.2rem 0.5rem;
+  margin-bottom: 0.3rem;
+  background: linear-gradient(90deg, rgba(200,68,10,.2), transparent);
+  border-left: 3px solid var(--rust-orange);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
+.kit-section-title .section-count {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+/* Clothing: grid that fills width */
+.kit-section-clothing .kit-items-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 0.25rem;
+  padding: 0.3rem;
+  background: rgba(0,0,0,.2);
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 4px;
+}
+
+/* Inventory: 6-column grid that fills width */
+.kit-section-inventory .kit-items-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.25rem;
+  padding: 0.3rem;
+  background: rgba(0,0,0,.2);
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 4px;
+}
+
+/* Hotbar: grid that fills width */
+.kit-section-hotbar .kit-items-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 0.25rem;
+  padding: 0.3rem;
+  background: rgba(0,0,0,.2);
+  border: 1px solid rgba(76,175,80,.1);
+  border-radius: 4px;
+}
+
 .kit-item-card {
-  background: var(--rust-dim);
-  border: 1px solid rgba(200,68,10,.2);
-  border-radius: 6px;
-  padding: 0.5rem;
+  background: rgba(26,21,16,.9);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 3px;
+  padding: 0.2rem;
   text-align: center;
-  transition: border-color .2s;
+  transition: all .2s;
+  position: relative;
 }
-.kit-item-card:hover { border-color: var(--rust-orange); }
+.kit-item-card:hover {
+  border-color: var(--rust-orange);
+  background: rgba(200,68,10,.08);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0,0,0,.4);
+}
 .kit-item-card img {
-  width: 52px;
-  height: 52px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
-  image-rendering: pixelated;
+  image-rendering: auto;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
 }
 .kit-item-card .item-label {
-  font-size: 0.65rem;
+  font-size: 0.45rem;
   color: var(--rust-light);
-  margin-top: 0.25rem;
-  line-height: 1.2;
+  margin-top: 0.05rem;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .kit-item-card .item-amount {
-  font-size: 0.7rem;
+  font-size: 0.55rem;
   color: var(--rust-orange);
   font-weight: 700;
+  font-family: 'Share Tech Mono', monospace;
 }
+
+/* Hotbar items get a subtle green tint */
+.kit-section-hotbar .kit-item-card {
+  border-color: rgba(76,175,80,.15);
+}
+.kit-section-hotbar .kit-item-card:hover {
+  border-color: var(--green);
+}
+
+/* Clothing items get a subtle blue tint */
+.kit-section-clothing .kit-item-card {
+  border-color: rgba(100,149,237,.12);
+}
+.kit-section-clothing .kit-item-card:hover {
+  border-color: cornflowerblue;
+}
+
 .modal-kit-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
 }
 .modal-kit-image {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
   border-radius: 6px;
   background: var(--rust-dim);
@@ -937,7 +1009,7 @@ footer .footer-logo span { color:var(--rust-orange); }
 
 <!-- KIT ITEMS MODAL -->
 <div class="modal-overlay" id="modal-kit-items">
-  <div class="modal" style="max-width:780px; width:97%;">
+  <div class="modal" style="max-width:920px; width:97%; padding:1.25rem 1.5rem;">
     <button class="modal-close" onclick="closeModal('kit-items')">✕</button>
     <div class="modal-kit-header">
       <img id="kit-modal-image" class="modal-kit-image" src="" alt="" onerror="this.style.display='none'">
@@ -946,7 +1018,7 @@ footer .footer-logo span { color:var(--rust-orange); }
         <div class="modal-sub" id="kit-modal-desc"></div>
       </div>
     </div>
-    <div id="kit-modal-items" class="kit-items-grid"></div>
+    <div id="kit-modal-items" class="kit-inventory-wrapper"></div>
     <div style="margin-top:1.5rem; display:flex; gap:.75rem;">
       <button class="btn btn-outline" style="flex:1;" onclick="closeModal('kit-items')">Fechar</button>
       <button class="btn btn-primary" style="flex:1;" id="kit-modal-buy-btn">Comprar</button>
@@ -1382,37 +1454,66 @@ function openKitModal(item) {
   if (item.image) { img.src = item.image; img.style.display = 'block'; }
   else img.style.display = 'none';
 
-  const grid = document.getElementById('kit-modal-items');
+  const container = document.getElementById('kit-modal-items');
   if (item.items && item.items.length > 0) {
-    const sections = ['Clothing', 'Inventory', 'Hotbar'];
-    const sectionLabels = { Clothing: '👕 Clothing', Inventory: '🎒 Inventory', Hotbar: '⚡ Hotbar' };
+    const sectionConfig = [
+      { key: 'Clothing', icon: '👕', label: 'CLOTHING', cssClass: 'kit-section-clothing', layout: 'row' },
+      { key: 'Inventory', icon: '🎒', label: 'INVENTORY', cssClass: 'kit-section-inventory', layout: 'grid' },
+      { key: 'Hotbar', icon: '⚡', label: 'HOTBAR', cssClass: 'kit-section-hotbar', layout: 'row' }
+    ];
+    
     let html = '';
-    sections.forEach(sec => {
-      const secItems = item.items.filter(i => i.section === sec);
+    
+    sectionConfig.forEach(sec => {
+      const secItems = item.items.filter(i => i.section === sec.key);
       if (!secItems.length) return;
-      html += `<div class="kit-section-title">${sectionLabels[sec]}</div>`;
-      html += secItems.map(i => `
-        <div class="kit-item-card">
-          <img src="${i.image}" alt="${i.name}" title="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
+      
+      const itemsHtml = secItems.map(i => `
+        <div class="kit-item-card" title="${i.name} x${i.amount}">
+          <img src="${i.image}" alt="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
           <div class="item-label">${i.name}</div>
-          <div class="item-amount">x${i.amount}</div>
+          <div class="item-amount">x${i.amount.toLocaleString()}</div>
         </div>
       `).join('');
+      
+      html += `
+        <div class="kit-section ${sec.cssClass}">
+          <div class="kit-section-title">
+            ${sec.icon} ${sec.label}
+            <span class="section-count">${secItems.length} ${secItems.length === 1 ? 'ITEM' : 'ITENS'}</span>
+          </div>
+          <div class="${sec.layout === 'grid' ? 'kit-items-grid' : 'kit-items-row'}">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
     });
-    // Itens sem seção definida
-    const noSec = item.items.filter(i => !i.section || !sections.includes(i.section));
+    
+    // Items without a defined section
+    const noSec = item.items.filter(i => !i.section || !['Clothing','Inventory','Hotbar'].includes(i.section));
     if (noSec.length) {
-      html += noSec.map(i => `
-        <div class="kit-item-card">
-          <img src="${i.image}" alt="${i.name}" title="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
+      const itemsHtml = noSec.map(i => `
+        <div class="kit-item-card" title="${i.name} x${i.amount}">
+          <img src="${i.image}" alt="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
           <div class="item-label">${i.name}</div>
-          <div class="item-amount">x${i.amount}</div>
+          <div class="item-amount">x${i.amount.toLocaleString()}</div>
         </div>
       `).join('');
+      
+      html += `
+        <div class="kit-section kit-section-inventory">
+          <div class="kit-section-title">
+            📦 ITENS
+            <span class="section-count">${noSec.length} ${noSec.length === 1 ? 'ITEM' : 'ITENS'}</span>
+          </div>
+          <div class="kit-items-grid">${itemsHtml}</div>
+        </div>
+      `;
     }
-    grid.innerHTML = html;
+    
+    container.innerHTML = html;
   } else {
-    grid.innerHTML = '<p style="color:var(--rust-light);text-align:center;">Nenhum item encontrado.</p>';
+    container.innerHTML = '<p style="color:var(--rust-light);text-align:center;padding:2rem 0;">Nenhum item encontrado.</p>';
   }
 
   const buyBtn = document.getElementById('kit-modal-buy-btn');
