@@ -21,7 +21,7 @@ CORS(app, supports_credentials=True, origins=[ALLOWED_ORIGIN])
 
 # ── MONGODB ───────────────────────────────────────────────
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/firethrone')
-client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000, connectTimeoutMS=5000)
+client = MongoClient(MONGO_URI)
 db = client.get_database()
 
 users_col       = db['users']
@@ -34,32 +34,24 @@ tickets_col     = db['tickets']
 tokens_col      = db['email_tokens']
 
 # ── EMAIL HELPER (Resend API) ─────────────────────────────
+SITE_URL       = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 EMAIL_FROM     = os.environ.get('EMAIL_FROM', 'FireThrone <onboarding@resend.dev>')
-SITE_URL       = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
 
 def send_email(to, subject, html_body):
-    print(f'[EMAIL] Tentando enviar para: {to}')
     if not RESEND_API_KEY:
-        print(f'[EMAIL SKIP] RESEND_API_KEY não configurada!')
+        print(f'[EMAIL SKIP] RESEND_API_KEY nao configurada!')
         return
     try:
-        payload = json.dumps({
-            'from': EMAIL_FROM,
-            'to': [to],
-            'subject': subject,
-            'html': html_body
-        }).encode()
+        import json as _json
+        payload = _json.dumps({'from': EMAIL_FROM, 'to': [to], 'subject': subject, 'html': html_body}).encode()
         req = urllib.request.Request(
             'https://api.resend.com/emails',
             data=payload,
-            headers={
-                'Authorization': f'Bearer {RESEND_API_KEY}',
-                'Content-Type': 'application/json'
-            }
+            headers={'Authorization': f'Bearer {RESEND_API_KEY}', 'Content-Type': 'application/json'}
         )
         resp = urllib.request.urlopen(req, timeout=10).read()
-        print(f'[EMAIL OK] Email enviado para {to}! Resposta: {resp}')
+        print(f'[EMAIL OK] Enviado para {to}: {resp}')
     except Exception as e:
         print(f'[EMAIL ERROR] {type(e).__name__}: {e}')
 
