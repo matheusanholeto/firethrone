@@ -44,8 +44,12 @@ EMAIL_PASS  = os.environ.get('EMAIL_PASS', '')
 EMAIL_FROM  = os.environ.get('EMAIL_FROM', EMAIL_USER)
 
 def send_email(to, subject, html_body):
+    print(f'[EMAIL] Tentando enviar para: {to}')
+    print(f'[EMAIL] EMAIL_USER: {EMAIL_USER}')
+    print(f'[EMAIL] EMAIL_FROM: {EMAIL_FROM}')
+    print(f'[EMAIL] EMAIL_HOST: {EMAIL_HOST}:{EMAIL_PORT}')
     if not EMAIL_USER or not EMAIL_PASS:
-        print(f'[EMAIL SKIP] Para: {to} | {subject}')
+        print(f'[EMAIL SKIP] EMAIL_USER ou EMAIL_PASS não configurados!')
         return
     try:
         msg = MIMEMultipart('alternative')
@@ -53,12 +57,16 @@ def send_email(to, subject, html_body):
         msg['From']    = f'FireThrone <{EMAIL_FROM}>'
         msg['To']      = to
         msg.attach(MIMEText(html_body, 'html'))
+        print(f'[EMAIL] Conectando ao SMTP...')
         with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as s:
             s.starttls()
+            print(f'[EMAIL] TLS OK, fazendo login...')
             s.login(EMAIL_USER, EMAIL_PASS)
+            print(f'[EMAIL] Login OK, enviando...')
             s.sendmail(EMAIL_FROM, to, msg.as_string())
+            print(f'[EMAIL OK] Email enviado para {to}!')
     except Exception as e:
-        print(f'[EMAIL ERROR] {e}')
+        print(f'[EMAIL ERROR] {type(e).__name__}: {e}')
 
 def send_verification_email(to_email, username, token):
     link = f'{SITE_URL}/api/auth/verify-email?token={token}'
