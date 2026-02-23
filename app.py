@@ -2,9 +2,7 @@ from flask import Flask, jsonify, request, session, send_from_directory, redirec
 from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
-import bcrypt, os, random, secrets, smtplib, re, json
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import bcrypt, os, random, secrets, re, json
 from datetime import datetime, timedelta
 from urllib.parse import urlencode, parse_qs
 import urllib.request
@@ -35,35 +33,33 @@ news_col        = db['news']
 tickets_col     = db['tickets']
 tokens_col      = db['email_tokens']
 
-# ── EMAIL HELPER ──────────────────────────────────────────
-SITE_URL    = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
-EMAIL_HOST  = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT  = int(os.environ.get('EMAIL_PORT', 465))
-EMAIL_USER  = os.environ.get('EMAIL_USER', '')
-EMAIL_PASS  = os.environ.get('EMAIL_PASS', '')
-EMAIL_FROM  = os.environ.get('EMAIL_FROM', EMAIL_USER)
+# ── EMAIL HELPER (Resend API) ─────────────────────────────
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+EMAIL_FROM     = os.environ.get('EMAIL_FROM', 'FireThrone <onboarding@resend.dev>')
+SITE_URL       = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
 
 def send_email(to, subject, html_body):
     print(f'[EMAIL] Tentando enviar para: {to}')
-    print(f'[EMAIL] EMAIL_USER: {EMAIL_USER}')
-    print(f'[EMAIL] EMAIL_FROM: {EMAIL_FROM}')
-    print(f'[EMAIL] EMAIL_HOST: {EMAIL_HOST}:{EMAIL_PORT}')
-    if not EMAIL_USER or not EMAIL_PASS:
-        print(f'[EMAIL SKIP] EMAIL_USER ou EMAIL_PASS não configurados!')
+    if not RESEND_API_KEY:
+        print(f'[EMAIL SKIP] RESEND_API_KEY não configurada!')
         return
     try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From']    = f'FireThrone <{EMAIL_FROM}>'
-        msg['To']      = to
-        msg.attach(MIMEText(html_body, 'html'))
-        print(f'[EMAIL] Conectando ao SMTP SSL...')
-        with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT) as s:
-            print(f'[EMAIL] SSL OK, fazendo login...')
-            s.login(EMAIL_USER, EMAIL_PASS)
-            print(f'[EMAIL] Login OK, enviando...')
-            s.sendmail(EMAIL_FROM, to, msg.as_string())
-            print(f'[EMAIL OK] Email enviado para {to}!')
+        payload = json.dumps({
+            'from': EMAIL_FROM,
+            'to': [to],
+            'subject': subject,
+            'html': html_body
+        }).encode()
+        req = urllib.request.Request(
+            'https://api.resend.com/emails',
+            data=payload,
+            headers={
+                'Authorization': f'Bearer {RESEND_API_KEY}',
+                'Content-Type': 'application/json'
+            }
+        )
+        resp = urllib.request.urlopen(req, timeout=10).read()
+        print(f'[EMAIL OK] Email enviado para {to}! Resposta: {resp}')
     except Exception as e:
         print(f'[EMAIL ERROR] {type(e).__name__}: {e}')
 
