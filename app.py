@@ -144,12 +144,13 @@ def sync_kits():
         desc   = kit.get('Description', '') or f'Kit VIP {name}'
         price  = kit.get('Cost', 0)
         image  = kit.get('KitImage', '')
+        items  = kit.get('Items', [])
         hidden = kit.get('IsHidden', False)
         if hidden or not name:
             continue
         store_col.update_one(
             {'name': name, 'category': 'vip'},
-            {'$set': {'description': desc, 'price': price, 'image': image, 'active': True, 'category': 'vip', 'featured': False}},
+            {'$set': {'description': desc, 'price': price, 'image': image, 'active': True, 'category': 'vip', 'featured': False, 'items': items}},
             upsert=True
         )
     return jsonify({'message': f'{len(kits)} kits sincronizados com sucesso!'})
@@ -252,6 +253,24 @@ def admin_servers():
         d = request.json
         servers_col.update_one({'_id': ObjectId(d['id'])}, {'$set': {'name': d['name'], 'status': d['status'], 'current_players': d['current_players']}})
         return jsonify({'message': 'Servidor atualizado!'})
+
+
+@app.route('/api/admin/store/<item_id>', methods=['PUT'])
+def admin_update_store_item(item_id):
+    if not require_admin():
+        return jsonify({'error': 'Acesso negado'}), 403
+    d = request.json
+    update = {}
+    if 'price' in d:
+        update['price'] = int(d['price'])
+    if 'featured' in d:
+        update['featured'] = bool(d['featured'])
+    if 'image' in d:
+        update['image'] = str(d['image'])
+    if not update:
+        return jsonify({'error': 'Nada para atualizar'}), 400
+    store_col.update_one({'_id': ObjectId(item_id)}, {'$set': update})
+    return jsonify({'message': 'Item atualizado!'})
 
 if __name__ == '__main__':
     seed_db()
