@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, session
+from flask import Flask, jsonify, request, session, render_template
 from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
@@ -57,6 +57,11 @@ def seed_db():
         {'title': 'Evento: Raid Weekend', 'content': 'Este fim de semana os custos de explosivos foram reduzidos em 50%.', 'author_name': 'Admin', 'category': 'event', 'published': True, 'created_at': datetime.utcnow()},
     ])
     print('Banco populado com dados iniciais!')
+
+# ── FRONT-END ─────────────────────────────────────────────
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 # ── AUTH ──────────────────────────────────────────────────
 @app.route('/api/auth/register', methods=['POST'])
