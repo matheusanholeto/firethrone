@@ -673,14 +673,6 @@ def admin_ticket_stats():
         'total':       tickets_col.count_documents({}),
     })
 
-@app.route('/api/test-email')
-def test_email():
-    brevo_key = os.environ.get('BREVO_API_KEY', '')
-    if not brevo_key:
-        return jsonify({'error': 'BREVO_API_KEY nao encontrada!'}), 500
-    send_email('firethroneserver@gmail.com', 'Teste FireThrone', '<h1>Email funcionando!</h1>')
-    return jsonify({'message': 'Email enviado! Verifique os logs.', 'key_found': bool(brevo_key)}), 200
-
 if __name__ == '__main__':
     seed_db()
     setup_admin_on_start()
