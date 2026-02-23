@@ -180,6 +180,28 @@ def sync_kit_items():
     )
     return jsonify({'message': f'Itens do kit {kit_name} atualizados!'})
 
+
+@app.route('/api/sync/kits/items/batch', methods=['POST'])
+def sync_kit_items_batch():
+    secret = request.headers.get('X-Sync-Secret', '') or request.args.get('secret', '')
+    if secret != os.environ.get('SYNC_SECRET', 'firethrone-sync-secret'):
+        return jsonify({'error': 'Não autorizado'}), 401
+    data = request.json
+    if not data or 'items' not in data:
+        return jsonify({'error': 'Dados inválidos'}), 400
+    for item in data['items']:
+        kit_name  = item.get('kit', '')
+        if not kit_name: continue
+        shortname = item.get('shortname', '')
+        name      = item.get('name', shortname)
+        amount    = item.get('amount', 1)
+        image     = item.get('image', '')
+        store_col.update_one(
+            {'name': kit_name, 'category': 'vip'},
+            {'$addToSet': {'items': {'shortname': shortname, 'name': name, 'amount': amount, 'image': image}}}
+        )
+    return jsonify({'message': f'{len(data["items"])} itens processados'})
+
 @app.route('/api/store/buy', methods=['POST'])
 def buy_item():
     uid = session.get('user_id')
