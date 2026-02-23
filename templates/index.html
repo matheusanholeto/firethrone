@@ -786,6 +786,144 @@ footer .footer-logo span { color:var(--rust-orange); }
   flex-shrink: 0;
 }
 
+/* ── SUPPORT ── */
+.support-tabs {
+  display:flex; gap:.4rem; margin-bottom:1.5rem; flex-wrap:wrap;
+}
+.support-tab {
+  font-family:'Rajdhani'; font-weight:700; font-size:.82rem; letter-spacing:1.2px;
+  text-transform:uppercase; padding:.45rem 1.1rem; border-radius:3px;
+  border:1px solid var(--border); background:transparent; color:var(--text-muted);
+  cursor:pointer; transition:all .2s;
+}
+.support-tab.active, .support-tab:hover {
+  border-color:var(--rust-orange); color:var(--rust-orange); background:rgba(200,68,10,.1);
+}
+
+.support-form-wrap {
+  max-width:640px;
+  background:rgba(13,11,9,.5); border:1px solid var(--border);
+  border-radius:6px; padding:1.5rem;
+}
+.form-input textarea, textarea.form-input {
+  resize:vertical; min-height:120px; font-family:'Rajdhani',sans-serif; font-size:.9rem;
+  width:100%; background:rgba(0,0,0,.3); border:1px solid var(--border);
+  color:var(--rust-light); border-radius:4px; padding:.6rem .8rem; outline:none;
+  transition:border-color .2s;
+}
+textarea.form-input:focus { border-color:var(--rust-orange); }
+select.form-input {
+  appearance:none; cursor:pointer;
+}
+
+/* Ticket card list */
+.ticket-card {
+  background:linear-gradient(160deg, rgba(42,26,14,.5), rgba(13,11,9,.7));
+  border:1px solid var(--border); border-radius:6px; padding:1rem 1.25rem;
+  margin-bottom:.6rem; cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; gap:1rem;
+}
+.ticket-card:hover { border-color:rgba(200,68,10,.4); transform:translateX(3px); }
+.ticket-card .t-status-dot {
+  width:10px; height:10px; border-radius:50%; flex-shrink:0;
+}
+.t-status-dot.open        { background:var(--rust-orange); box-shadow:0 0 6px var(--rust-orange); }
+.t-status-dot.in_progress { background:var(--yellow);      box-shadow:0 0 6px var(--yellow); animation:blink 2s infinite; }
+.t-status-dot.closed      { background:var(--text-muted); }
+.ticket-card .t-main { flex:1; min-width:0; }
+.ticket-card .t-subject { font-weight:700; font-size:.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ticket-card .t-meta { font-size:.75rem; color:var(--text-muted); margin-top:.2rem; display:flex; gap:1rem; flex-wrap:wrap; }
+.ticket-card .t-badge {
+  font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:1px;
+  padding:.15rem .45rem; border-radius:2px; white-space:nowrap; flex-shrink:0;
+}
+.t-badge.open        { background:rgba(200,68,10,.15); color:var(--rust-orange); border:1px solid rgba(200,68,10,.3); }
+.t-badge.in_progress { background:rgba(255,193,7,.1);  color:var(--yellow);      border:1px solid rgba(255,193,7,.3); }
+.t-badge.closed      { background:rgba(255,255,255,.04); color:var(--text-muted); border:1px solid var(--border); }
+
+/* Ticket thread */
+.ticket-thread-header {
+  background:linear-gradient(135deg, rgba(200,68,10,.15), rgba(139,26,26,.08));
+  border:1px solid var(--border); border-radius:6px; padding:1.25rem 1.5rem;
+  margin-bottom:1rem;
+}
+.ticket-thread-header h3 { font-family:'Bebas Neue'; font-size:1.4rem; letter-spacing:2px; margin-bottom:.5rem; }
+.ticket-thread-meta { display:flex; gap:1.5rem; font-size:.8rem; color:var(--text-muted); flex-wrap:wrap; }
+
+.ticket-admin-controls {
+  display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.75rem; padding-top:.75rem;
+  border-top:1px solid var(--border);
+}
+.ticket-admin-controls select {
+  font-family:'Rajdhani'; font-size:.8rem; font-weight:700; letter-spacing:1px;
+  background:rgba(0,0,0,.3); border:1px solid var(--border); color:var(--rust-light);
+  padding:.3rem .6rem; border-radius:3px; cursor:pointer;
+}
+
+.ticket-messages { display:flex; flex-direction:column; gap:.6rem; margin-bottom:1rem; }
+.ticket-msg {
+  display:flex; gap:.75rem; align-items:flex-start;
+}
+.ticket-msg.is-admin { flex-direction:row-reverse; }
+.ticket-msg .msg-avatar {
+  width:34px; height:34px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.9rem; font-weight:700;
+}
+.ticket-msg.is-user  .msg-avatar { background:linear-gradient(135deg, var(--rust-metal), #2a2520); border:1px solid var(--border); }
+.ticket-msg.is-admin .msg-avatar { background:linear-gradient(135deg, var(--rust-orange), var(--rust-red)); }
+.ticket-msg .msg-bubble {
+  max-width:75%; background:rgba(26,21,16,.9); border:1px solid var(--border);
+  border-radius:6px; padding:.7rem .9rem;
+}
+.ticket-msg.is-admin .msg-bubble {
+  background:rgba(200,68,10,.1); border-color:rgba(200,68,10,.3);
+}
+.msg-bubble .msg-author {
+  font-size:.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  margin-bottom:.3rem;
+}
+.ticket-msg.is-admin .msg-author { color:var(--rust-orange); }
+.ticket-msg.is-user  .msg-author { color:var(--text-muted); }
+.msg-bubble .msg-text { font-size:.9rem; line-height:1.55; color:var(--rust-light); white-space:pre-wrap; }
+.msg-bubble .msg-time { font-size:.65rem; color:var(--text-muted); margin-top:.35rem; text-align:right; }
+
+.ticket-reply-box {
+  background:rgba(13,11,9,.5); border:1px solid var(--border);
+  border-radius:6px; padding:1rem;
+}
+.ticket-reply-box textarea {
+  width:100%; background:rgba(0,0,0,.3); border:1px solid var(--border);
+  color:var(--rust-light); border-radius:4px; padding:.6rem .8rem;
+  font-family:'Rajdhani'; font-size:.9rem; outline:none; resize:vertical;
+  min-height:80px; transition:border-color .2s;
+}
+.ticket-reply-box textarea:focus { border-color:var(--rust-orange); }
+.ticket-reply-actions { display:flex; justify-content:flex-end; gap:.5rem; margin-top:.6rem; }
+
+/* Admin stats bar */
+.support-admin-stats {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:.75rem; margin-bottom:1.25rem;
+}
+.support-stat-card {
+  background:rgba(13,11,9,.6); border:1px solid var(--border); border-radius:6px;
+  padding:.85rem; text-align:center;
+}
+.support-stat-card .s-num { font-family:'Bebas Neue'; font-size:1.8rem; color:var(--rust-orange); line-height:1; }
+.support-stat-card .s-label { font-size:.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-top:.2rem; }
+
+.support-filter-row { display:flex; gap:.4rem; margin-bottom:1rem; flex-wrap:wrap; }
+
+/* Priority badges */
+.priority-badge {
+  font-family:'Share Tech Mono'; font-size:.55rem; letter-spacing:1px;
+  padding:.1rem .35rem; border-radius:2px;
+}
+.priority-badge.normal { background:rgba(255,255,255,.05); color:var(--text-muted); border:1px solid var(--border); }
+.priority-badge.high   { background:rgba(255,193,7,.1); color:var(--yellow); border:1px solid rgba(255,193,7,.3); }
+.priority-badge.urgent { background:rgba(244,67,54,.15); color:#f44336; border:1px solid rgba(244,67,54,.3); }
+
 </style>
 </head>
 <body>
@@ -802,6 +940,7 @@ footer .footer-logo span { color:var(--rust-orange); }
     <li><a onclick="showPage('store')" id="nav-store">Loja VIP</a></li>
     <li><a onclick="showPage('leaderboard')" id="nav-leaderboard">Ranking</a></li>
     <li><a onclick="showPage('news')" id="nav-news">Notícias</a></li>
+    <li id="nav-support-link"><a onclick="showPage('support')" id="nav-support">Suporte</a></li>
     <li id="nav-admin-link" style="display:none"><a onclick="showPage('admin')" id="nav-admin">Admin</a></li>
   </ul>
   <div class="nav-actions">
@@ -974,6 +1113,75 @@ footer .footer-logo span { color:var(--rust-orange); }
     </div>
     <div id="admin-tab-users"></div>
     <div id="admin-tab-servers" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ── SUPPORT PAGE ── -->
+<div id="page-support" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Central de Ajuda</div>
+      <h2 class="section-title">Suporte</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    <!-- Tabs: Meus Tickets | Novo Ticket | (admin) Todos -->
+    <div class="support-tabs" id="support-tabs">
+      <button class="support-tab active" id="stab-list"   onclick="supportTab('list',this)">📋 Meus Tickets</button>
+      <button class="support-tab"        id="stab-new"    onclick="supportTab('new',this)">➕ Novo Ticket</button>
+      <button class="support-tab admin-only" id="stab-admin" onclick="supportTab('admin',this)" style="display:none">🛡️ Admin — Todos</button>
+    </div>
+
+    <!-- Lista de tickets do usuário -->
+    <div id="support-panel-list">
+      <div id="support-ticket-list"><div class="empty-state"><div class="icon">🎫</div><p>Carregando tickets...</p></div></div>
+    </div>
+
+    <!-- Novo ticket -->
+    <div id="support-panel-new" style="display:none">
+      <div class="support-form-wrap">
+        <div class="form-group">
+          <label class="form-label">Categoria</label>
+          <select id="ticket-category" class="form-input">
+            <option value="">Selecione uma categoria...</option>
+            <option>Compra / Pagamento</option>
+            <option>Problema no servidor</option>
+            <option>Bug / Erro</option>
+            <option>Conta / Acesso</option>
+            <option>Abuso / Report</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assunto</label>
+          <input type="text" id="ticket-subject" class="form-input" placeholder="Descreva brevemente o problema...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mensagem</label>
+          <textarea id="ticket-message" class="form-input" rows="6" placeholder="Detalhe o seu problema com o máximo de informações possível..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="submitTicket()">🎫 Abrir Ticket</button>
+      </div>
+    </div>
+
+    <!-- Admin: todos os tickets -->
+    <div id="support-panel-admin" style="display:none">
+      <div class="support-admin-stats" id="support-admin-stats"></div>
+      <div class="support-filter-row">
+        <button class="filter-btn active" onclick="loadAdminTickets('all',this)">Todos</button>
+        <button class="filter-btn" onclick="loadAdminTickets('open',this)">Abertos</button>
+        <button class="filter-btn" onclick="loadAdminTickets('in_progress',this)">Em Andamento</button>
+        <button class="filter-btn" onclick="loadAdminTickets('closed',this)">Fechados</button>
+      </div>
+      <div id="admin-ticket-list"></div>
+    </div>
+
+    <!-- Visualização de ticket individual -->
+    <div id="support-panel-thread" style="display:none">
+      <button class="btn btn-outline btn-sm" onclick="backToTicketList()" style="margin-bottom:1rem">← Voltar</button>
+      <div id="ticket-thread-content"></div>
+    </div>
+
   </div>
 </div>
 
@@ -1247,6 +1455,13 @@ function showPage(name) {
   if(name==='news') loadNews();
   if(name==='profile') loadProfile();
   if(name==='admin') loadAdmin();
+  if(name==='support') {
+    // Mostrar tab admin se for admin
+    if(currentUser?.role === 'admin') {
+      document.getElementById('stab-admin').style.display = 'inline-flex';
+    }
+    supportTab('list', document.getElementById('stab-list'));
+  }
 }
 
 // ── AUTH ──────────────────────────────────────────────────
@@ -1268,6 +1483,8 @@ function setUser(user) {
   document.getElementById('store-balance').textContent = user.balance + ' CR';
   if(user.role === 'admin') {
     document.getElementById('nav-admin-link').style.display = 'block';
+    const stabAdmin = document.getElementById('stab-admin');
+    if(stabAdmin) stabAdmin.style.display = 'inline-flex';
   }
 }
 
@@ -1919,6 +2136,237 @@ function toast(msg, type='info') {
 // ── UTILS ─────────────────────────────────────────────────
 function safeParseJSON(str, fallback) {
   try { return JSON.parse(str); } catch(e) { return fallback; }
+}
+
+// ── SUPPORT ───────────────────────────────────────────────
+let currentSupportTab = 'list';
+let currentTicketId   = null;
+
+function supportTab(tab, btn) {
+  document.querySelectorAll('.support-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSupportTab = tab;
+  ['list','new','admin','thread'].forEach(p => {
+    const el = document.getElementById('support-panel-' + p);
+    if (el) el.style.display = p === tab ? 'block' : 'none';
+  });
+  if (tab === 'list')  loadMyTickets();
+  if (tab === 'admin') { loadAdminTicketStats(); loadAdminTickets('all'); }
+}
+
+async function loadMyTickets() {
+  const el = document.getElementById('support-ticket-list');
+  el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>';
+  try {
+    const r = await fetch(`${API}/tickets`, {credentials:'include'});
+    const d = await r.json();
+    if (!d.tickets?.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">🎫</div><p>Nenhum ticket aberto ainda. Clique em <strong>Novo Ticket</strong> para começar.</p></div>';
+      return;
+    }
+    el.innerHTML = d.tickets.map(t => ticketCardHTML(t)).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Erro ao carregar tickets.</p></div>';
+  }
+}
+
+function ticketCardHTML(t) {
+  const statusLabel = {open:'Aberto', in_progress:'Em Andamento', closed:'Fechado'};
+  const prioLabel   = {normal:'', high:'⚠️ HIGH', urgent:'🚨 URGENTE'};
+  return `<div class="ticket-card" onclick="openTicketThread('${t.id}')">
+    <div class="t-status-dot ${t.status}"></div>
+    <div class="t-main">
+      <div class="t-subject">${t.subject}</div>
+      <div class="t-meta">
+        <span>📁 ${t.category}</span>
+        <span>💬 ${t.message_count} mensagem${t.message_count !== 1 ? 's' : ''}</span>
+        <span>${new Date(t.updated_at).toLocaleDateString('pt-BR')}</span>
+        ${t.username ? `<span>👤 ${t.username}</span>` : ''}
+        ${t.priority !== 'normal' ? `<span class="priority-badge ${t.priority}">${prioLabel[t.priority]}</span>` : ''}
+      </div>
+    </div>
+    <span class="t-badge ${t.status}">${statusLabel[t.status] || t.status}</span>
+  </div>`;
+}
+
+async function openTicketThread(ticketId) {
+  currentTicketId = ticketId;
+  const panels = ['list','new','admin','thread'];
+  panels.forEach(p => {
+    const el = document.getElementById('support-panel-' + p);
+    if (el) el.style.display = p === 'thread' ? 'block' : 'none';
+  });
+  document.querySelectorAll('.support-tab').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('ticket-thread-content');
+  el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>';
+  try {
+    const r = await fetch(`${API}/tickets/${ticketId}`, {credentials:'include'});
+    const d = await r.json();
+    renderTicketThread(d.ticket);
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Erro ao carregar ticket.</p></div>';
+  }
+}
+
+function renderTicketThread(t) {
+  const isAdmin = currentUser?.role === 'admin';
+  const statusLabel = {open:'Aberto', in_progress:'Em Andamento', closed:'Fechado'};
+
+  const adminControls = isAdmin ? `
+    <div class="ticket-admin-controls">
+      <select onchange="updateTicketStatus('${t.id}','status',this.value)" title="Status">
+        <option value="open"        ${t.status==='open'?'selected':''}>🔴 Aberto</option>
+        <option value="in_progress" ${t.status==='in_progress'?'selected':''}>🟡 Em Andamento</option>
+        <option value="closed"      ${t.status==='closed'?'selected':''}>⚫ Fechado</option>
+      </select>
+      <select onchange="updateTicketStatus('${t.id}','priority',this.value)" title="Prioridade">
+        <option value="normal" ${t.priority==='normal'?'selected':''}>Normal</option>
+        <option value="high"   ${t.priority==='high'?'selected':''}>⚠️ Alta</option>
+        <option value="urgent" ${t.priority==='urgent'?'selected':''}>🚨 Urgente</option>
+      </select>
+    </div>` : '';
+
+  const messagesHtml = (t.messages || []).map(msg => {
+    const isAdminMsg = msg.author_role === 'admin';
+    const time = new Date(msg.created_at).toLocaleString('pt-BR');
+    return `<div class="ticket-msg ${isAdminMsg ? 'is-admin' : 'is-user'}">
+      <div class="msg-avatar">${isAdminMsg ? '🛡️' : '🪖'}</div>
+      <div class="msg-bubble">
+        <div class="msg-author">${isAdminMsg ? '🛡️ ' : ''}${msg.username || 'Usuário'}${isAdminMsg ? ' — Suporte' : ''}</div>
+        <div class="msg-text">${msg.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+        <div class="msg-time">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const replyBox = t.status !== 'closed' || isAdmin ? `
+    <div class="ticket-reply-box">
+      <textarea id="reply-text" placeholder="${isAdmin ? 'Responder como suporte...' : 'Escreva sua mensagem...'}" rows="3"></textarea>
+      <div class="ticket-reply-actions">
+        ${isAdmin && t.status !== 'closed' ? `<button class="btn btn-outline btn-sm" onclick="updateTicketStatus('${t.id}','status','closed')">✅ Fechar Ticket</button>` : ''}
+        <button class="btn btn-primary btn-sm" onclick="sendReply('${t.id}')">📨 Enviar</button>
+      </div>
+    </div>` : `<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:.85rem;">⚫ Ticket fechado — sem novas respostas.</div>`;
+
+  document.getElementById('ticket-thread-content').innerHTML = `
+    <div class="ticket-thread-header">
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+        <h3>${t.subject}</h3>
+        <span class="t-badge ${t.status}">${statusLabel[t.status]}</span>
+        ${t.priority !== 'normal' ? `<span class="priority-badge ${t.priority}">${{high:'⚠️ Alta',urgent:'🚨 Urgente'}[t.priority]}</span>` : ''}
+      </div>
+      <div class="ticket-thread-meta">
+        <span>📁 ${t.category}</span>
+        <span>👤 ${t.username}</span>
+        <span>📅 ${new Date(t.created_at).toLocaleDateString('pt-BR')}</span>
+      </div>
+      ${adminControls}
+    </div>
+    <div class="ticket-messages" id="ticket-messages-${t.id}">${messagesHtml}</div>
+    ${replyBox}
+  `;
+}
+
+async function sendReply(ticketId) {
+  const text = document.getElementById('reply-text')?.value?.trim();
+  if (!text) return;
+  try {
+    const r = await fetch(`${API}/tickets/${ticketId}/reply`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text})
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.error || 'Erro ao enviar', 'error'); return; }
+    toast('Resposta enviada!', 'success');
+    openTicketThread(ticketId);
+  } catch(e) { toast('Erro de conexão', 'error'); }
+}
+
+async function updateTicketStatus(ticketId, field, value) {
+  try {
+    const body = field === 'status' ? {status: value} : {priority: value};
+    const r = await fetch(`${API}/tickets/${ticketId}/status`, {
+      method:'PUT', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.error || 'Erro', 'error'); return; }
+    toast('Ticket atualizado!', 'success');
+    if (field === 'status' && value === 'closed') {
+      backToTicketList();
+    } else {
+      openTicketThread(ticketId);
+    }
+    if (currentSupportTab === 'admin') loadAdminTicketStats();
+  } catch(e) { toast('Erro de conexão', 'error'); }
+}
+
+function backToTicketList() {
+  document.getElementById('support-panel-thread').style.display = 'none';
+  if (currentUser?.role === 'admin' && currentSupportTab === 'admin') {
+    document.getElementById('support-panel-admin').style.display = 'block';
+    document.getElementById('stab-admin').classList.add('active');
+  } else {
+    document.getElementById('support-panel-list').style.display = 'block';
+    document.getElementById('stab-list').classList.add('active');
+    loadMyTickets();
+  }
+}
+
+async function submitTicket() {
+  const category = document.getElementById('ticket-category').value;
+  const subject  = document.getElementById('ticket-subject').value.trim();
+  const message  = document.getElementById('ticket-message').value.trim();
+  if (!category || !subject || !message) { toast('Preencha todos os campos!', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/tickets`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({category, subject, message})
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.error || 'Erro ao abrir ticket', 'error'); return; }
+    toast('Ticket aberto com sucesso!', 'success');
+    document.getElementById('ticket-category').value = '';
+    document.getElementById('ticket-subject').value  = '';
+    document.getElementById('ticket-message').value  = '';
+    supportTab('list', document.getElementById('stab-list'));
+  } catch(e) { toast('Erro de conexão', 'error'); }
+}
+
+async function loadAdminTicketStats() {
+  try {
+    const r = await fetch(`${API}/admin/tickets/stats`, {credentials:'include'});
+    const d = await r.json();
+    document.getElementById('support-admin-stats').innerHTML = `
+      <div class="support-stat-card"><div class="s-num">${d.total}</div><div class="s-label">Total</div></div>
+      <div class="support-stat-card"><div class="s-num" style="color:var(--rust-orange)">${d.open}</div><div class="s-label">Abertos</div></div>
+      <div class="support-stat-card"><div class="s-num" style="color:var(--yellow)">${d.in_progress}</div><div class="s-label">Em Andamento</div></div>
+      <div class="support-stat-card"><div class="s-num" style="color:var(--text-muted)">${d.closed}</div><div class="s-label">Fechados</div></div>
+    `;
+  } catch(e) {}
+}
+
+async function loadAdminTickets(status, btn) {
+  if (btn) {
+    document.querySelectorAll('.support-filter-row .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const el = document.getElementById('admin-ticket-list');
+  el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>';
+  try {
+    const r = await fetch(`${API}/tickets?status=${status}`, {credentials:'include'});
+    const d = await r.json();
+    if (!d.tickets?.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>Nenhum ticket encontrado.</p></div>';
+      return;
+    }
+    el.innerHTML = d.tickets.map(t => ticketCardHTML(t)).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Erro ao carregar.</p></div>';
+  }
 }
 
 // ── INIT ──────────────────────────────────────────────────

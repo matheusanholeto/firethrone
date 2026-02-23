@@ -20,6 +20,7 @@ store_col       = db['store_items']
 purchases_col   = db['purchases']
 leaderboard_col = db['leaderboard']
 news_col        = db['news']
+tickets_col     = db['tickets']
 
 def hash_password(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
@@ -349,6 +350,148 @@ def setup_admin_on_start():
         }},
         upsert=True
     )
+
+# ── SUPPORT TICKETS ───────────────────────────────────────
+
+TICKET_CATEGORIES = ['Compra / Pagamento', 'Problema no servidor', 'Bug / Erro', 'Conta / Acesso', 'Abuso / Report', 'Outro']
+
+@app.route('/api/tickets', methods=['POST'])
+def create_ticket():
+    uid = session.get('user_id')
+    if not uid:
+        return jsonify({'error': 'Faça login para abrir um ticket'}), 401
+    data     = request.json
+    subject  = (data.get('subject') or '').strip()
+    category = (data.get('category') or '').strip()
+    message  = (data.get('message') or '').strip()
+    if not subject or not message or not category:
+        return jsonify({'error': 'Preencha todos os campos'}), 400
+    if category not in TICKET_CATEGORIES:
+        return jsonify({'error': 'Categoria inválida'}), 400
+    ticket_id = tickets_col.insert_one({
+        'user_id':    uid,
+        'subject':    subject,
+        'category':   category,
+        'status':     'open',   # open | in_progress | closed
+        'priority':   'normal', # normal | high | urgent
+        'messages':   [{'author_id': uid, 'author_role': 'user', 'text': message, 'created_at': datetime.utcnow()}],
+        'created_at': datetime.utcnow(),
+        'updated_at': datetime.utcnow(),
+    }).inserted_id
+    return jsonify({'message': 'Ticket aberto com sucesso!', 'ticket_id': str(ticket_id)}), 201
+
+@app.route('/api/tickets', methods=['GET'])
+def list_tickets():
+    uid = session.get('user_id')
+    if not uid:
+        return jsonify({'error': 'Não autenticado'}), 401
+    user = users_col.find_one({'_id': ObjectId(uid)})
+    if user and user.get('role') == 'admin':
+        status_filter = request.args.get('status')
+        query = {}
+        if status_filter and status_filter != 'all':
+            query['status'] = status_filter
+        tickets = list(tickets_col.find(query).sort('updated_at', -1))
+    else:
+        tickets = list(tickets_col.find({'user_id': uid}).sort('updated_at', -1))
+    result = []
+    for t in tickets:
+        t = fix_id(t)
+        try:
+            u = users_col.find_one({'_id': ObjectId(t['user_id'])}, {'username': 1})
+            t['username'] = u['username'] if u else 'Desconhecido'
+        except:
+            t['username'] = 'Desconhecido'
+        t['message_count'] = len(t.get('messages', []))
+        t.pop('messages', None)
+        result.append(t)
+    return jsonify({'tickets': result})
+
+@app.route('/api/tickets/<ticket_id>', methods=['GET'])
+def get_ticket(ticket_id):
+    uid = session.get('user_id')
+    if not uid:
+        return jsonify({'error': 'Não autenticado'}), 401
+    user = users_col.find_one({'_id': ObjectId(uid)})
+    is_admin = user and user.get('role') == 'admin'
+    ticket = tickets_col.find_one({'_id': ObjectId(ticket_id)})
+    if not ticket:
+        return jsonify({'error': 'Ticket não encontrado'}), 404
+    if not is_admin and ticket['user_id'] != uid:
+        return jsonify({'error': 'Acesso negado'}), 403
+    ticket = fix_id(ticket)
+    # Enriquecer mensagens com username
+    for msg in ticket.get('messages', []):
+        try:
+            u = users_col.find_one({'_id': ObjectId(msg['author_id'])}, {'username': 1, 'role': 1})
+            msg['username'] = u['username'] if u else 'Desconhecido'
+            msg['role']     = u.get('role', 'player') if u else 'player'
+            msg['created_at'] = msg['created_at'].isoformat() if hasattr(msg.get('created_at'), 'isoformat') else str(msg.get('created_at',''))
+        except:
+            msg['username'] = 'Desconhecido'
+            msg['role']     = 'player'
+    try:
+        owner = users_col.find_one({'_id': ObjectId(ticket['user_id'])}, {'username': 1})
+        ticket['username'] = owner['username'] if owner else 'Desconhecido'
+    except:
+        ticket['username'] = 'Desconhecido'
+    ticket['created_at'] = ticket['created_at'].isoformat() if hasattr(ticket.get('created_at'), 'isoformat') else str(ticket.get('created_at',''))
+    ticket['updated_at'] = ticket['updated_at'].isoformat() if hasattr(ticket.get('updated_at'), 'isoformat') else str(ticket.get('updated_at',''))
+    return jsonify({'ticket': ticket})
+
+@app.route('/api/tickets/<ticket_id>/reply', methods=['POST'])
+def reply_ticket(ticket_id):
+    uid = session.get('user_id')
+    if not uid:
+        return jsonify({'error': 'Não autenticado'}), 401
+    user = users_col.find_one({'_id': ObjectId(uid)})
+    is_admin = user and user.get('role') == 'admin'
+    ticket = tickets_col.find_one({'_id': ObjectId(ticket_id)})
+    if not ticket:
+        return jsonify({'error': 'Ticket não encontrado'}), 404
+    if not is_admin and ticket['user_id'] != uid:
+        return jsonify({'error': 'Acesso negado'}), 403
+    if ticket['status'] == 'closed' and not is_admin:
+        return jsonify({'error': 'Ticket fechado'}), 400
+    data = request.json
+    text = (data.get('text') or '').strip()
+    if not text:
+        return jsonify({'error': 'Mensagem vazia'}), 400
+    msg = {'author_id': uid, 'author_role': 'admin' if is_admin else 'user', 'text': text, 'created_at': datetime.utcnow()}
+    new_status = ticket['status']
+    if is_admin and ticket['status'] == 'open':
+        new_status = 'in_progress'
+    tickets_col.update_one(
+        {'_id': ObjectId(ticket_id)},
+        {'$push': {'messages': msg}, '$set': {'updated_at': datetime.utcnow(), 'status': new_status}}
+    )
+    return jsonify({'message': 'Resposta enviada!'})
+
+@app.route('/api/tickets/<ticket_id>/status', methods=['PUT'])
+def update_ticket_status(ticket_id):
+    if not require_admin():
+        return jsonify({'error': 'Acesso negado'}), 403
+    data   = request.json
+    status = data.get('status')
+    priority = data.get('priority')
+    update = {'updated_at': datetime.utcnow()}
+    if status in ('open', 'in_progress', 'closed'):
+        update['status'] = status
+    if priority in ('normal', 'high', 'urgent'):
+        update['priority'] = priority
+    tickets_col.update_one({'_id': ObjectId(ticket_id)}, {'$set': update})
+    return jsonify({'message': 'Ticket atualizado!'})
+
+@app.route('/api/admin/tickets/stats')
+def admin_ticket_stats():
+    if not require_admin():
+        return jsonify({'error': 'Acesso negado'}), 403
+    return jsonify({
+        'open':        tickets_col.count_documents({'status': 'open'}),
+        'in_progress': tickets_col.count_documents({'status': 'in_progress'}),
+        'closed':      tickets_col.count_documents({'status': 'closed'}),
+        'total':       tickets_col.count_documents({}),
+    })
 
 if __name__ == '__main__':
     seed_db()
