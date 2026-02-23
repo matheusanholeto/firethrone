@@ -495,9 +495,19 @@ footer .footer-logo span { color:var(--rust-orange); }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: 0.6rem;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   max-height: none;
   overflow-y: visible;
+}
+.kit-section-title {
+  grid-column: 1 / -1;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  color: var(--rust-orange);
+  border-bottom: 1px solid rgba(200,68,10,.3);
+  padding-bottom: 0.3rem;
+  margin-top: 0.5rem;
 }
 .kit-item-card {
   background: var(--rust-dim);
@@ -1374,13 +1384,33 @@ function openKitModal(item) {
 
   const grid = document.getElementById('kit-modal-items');
   if (item.items && item.items.length > 0) {
-    grid.innerHTML = item.items.map(i => `
-      <div class="kit-item-card">
-        <img src="${i.image}" alt="${i.name}" title="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
-        <div class="item-label">${i.name}</div>
-        <div class="item-amount">x${i.amount}</div>
-      </div>
-    `).join('');
+    const sections = ['Clothing', 'Inventory', 'Hotbar'];
+    const sectionLabels = { Clothing: '👕 Clothing', Inventory: '🎒 Inventory', Hotbar: '⚡ Hotbar' };
+    let html = '';
+    sections.forEach(sec => {
+      const secItems = item.items.filter(i => i.section === sec);
+      if (!secItems.length) return;
+      html += `<div class="kit-section-title">${sectionLabels[sec]}</div>`;
+      html += secItems.map(i => `
+        <div class="kit-item-card">
+          <img src="${i.image}" alt="${i.name}" title="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
+          <div class="item-label">${i.name}</div>
+          <div class="item-amount">x${i.amount}</div>
+        </div>
+      `).join('');
+    });
+    // Itens sem seção definida
+    const noSec = item.items.filter(i => !i.section || !sections.includes(i.section));
+    if (noSec.length) {
+      html += noSec.map(i => `
+        <div class="kit-item-card">
+          <img src="${i.image}" alt="${i.name}" title="${i.name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
+          <div class="item-label">${i.name}</div>
+          <div class="item-amount">x${i.amount}</div>
+        </div>
+      `).join('');
+    }
+    grid.innerHTML = html;
   } else {
     grid.innerHTML = '<p style="color:var(--rust-light);text-align:center;">Nenhum item encontrado.</p>';
   }
