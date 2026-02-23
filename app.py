@@ -33,22 +33,29 @@ news_col        = db['news']
 tickets_col     = db['tickets']
 tokens_col      = db['email_tokens']
 
-# ── EMAIL HELPER (Resend API) ─────────────────────────────
+# ── EMAIL HELPER (Brevo API) ──────────────────────────────
 SITE_URL       = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
-RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
-EMAIL_FROM     = os.environ.get('EMAIL_FROM', 'FireThrone <onboarding@resend.dev>')
+BREVO_API_KEY  = os.environ.get('BREVO_API_KEY', '')
+EMAIL_FROM     = os.environ.get('EMAIL_FROM', 'firethroneserver@gmail.com')
 
 def send_email(to, subject, html_body):
-    if not RESEND_API_KEY:
-        print(f'[EMAIL SKIP] RESEND_API_KEY nao configurada!')
+    if not BREVO_API_KEY:
+        print('[EMAIL SKIP] BREVO_API_KEY nao configurada!')
         return
     try:
-        import json as _json
-        payload = _json.dumps({'from': EMAIL_FROM, 'to': [to], 'subject': subject, 'html': html_body}).encode()
+        payload = json.dumps({
+            'sender': {'name': 'FireThrone', 'email': EMAIL_FROM},
+            'to': [{'email': to}],
+            'subject': subject,
+            'htmlContent': html_body
+        }).encode()
         req = urllib.request.Request(
-            'https://api.resend.com/emails',
+            'https://api.brevo.com/v3/smtp/email',
             data=payload,
-            headers={'Authorization': f'Bearer {RESEND_API_KEY}', 'Content-Type': 'application/json'}
+            headers={
+                'api-key': BREVO_API_KEY,
+                'Content-Type': 'application/json'
+            }
         )
         resp = urllib.request.urlopen(req, timeout=10).read()
         print(f'[EMAIL OK] Enviado para {to}: {resp}')
