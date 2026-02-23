@@ -137,8 +137,11 @@ def sync_kits():
     data = request.json
     if not data or 'kits' not in data:
         return jsonify({'error': 'Dados inválidos'}), 400
-    kits = data['kits']
-    store_col.update_many({'category': 'vip'}, {'$set': {'active': False}})
+    kits   = data['kits']
+    append = data.get('append', False)
+    # Só desativa todos no primeiro chunk (append=False)
+    if not append:
+        store_col.update_many({'category': 'vip'}, {'$set': {'active': False}})
     for kit in kits:
         name   = kit.get('Name', '')
         desc   = kit.get('Description', '') or f'Kit VIP {name}'
@@ -148,9 +151,13 @@ def sync_kits():
         hidden = kit.get('IsHidden', False)
         if hidden or not name:
             continue
+        # Preserva imagem e preço existentes se não vierem no sync
+        existing = store_col.find_one({'name': name, 'category': 'vip'}) or {}
+        final_image = image if image else existing.get('image', '')
+        final_price = existing.get('price', price)
         store_col.update_one(
             {'name': name, 'category': 'vip'},
-            {'$set': {'description': desc, 'price': price, 'image': image, 'active': True, 'category': 'vip', 'featured': False, 'items': items}},
+            {'$set': {'description': desc, 'price': final_price, 'image': final_image, 'active': True, 'category': 'vip', 'featured': False, 'items': items}},
             upsert=True
         )
     return jsonify({'message': f'{len(kits)} kits sincronizados com sucesso!'})
