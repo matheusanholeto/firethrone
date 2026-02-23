@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="240" height="200">
+  <defs>
+    <linearGradient id="bg_DISCORD" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D0B09"/>
+      <stop offset="100%" style="stop-color:#1A1510"/>
+    </linearGradient>
+    <linearGradient id="glow_DISCORD" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7289DA;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#5865F2;stop-opacity:0.1"/>
+    </linearGradient>
+    <filter id="blur_DISCORD">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="240" height="200" fill="url(#bg_DISCORD)"/>
+  
+  <!-- Glow orb -->
+  <circle cx="120" cy="90" r="70" fill="url(#glow_DISCORD)" filter="url(#blur_DISCORD)"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="236" height="196" rx="8" fill="none" stroke="#7289DA" stroke-width="1.5" opacity="0.4"/>
+  
+  <!-- Corner accents -->
+  <path d="M2 20 L2 2 L20 2" stroke="#7289DA" stroke-width="2.5" fill="none"/>
+  <path d="M220 2 L238 2 L238 20" stroke="#7289DA" stroke-width="2.5" fill="none"/>
+  <path d="M2 180 L2 198 L20 198" stroke="#7289DA" stroke-width="2.5" fill="none"/>
+  <path d="M220 198 L238 198 L238 180" stroke="#7289DA" stroke-width="2.5" fill="none"/>
+  
+  <!-- Main shape -->
+  
+        <rect x="80" y="72" width="80" height="55" rx="12" fill="#5865F2" opacity="0.85"/>
+        <circle cx="104" cy="103" r="7" fill="white"/>
+        <circle cx="136" cy="103" r="7" fill="white"/>
+        <path d="M100 128 Q120 138 140 128" stroke="#5865F2" stroke-width="4" fill="none"/>
+        
+  
+  <!-- Title bar -->
+  <rect x="20" y="152" width="200" height="36" rx="4" fill="#7289DA" opacity="0.15"/>
+  <rect x="20" y="152" width="200" height="2" fill="#7289DA" opacity="0.6"/>
+  <text x="120" y="176" text-anchor="middle" fill="#7289DA" font-size="18" font-family="'Arial Black', sans-serif" font-weight="900" letter-spacing="3">DISCORD</text>
+</svg>

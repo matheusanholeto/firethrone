@@ -319,7 +319,39 @@ def admin_update_store_item(item_id):
     store_col.update_one({'_id': ObjectId(item_id)}, {'$set': update})
     return jsonify({'message': 'Item atualizado!'})
 
+
+@app.route('/api/admin/setup', methods=['POST'])
+def setup_admin():
+    # Atualiza ou cria o admin principal
+    users_col.update_one(
+        {'email': 'matheus.anholetos@gmail.com'},
+        {'$set': {
+            'username': 'Matheus',
+            'email': 'matheus.anholetos@gmail.com',
+            'password_hash': hash_password('compass2210'),
+            'role': 'admin',
+            'balance': 99999,
+            'avatar': '/static/default_avatar.png'
+        }},
+        upsert=True
+    )
+    return jsonify({'message': 'Admin configurado!'})
+
+def setup_admin_on_start():
+    users_col.update_one(
+        {'email': 'matheus.anholetos@gmail.com'},
+        {'$set': {
+            'username': 'Matheus',
+            'email': 'matheus.anholetos@gmail.com',
+            'password_hash': hash_password('compass2210'),
+            'role': 'admin',
+            'balance': 99999,
+        }},
+        upsert=True
+    )
+
 if __name__ == '__main__':
     seed_db()
+    setup_admin_on_start()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)

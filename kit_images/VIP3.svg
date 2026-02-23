@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="240" height="200">
+  <defs>
+    <linearGradient id="bg_VIP3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D0B09"/>
+      <stop offset="100%" style="stop-color:#1A1510"/>
+    </linearGradient>
+    <linearGradient id="glow_VIP3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#FF6F00;stop-opacity:0.1"/>
+    </linearGradient>
+    <filter id="blur_VIP3">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="240" height="200" fill="url(#bg_VIP3)"/>
+  
+  <!-- Glow orb -->
+  <circle cx="120" cy="90" r="70" fill="url(#glow_VIP3)" filter="url(#blur_VIP3)"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="236" height="196" rx="8" fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.4"/>
+  
+  <!-- Corner accents -->
+  <path d="M2 20 L2 2 L20 2" stroke="#FFD700" stroke-width="2.5" fill="none"/>
+  <path d="M220 2 L238 2 L238 20" stroke="#FFD700" stroke-width="2.5" fill="none"/>
+  <path d="M2 180 L2 198 L20 198" stroke="#FFD700" stroke-width="2.5" fill="none"/>
+  <path d="M220 198 L238 198 L238 180" stroke="#FFD700" stroke-width="2.5" fill="none"/>
+  
+  <!-- Main shape -->
+  
+        <polygon points="120,52 145,76 168,76 150,96 159,122 120,109 81,122 90,96 72,76 95,76" fill="#FFD700" stroke="#FF6F00" stroke-width="3" opacity="0.95"/>
+        <polygon points="120,62 140,80 158,80 144,96 151,116 120,104 89,116 96,96 82,80 100,80" fill="#FFF176" opacity="0.4"/>
+        <text x="120" y="101" text-anchor="middle" fill="#5D4037" font-size="14" font-family="Arial Black" font-weight="900">III</text>
+        
+  
+  <!-- Title bar -->
+  <rect x="20" y="152" width="200" height="36" rx="4" fill="#FFD700" opacity="0.15"/>
+  <rect x="20" y="152" width="200" height="2" fill="#FFD700" opacity="0.6"/>
+  <text x="120" y="176" text-anchor="middle" fill="#FFD700" font-size="18" font-family="'Arial Black', sans-serif" font-weight="900" letter-spacing="3">VIP 3</text>
+</svg>

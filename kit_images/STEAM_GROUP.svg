@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="240" height="200">
+  <defs>
+    <linearGradient id="bg_STEAM_GROUP" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D0B09"/>
+      <stop offset="100%" style="stop-color:#1A1510"/>
+    </linearGradient>
+    <linearGradient id="glow_STEAM_GROUP" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90D9;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#1B5E8A;stop-opacity:0.1"/>
+    </linearGradient>
+    <filter id="blur_STEAM_GROUP">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="240" height="200" fill="url(#bg_STEAM_GROUP)"/>
+  
+  <!-- Glow orb -->
+  <circle cx="120" cy="90" r="70" fill="url(#glow_STEAM_GROUP)" filter="url(#blur_STEAM_GROUP)"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="236" height="196" rx="8" fill="none" stroke="#4A90D9" stroke-width="1.5" opacity="0.4"/>
+  
+  <!-- Corner accents -->
+  <path d="M2 20 L2 2 L20 2" stroke="#4A90D9" stroke-width="2.5" fill="none"/>
+  <path d="M220 2 L238 2 L238 20" stroke="#4A90D9" stroke-width="2.5" fill="none"/>
+  <path d="M2 180 L2 198 L20 198" stroke="#4A90D9" stroke-width="2.5" fill="none"/>
+  <path d="M220 198 L238 198 L238 180" stroke="#4A90D9" stroke-width="2.5" fill="none"/>
+  
+  <!-- Main shape -->
+  
+        <circle cx="120" cy="95" r="45" fill="none" stroke="#4A90D9" stroke-width="6" opacity="0.8"/>
+        <circle cx="120" cy="95" r="30" fill="#4A90D9" opacity="0.6"/>
+        <text x="120" y="107" text-anchor="middle" fill="white" font-size="36" font-family="Arial Black" font-weight="900">S</text>
+        <path d="M90 130 Q120 145 150 130" stroke="#4FC3F7" stroke-width="3" fill="none"/>
+        
+  
+  <!-- Title bar -->
+  <rect x="20" y="152" width="200" height="36" rx="4" fill="#4A90D9" opacity="0.15"/>
+  <rect x="20" y="152" width="200" height="2" fill="#4A90D9" opacity="0.6"/>
+  <text x="120" y="176" text-anchor="middle" fill="#4A90D9" font-size="18" font-family="'Arial Black', sans-serif" font-weight="900" letter-spacing="3">STEAM</text>
+</svg>

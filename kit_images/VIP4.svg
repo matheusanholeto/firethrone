@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="240" height="200">
+  <defs>
+    <linearGradient id="bg_vip4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D0B09"/>
+      <stop offset="100%" style="stop-color:#1A0A00"/>
+    </linearGradient>
+    <linearGradient id="crown_vip4" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFF9C4"/>
+      <stop offset="40%" style="stop-color:#FFD700"/>
+      <stop offset="100%" style="stop-color:#FF6F00"/>
+    </linearGradient>
+    <linearGradient id="gem1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E040FB"/>
+      <stop offset="100%" style="stop-color:#7B1FA2"/>
+    </linearGradient>
+    <linearGradient id="gem2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#40C4FF"/>
+      <stop offset="100%" style="stop-color:#0288D1"/>
+    </linearGradient>
+    <radialGradient id="glow_vip4" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:0.35"/>
+      <stop offset="60%" style="stop-color:#FF6F00;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#0D0B09;stop-opacity:0"/>
+    </radialGradient>
+    <filter id="blur_vip4"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="glow_filter">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="240" height="200" fill="url(#bg_vip4)"/>
+
+  <!-- Glow orb -->
+  <circle cx="120" cy="90" r="80" fill="url(#glow_vip4)" filter="url(#blur_vip4)"/>
+
+  <!-- Particle sparks -->
+  <circle cx="55" cy="45" r="2" fill="#FFD700" opacity="0.8"/>
+  <circle cx="185" cy="38" r="1.5" fill="#FFD700" opacity="0.6"/>
+  <circle cx="40" cy="120" r="1.5" fill="#FF6F00" opacity="0.7"/>
+  <circle cx="200" cy="115" r="2" fill="#FFD700" opacity="0.5"/>
+  <circle cx="70" cy="160" r="1" fill="#FFF9C4" opacity="0.6"/>
+  <circle cx="175" cy="155" r="1.5" fill="#FFF9C4" opacity="0.5"/>
+  <circle cx="120" cy="30" r="1.5" fill="#FFD700" opacity="0.9"/>
+  <circle cx="95" cy="22" r="1" fill="#FF6F00" opacity="0.7"/>
+  <circle cx="148" cy="25" r="1" fill="#FFD700" opacity="0.6"/>
+
+  <!-- Flames (base) -->
+  <path d="M75 145 Q80 120 90 130 Q85 105 100 115 Q95 88 115 100 Q110 75 120 68 Q130 75 125 100 Q140 88 135 115 Q150 105 145 130 Q155 120 160 145 Z" fill="#FF6F00" opacity="0.5"/>
+  <path d="M85 145 Q90 122 98 132 Q94 108 108 118 Q103 93 118 103 Q113 80 120 72 Q127 80 122 103 Q137 93 132 118 Q146 108 142 132 Q150 122 155 145 Z" fill="#FFD700" opacity="0.4"/>
+
+  <!-- Crown base shadow -->
+  <ellipse cx="120" cy="128" rx="42" ry="8" fill="#000" opacity="0.5"/>
+
+  <!-- Crown body -->
+  <polygon points="78,125 82,82 100,100 120,58 140,100 158,82 162,125" fill="url(#crown_vip4)" filter="url(#glow_filter)"/>
+
+  <!-- Crown inner highlight -->
+  <polygon points="88,118 91,90 105,105 120,70 135,105 149,90 152,118" fill="#FFF9C4" opacity="0.18"/>
+
+  <!-- Crown base band -->
+  <rect x="78" y="118" width="84" height="14" rx="3" fill="url(#crown_vip4)"/>
+  <rect x="78" y="118" width="84" height="3" rx="1" fill="#FFF9C4" opacity="0.4"/>
+
+  <!-- Center gem (purple diamond) -->
+  <polygon points="120,72 130,83 120,94 110,83" fill="url(#gem1)" filter="url(#glow_filter)"/>
+  <polygon points="120,72 130,83 120,78" fill="#F3E5F5" opacity="0.5"/>
+  <polygon points="120,94 130,83 120,89" fill="#4A148C" opacity="0.4"/>
+
+  <!-- Left gem (blue) -->
+  <polygon points="92,87 99,94 92,101 85,94" fill="url(#gem2)" filter="url(#glow_filter)"/>
+  <polygon points="92,87 99,94 92,91" fill="#E1F5FE" opacity="0.5"/>
+
+  <!-- Right gem (blue) -->
+  <polygon points="148,87 155,94 148,101 141,94" fill="url(#gem2)" filter="url(#glow_filter)"/>
+  <polygon points="148,87 155,94 148,91" fill="#E1F5FE" opacity="0.5"/>
+
+  <!-- Small gems on band -->
+  <circle cx="95" cy="125" r="4" fill="#E040FB" opacity="0.9"/>
+  <circle cx="120" cy="125" r="4" fill="#FFD700" opacity="0.9"/>
+  <circle cx="145" cy="125" r="4" fill="#E040FB" opacity="0.9"/>
+  <circle cx="107" cy="125" r="3" fill="#40C4FF" opacity="0.8"/>
+  <circle cx="133" cy="125" r="3" fill="#40C4FF" opacity="0.8"/>
+
+  <!-- Border -->
+  <rect x="2" y="2" width="236" height="196" rx="8" fill="none" stroke="#FFD700" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- Corner accents -->
+  <path d="M2 20 L2 2 L20 2" stroke="#FFD700" stroke-width="3" fill="none"/>
+  <path d="M220 2 L238 2 L238 20" stroke="#FFD700" stroke-width="3" fill="none"/>
+  <path d="M2 180 L2 198 L20 198" stroke="#FFD700" stroke-width="3" fill="none"/>
+  <path d="M220 198 L238 198 L238 180" stroke="#FFD700" stroke-width="3" fill="none"/>
+
+  <!-- Title bar -->
+  <rect x="20" y="152" width="200" height="36" rx="4" fill="#FFD700" opacity="0.12"/>
+  <rect x="20" y="152" width="200" height="2" rx="1" fill="#FFD700" opacity="0.8"/>
+  <text x="120" y="176" text-anchor="middle" fill="#FFD700" font-size="18" font-family="'Arial Black', sans-serif" font-weight="900" letter-spacing="3">VIP 4</text>
+</svg>

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="240" height="200">
+  <defs>
+    <linearGradient id="bg_WIPE" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D0B09"/>
+      <stop offset="100%" style="stop-color:#1A1510"/>
+    </linearGradient>
+    <linearGradient id="glow_WIPE" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00BCD4;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#006064;stop-opacity:0.1"/>
+    </linearGradient>
+    <filter id="blur_WIPE">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="240" height="200" fill="url(#bg_WIPE)"/>
+  
+  <!-- Glow orb -->
+  <circle cx="120" cy="90" r="70" fill="url(#glow_WIPE)" filter="url(#blur_WIPE)"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="236" height="196" rx="8" fill="none" stroke="#00BCD4" stroke-width="1.5" opacity="0.4"/>
+  
+  <!-- Corner accents -->
+  <path d="M2 20 L2 2 L20 2" stroke="#00BCD4" stroke-width="2.5" fill="none"/>
+  <path d="M220 2 L238 2 L238 20" stroke="#00BCD4" stroke-width="2.5" fill="none"/>
+  <path d="M2 180 L2 198 L20 198" stroke="#00BCD4" stroke-width="2.5" fill="none"/>
+  <path d="M220 198 L238 198 L238 180" stroke="#00BCD4" stroke-width="2.5" fill="none"/>
+  
+  <!-- Main shape -->
+  
+        <path d="M60 95 Q80 70 100 95 Q120 120 140 95 Q160 70 180 95" stroke="#00BCD4" stroke-width="6" fill="none" opacity="0.9"/>
+        <path d="M60 110 Q80 85 100 110 Q120 135 140 110 Q160 85 180 110" stroke="#4DD0E1" stroke-width="4" fill="none" opacity="0.6"/>
+        <circle cx="120" cy="95" r="18" fill="#00BCD4" opacity="0.4"/>
+        <text x="120" y="102" text-anchor="middle" fill="white" font-size="20" font-family="Arial Black">W</text>
+        
+  
+  <!-- Title bar -->
+  <rect x="20" y="152" width="200" height="36" rx="4" fill="#00BCD4" opacity="0.15"/>
+  <rect x="20" y="152" width="200" height="2" fill="#00BCD4" opacity="0.6"/>
+  <text x="120" y="176" text-anchor="middle" fill="#00BCD4" font-size="18" font-family="'Arial Black', sans-serif" font-weight="900" letter-spacing="3">WIPE</text>
+</svg>

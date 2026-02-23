@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 200" width="240" height="200">
+  <defs>
+    <linearGradient id="bg_VIP1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0D0B09"/>
+      <stop offset="100%" style="stop-color:#1A1510"/>
+    </linearGradient>
+    <linearGradient id="glow_VIP1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#CD7F32;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#8B4513;stop-opacity:0.1"/>
+    </linearGradient>
+    <filter id="blur_VIP1">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="240" height="200" fill="url(#bg_VIP1)"/>
+  
+  <!-- Glow orb -->
+  <circle cx="120" cy="90" r="70" fill="url(#glow_VIP1)" filter="url(#blur_VIP1)"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="236" height="196" rx="8" fill="none" stroke="#CD7F32" stroke-width="1.5" opacity="0.4"/>
+  
+  <!-- Corner accents -->
+  <path d="M2 20 L2 2 L20 2" stroke="#CD7F32" stroke-width="2.5" fill="none"/>
+  <path d="M220 2 L238 2 L238 20" stroke="#CD7F32" stroke-width="2.5" fill="none"/>
+  <path d="M2 180 L2 198 L20 198" stroke="#CD7F32" stroke-width="2.5" fill="none"/>
+  <path d="M220 198 L238 198 L238 180" stroke="#CD7F32" stroke-width="2.5" fill="none"/>
+  
+  <!-- Main shape -->
+  
+        <polygon points="120,58 140,80 160,80 145,97 152,118 120,107 88,118 95,97 80,80 100,80" fill="#CD7F32" stroke="#8B4513" stroke-width="3" opacity="0.9"/>
+        <text x="120" y="103" text-anchor="middle" fill="white" font-size="22" font-family="Arial Black" font-weight="900">I</text>
+        
+  
+  <!-- Title bar -->
+  <rect x="20" y="152" width="200" height="36" rx="4" fill="#CD7F32" opacity="0.15"/>
+  <rect x="20" y="152" width="200" height="2" fill="#CD7F32" opacity="0.6"/>
+  <text x="120" y="176" text-anchor="middle" fill="#CD7F32" font-size="18" font-family="'Arial Black', sans-serif" font-weight="900" letter-spacing="3">VIP 1</text>
+</svg>

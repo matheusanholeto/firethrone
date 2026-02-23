@@ -493,11 +493,11 @@ footer .footer-logo span { color:var(--rust-orange); }
 /* ── KIT ITEMS MODAL ─────────────────────────────────── */
 .kit-items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.6rem;
   margin-top: 1rem;
-  max-height: 400px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
 }
 .kit-item-card {
   background: var(--rust-dim);
@@ -704,11 +704,11 @@ footer .footer-logo span { color:var(--rust-orange); }
   <div class="lang-selector">
     <button class="lang-btn" onclick="toggleLangDropdown()" id="lang-current">🇧🇷 Português</button>
     <div class="lang-dropdown" id="lang-dropdown">
-      <div class="lang-option active" data-lang="pt" onclick="setLang('pt')">🇧🇷 Português</div>
+      <div class="lang-option active" data-lang="pt" onclick="setLang('pt')">🇧🇷 Português (BR)</div>
+      <div class="lang-option" data-lang="pt_pt" onclick="setLang('pt_pt')">🇵🇹 Português (PT)</div>
       <div class="lang-option" data-lang="en" onclick="setLang('en')">🇺🇸 English</div>
       <div class="lang-option" data-lang="de" onclick="setLang('de')">🇩🇪 Deutsch</div>
       <div class="lang-option" data-lang="ru" onclick="setLang('ru')">🇷🇺 Русский</div>
-      <div class="lang-option" data-lang="es" onclick="setLang('es')">🇪🇸 Español</div>
     </div>
   </div>
   
@@ -927,7 +927,7 @@ footer .footer-logo span { color:var(--rust-orange); }
 
 <!-- KIT ITEMS MODAL -->
 <div class="modal-overlay" id="modal-kit-items">
-  <div class="modal" style="max-width:550px; width:95%;">
+  <div class="modal" style="max-width:780px; width:97%;">
     <button class="modal-close" onclick="closeModal('kit-items')">✕</button>
     <div class="modal-kit-header">
       <img id="kit-modal-image" class="modal-kit-image" src="" alt="" onerror="this.style.display='none'">
@@ -948,7 +948,183 @@ footer .footer-logo span { color:var(--rust-orange); }
 <div class="toast-container" id="toasts"></div>
 
 <script>
-const API = 'https://firethrone-server.onrender.com/api';
+
+// ── I18N ─────────────────────────────────────────────────
+const LANGS = {
+  pt: {
+    flag:'🇧🇷', label:'Português (BR)',
+    nav_home:'Início', nav_servers:'Servidores', nav_store:'Loja VIP',
+    nav_leaderboard:'Ranking', nav_news:'Notícias', nav_admin:'Admin',
+    btn_login:'Entrar', btn_register:'Cadastrar', btn_logout:'Sair',
+    hero_tag:'🔴 Servidores Online',
+    hero_sub:'FireThrone é a rede de servidores de Rust mais competitiva do Brasil. Servidores vanilla e modificados com economia balanceada e comunidade ativa.',
+    hero_btn_servers:'🎮 Ver Servidores', hero_btn_store:'🛒 Loja VIP',
+    stat_players:'Jogadores Online', stat_servers:'Servidores Ativos', stat_uptime:'Disponibilidade',
+    sec_servers:'Servidores', sec_store:'Loja VIP', sec_leaderboard:'Ranking', sec_news:'Notícias', sec_admin:'Administração',
+    filter_vip:'👑 Planos VIP',
+    status_online:'Online', status_offline:'Offline', status_restarting:'Reiniciando',
+    wipe:'Wipe', players:'jogadores', copy_ip:'Copiar IP',
+    buy:'Comprar', free:'Grátis', credits:'créditos', view_items:'📦 Itens', save_price:'Salvar', price_label:'💰 Preço', close:'Fechar',
+    login_title:'Entrar', login_sub:'Acesse sua conta FireThrone', login_field:'Usuário ou Email', login_pass:'Senha', login_btn:'Entrar',
+    login_switch:'Não tem conta?', login_switch_link:'Cadastre-se',
+    reg_title:'Cadastrar', reg_sub:'Crie sua conta e entre para a batalha', reg_user:'Usuário', reg_email:'Email', reg_pass:'Senha', reg_btn:'Criar Conta',
+    reg_switch:'Já tem conta?', reg_switch_link:'Entre aqui',
+    empty_servers:'Nenhum servidor encontrado.', empty_store:'Sem itens disponíveis.',
+    tab_users:'Usuários', tab_servers:'Servidores', get_kit:'Pegar Kit',
+  },
+  pt_pt: {
+    flag:'🇵🇹', label:'Português (PT)',
+    nav_home:'Início', nav_servers:'Servidores', nav_store:'Loja VIP',
+    nav_leaderboard:'Classificação', nav_news:'Notícias', nav_admin:'Admin',
+    btn_login:'Entrar', btn_register:'Registar', btn_logout:'Sair',
+    hero_tag:'🔴 Servidores Online',
+    hero_sub:'FireThrone é a rede de servidores de Rust mais competitiva. Servidores vanilla e modificados com economia equilibrada e comunidade activa.',
+    hero_btn_servers:'🎮 Ver Servidores', hero_btn_store:'🛒 Loja VIP',
+    stat_players:'Jogadores Online', stat_servers:'Servidores Activos', stat_uptime:'Disponibilidade',
+    sec_servers:'Servidores', sec_store:'Loja VIP', sec_leaderboard:'Classificação', sec_news:'Notícias', sec_admin:'Administração',
+    filter_vip:'👑 Planos VIP',
+    status_online:'Online', status_offline:'Offline', status_restarting:'A Reiniciar',
+    wipe:'Wipe', players:'jogadores', copy_ip:'Copiar IP',
+    buy:'Comprar', free:'Grátis', credits:'créditos', view_items:'📦 Itens', save_price:'Guardar', price_label:'💰 Preço', close:'Fechar',
+    login_title:'Entrar', login_sub:'Aceda à sua conta FireThrone', login_field:'Utilizador ou Email', login_pass:'Palavra-passe', login_btn:'Entrar',
+    login_switch:'Não tem conta?', login_switch_link:'Registar',
+    reg_title:'Registar', reg_sub:'Crie a sua conta e entre na batalha', reg_user:'Utilizador', reg_email:'Email', reg_pass:'Palavra-passe', reg_btn:'Criar Conta',
+    reg_switch:'Já tem conta?', reg_switch_link:'Entrar aqui',
+    empty_servers:'Nenhum servidor encontrado.', empty_store:'Sem itens disponíveis.',
+    tab_users:'Utilizadores', tab_servers:'Servidores', get_kit:'Obter Kit',
+  },
+  en: {
+    flag:'🇺🇸', label:'English',
+    nav_home:'Home', nav_servers:'Servers', nav_store:'VIP Store',
+    nav_leaderboard:'Leaderboard', nav_news:'News', nav_admin:'Admin',
+    btn_login:'Login', btn_register:'Register', btn_logout:'Logout',
+    hero_tag:'🔴 Servers Online',
+    hero_sub:'FireThrone is the most competitive Rust server network. Vanilla and modded servers with balanced economy and active community.',
+    hero_btn_servers:'🎮 View Servers', hero_btn_store:'🛒 VIP Store',
+    stat_players:'Online Players', stat_servers:'Active Servers', stat_uptime:'Uptime',
+    sec_servers:'Servers', sec_store:'VIP Store', sec_leaderboard:'Leaderboard', sec_news:'News', sec_admin:'Administration',
+    filter_vip:'👑 VIP Plans',
+    status_online:'Online', status_offline:'Offline', status_restarting:'Restarting',
+    wipe:'Wipe', players:'players', copy_ip:'Copy IP',
+    buy:'Buy', free:'Free', credits:'credits', view_items:'📦 Items', save_price:'Save', price_label:'💰 Price', close:'Close',
+    login_title:'Login', login_sub:'Access your FireThrone account', login_field:'Username or Email', login_pass:'Password', login_btn:'Login',
+    login_switch:"Don't have an account?", login_switch_link:'Register',
+    reg_title:'Register', reg_sub:'Create your account and join the battle', reg_user:'Username', reg_email:'Email', reg_pass:'Password', reg_btn:'Create Account',
+    reg_switch:'Already have an account?', reg_switch_link:'Login here',
+    empty_servers:'No servers found.', empty_store:'No items available.',
+    tab_users:'Users', tab_servers:'Servers', get_kit:'Get Kit',
+  },
+  de: {
+    flag:'🇩🇪', label:'Deutsch',
+    nav_home:'Start', nav_servers:'Server', nav_store:'VIP-Shop',
+    nav_leaderboard:'Rangliste', nav_news:'Neuigkeiten', nav_admin:'Admin',
+    btn_login:'Anmelden', btn_register:'Registrieren', btn_logout:'Abmelden',
+    hero_tag:'🔴 Server Online',
+    hero_sub:'FireThrone ist das wettbewerbsfähigste Rust-Servernetzwerk. Vanilla- und modifizierte Server mit ausgeglichener Wirtschaft und aktiver Community.',
+    hero_btn_servers:'🎮 Server ansehen', hero_btn_store:'🛒 VIP-Shop',
+    stat_players:'Spieler Online', stat_servers:'Aktive Server', stat_uptime:'Verfügbarkeit',
+    sec_servers:'Server', sec_store:'VIP-Shop', sec_leaderboard:'Rangliste', sec_news:'Neuigkeiten', sec_admin:'Administration',
+    filter_vip:'👑 VIP-Pläne',
+    status_online:'Online', status_offline:'Offline', status_restarting:'Neustart',
+    wipe:'Wipe', players:'Spieler', copy_ip:'IP kopieren',
+    buy:'Kaufen', free:'Kostenlos', credits:'Credits', view_items:'📦 Items', save_price:'Speichern', price_label:'💰 Preis', close:'Schließen',
+    login_title:'Anmelden', login_sub:'Auf dein FireThrone-Konto zugreifen', login_field:'Benutzername oder E-Mail', login_pass:'Passwort', login_btn:'Anmelden',
+    login_switch:'Kein Konto?', login_switch_link:'Registrieren',
+    reg_title:'Registrieren', reg_sub:'Konto erstellen und in den Kampf einsteigen', reg_user:'Benutzername', reg_email:'E-Mail', reg_pass:'Passwort', reg_btn:'Konto erstellen',
+    reg_switch:'Bereits ein Konto?', reg_switch_link:'Hier anmelden',
+    empty_servers:'Keine Server gefunden.', empty_store:'Keine Artikel verfügbar.',
+    tab_users:'Benutzer', tab_servers:'Server', get_kit:'Kit holen',
+  },
+  ru: {
+    flag:'🇷🇺', label:'Русский',
+    nav_home:'Главная', nav_servers:'Серверы', nav_store:'VIP Магазин',
+    nav_leaderboard:'Рейтинг', nav_news:'Новости', nav_admin:'Админ',
+    btn_login:'Войти', btn_register:'Регистрация', btn_logout:'Выйти',
+    hero_tag:'🔴 Серверы онлайн',
+    hero_sub:'FireThrone — самая конкурентная сеть серверов Rust. Ванильные и модифицированные серверы со сбалансированной экономикой и активным сообществом.',
+    hero_btn_servers:'🎮 Серверы', hero_btn_store:'🛒 VIP Магазин',
+    stat_players:'Игроки онлайн', stat_servers:'Активных серверов', stat_uptime:'Доступность',
+    sec_servers:'Серверы', sec_store:'VIP Магазин', sec_leaderboard:'Рейтинг', sec_news:'Новости', sec_admin:'Администрация',
+    filter_vip:'👑 VIP Планы',
+    status_online:'Онлайн', status_offline:'Оффлайн', status_restarting:'Перезапуск',
+    wipe:'Вайп', players:'игроков', copy_ip:'Копировать IP',
+    buy:'Купить', free:'Бесплатно', credits:'кредитов', view_items:'📦 Предметы', save_price:'Сохранить', price_label:'💰 Цена', close:'Закрыть',
+    login_title:'Войти', login_sub:'Войдите в свой аккаунт FireThrone', login_field:'Логин или Email', login_pass:'Пароль', login_btn:'Войти',
+    login_switch:'Нет аккаунта?', login_switch_link:'Зарегистрироваться',
+    reg_title:'Регистрация', reg_sub:'Создайте аккаунт и вступите в бой', reg_user:'Имя пользователя', reg_email:'Email', reg_pass:'Пароль', reg_btn:'Создать аккаунт',
+    reg_switch:'Уже есть аккаунт?', reg_switch_link:'Войти',
+    empty_servers:'Серверы не найдены.', empty_store:'Нет доступных товаров.',
+    tab_users:'Пользователи', tab_servers:'Серверы', get_kit:'Получить кит',
+  }
+};
+
+let currentLang = localStorage.getItem('ft_lang') || 'pt';
+
+function t(key) { return (LANGS[currentLang] || LANGS['pt'])[key] || key; }
+
+function applyLang() {
+  const T = LANGS[currentLang] || LANGS['pt'];
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  const setHtml = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
+  set('nav-home', T.nav_home); set('nav-servers', T.nav_servers); set('nav-store', T.nav_store);
+  set('nav-leaderboard', T.nav_leaderboard); set('nav-news', T.nav_news); set('nav-admin', T.nav_admin);
+  set('btn-login', T.btn_login); set('btn-register', T.btn_register); set('btn-logout', T.btn_logout);
+  set('hero-tag', T.hero_tag); set('hero-sub', T.hero_sub);
+  set('hero-btn-servers', T.hero_btn_servers); set('hero-btn-store', T.hero_btn_store);
+  set('stat-players-label', T.stat_players); set('stat-servers-label', T.stat_servers); set('stat-uptime-label', T.stat_uptime);
+  set('sec-servers', T.sec_servers); set('sec-store', T.sec_store); set('sec-lb', T.sec_leaderboard);
+  set('sec-news', T.sec_news); set('sec-admin', T.sec_admin); set('filter-vip', T.filter_vip);
+  set('login-title', T.login_title); set('login-sub', T.login_sub);
+  set('login-field-label', T.login_field); set('login-pass-label', T.login_pass); set('login-btn', T.login_btn);
+  setHtml('login-switch', T.login_switch + ` <a onclick="switchModal('login','register')">${T.login_switch_link}</a>`);
+  set('reg-title', T.reg_title); set('reg-sub', T.reg_sub);
+  set('reg-user-label', T.reg_user); set('reg-email-label', T.reg_email); set('reg-pass-label', T.reg_pass); set('reg-btn', T.reg_btn);
+  setHtml('reg-switch', T.reg_switch + ` <a onclick="switchModal('register','login')">${T.reg_switch_link}</a>`);
+  set('tab-users', T.tab_users); set('tab-servers', T.tab_servers);
+  set('lang-current', T.flag + ' ' + T.label);
+  document.querySelectorAll('.lang-option').forEach(el => el.classList.toggle('active', el.dataset.lang === currentLang));
+  if (window.allStoreItems?.length) renderStore(window.allStoreItems);
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('ft_lang', lang);
+  applyLang();
+  const dd = document.getElementById('lang-dropdown');
+  if(dd) dd.classList.remove('open');
+}
+
+function toggleLangDropdown() {
+  document.getElementById('lang-dropdown').classList.toggle('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.lang-selector')) {
+    const dd = document.getElementById('lang-dropdown');
+    if(dd) dd.classList.remove('open');
+  }
+});
+
+
+// ── KIT IMAGE MAP ─────────────────────────────────────────
+const KIT_IMAGES = {
+  'DAILY':         '/static/kit_images/DAILY.svg',
+  'STEAM GROUP':   '/static/kit_images/STEAM_GROUP.svg',
+  'DISCORD NITRO': '/static/kit_images/DISCORD_NITRO.svg',
+  'DISCORD':       '/static/kit_images/DISCORD.svg',
+  'WIPE':          '/static/kit_images/WIPE.svg',
+  'VIP1':          '/static/kit_images/VIP1.svg',
+  'VIP2':          '/static/kit_images/VIP2.svg',
+  'VIP3':          '/static/kit_images/VIP3.svg',
+  'VIP4':          '/static/kit_images/VIP4.svg',
+};
+function getKitImage(name) {
+  // Tenta match exato, depois uppercase, depois parcial
+  return KIT_IMAGES[name] || KIT_IMAGES[name?.toUpperCase()] || 
+    Object.entries(KIT_IMAGES).find(([k]) => name?.toUpperCase().includes(k))?.[1] || '';
+}
+
+const API = '/api';
 let currentUser = null;
 let allStoreItems = [];
 let lbSort = 'kills';
@@ -1154,7 +1330,7 @@ function renderStore(items) {
   grid.innerHTML = items.map(item => `
     <div class="store-item ${item.featured?'featured':''}" data-category="${item.category}">
       <div class="item-img" style="color:${itemColors[item.category]||'var(--rust-orange)'}">
-        ${item.image ? `<img src="${item.image}" style="width:64px;height:64px;object-fit:contain;" onerror="this.parentElement.innerHTML='${itemEmojis[item.category]||'📦'}'">` : (itemEmojis[item.category]||'📦')}
+        ${(item.image || getKitImage(item.name)) ? `<img src="${item.image || getKitImage(item.name)}" style="width:100%;height:100%;object-fit:contain;padding:8px;" onerror="this.parentElement.innerHTML='👑'">` : '👑'}
       </div>
       <div class="item-body">
         <div class="item-name">${item.name}</div>
@@ -1548,6 +1724,7 @@ function safeParseJSON(str, fallback) {
 
 // ── INIT ──────────────────────────────────────────────────
 async function init() {
+  applyLang();
   await checkAuth();
   loadServers();
   loadNews();
