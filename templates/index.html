@@ -515,80 +515,102 @@ footer .footer-logo span { color:var(--rust-orange); }
 }
 .kit-section-title .section-count {
   font-family: 'Share Tech Mono', monospace;
-  font-size: 0.5rem;
+  font-size: 0.6rem;
   color: var(--text-muted);
   letter-spacing: 1px;
+  margin-left: auto;
 }
 
-/* Clothing: grid that fills width */
+/* Clothing: 8 colunas fixas */
 .kit-section-clothing .kit-items-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-  gap: 0.25rem;
-  padding: 0.3rem;
-  background: rgba(0,0,0,.2);
-  border: 1px solid rgba(255,255,255,.05);
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.3rem;
+  padding: 0.4rem;
+  background: rgba(100,149,237,.04);
+  border: 1px solid rgba(100,149,237,.1);
   border-radius: 4px;
 }
 
-/* Inventory: 6-column grid that fills width */
+/* Inventory: 6 colunas fixas */
 .kit-section-inventory .kit-items-grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 0.25rem;
-  padding: 0.3rem;
-  background: rgba(0,0,0,.2);
+  gap: 0.3rem;
+  padding: 0.4rem;
+  background: rgba(0,0,0,.18);
   border: 1px solid rgba(255,255,255,.05);
   border-radius: 4px;
 }
 
-/* Hotbar: grid that fills width */
+/* Hotbar: 6 colunas fixas */
 .kit-section-hotbar .kit-items-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-  gap: 0.25rem;
-  padding: 0.3rem;
-  background: rgba(0,0,0,.2);
-  border: 1px solid rgba(76,175,80,.1);
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.3rem;
+  padding: 0.4rem;
+  background: rgba(76,175,80,.04);
+  border: 1px solid rgba(76,175,80,.12);
   border-radius: 4px;
 }
 
+/* Card base — aspect-ratio garante todos quadrados iguais */
 .kit-item-card {
-  background: rgba(26,21,16,.9);
+  background: rgba(26,21,16,.95);
   border: 1px solid rgba(255,255,255,.08);
-  border-radius: 3px;
-  padding: 0.2rem;
+  border-radius: 4px;
+  padding: 0.4rem 0.3rem 0.3rem;
   text-align: center;
-  transition: all .2s;
+  transition: all .18s;
   position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
 }
 .kit-item-card:hover {
   border-color: var(--rust-orange);
-  background: rgba(200,68,10,.08);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(0,0,0,.4);
+  background: rgba(200,68,10,.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.5);
+  z-index: 2;
 }
 .kit-item-card img {
-  width: 32px;
-  height: 32px;
+  width: 52px;
+  height: 52px;
+  max-width: 70%;
+  max-height: 55%;
   object-fit: contain;
-  image-rendering: auto;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.6));
+  display: block;
 }
 .kit-item-card .item-label {
-  font-size: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
   color: var(--rust-light);
-  margin-top: 0.05rem;
-  line-height: 1.05;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
 }
 .kit-item-card .item-amount {
-  font-size: 0.55rem;
+  font-size: 0.78rem;
   color: var(--rust-orange);
   font-weight: 700;
   font-family: 'Share Tech Mono', monospace;
+  line-height: 1;
+}
+
+/* Slot vazio */
+.kit-slot-empty {
+  background: rgba(26,21,16,.4);
+  border: 1px dashed rgba(255,255,255,.06);
+  border-radius: 4px;
+  aspect-ratio: 1;
 }
 
 /* Hotbar items get a subtle green tint */
@@ -1458,35 +1480,52 @@ const WEAR_ITEMS = ['metal.facemask','metal.plate.torso','roadsign.jacket','road
   'nightvisiongoggles','hazmatsuit','hazmatsuit.nomadsuit','attire.banditguard',
   'largebackpack','smallbackpack'];
 
-const BELT_ITEMS = ['rifle.ak','rifle.lr300','lmg.m249','rifle.bolt','rifle.semiauto',
-  'smg.thompson','smg.mp5','pistol.semiauto','pistol.revolver','pistol.python',
+// Shortnames com prioridade para hotbar (armas + meds)
+const HOTBAR_PRIORITY_SNS = new Set([
+  'rifle.ak','rifle.lr300','rifle.bolt','rifle.semiauto','lmg.m249','rifle.l96',
+  'smg.thompson','smg.mp5','smg.2',
+  'pistol.semiauto','pistol.revolver','pistol.python','pistol.eoka','pistol.nailgun',
   'shotgun.pump','shotgun.spas12','shotgun.double','shotgun.waterpipe',
-  'crossbow','bow.hunting','bow.compound','rocket.launcher','multiplegrenadelauncher',
-  'syringe.medical','largemedkit','bandage','pickaxe','hatchet','stone.pickaxe',
-  'stone.hatchet','hammer','salvaged.icepick','salvaged.axe','salvaged.sword',
-  'longsword','mace','machete','bone.club','knife.combat','chainsaw','jackhammer',
-  'fun.guitar','fun.trumpet','snowball','torch','supply.signal'];
+  'rocket.launcher','multiplegrenadelauncher','grenade.f1','grenade.beancan','explosive.timed',
+  'crossbow','bow.hunting','bow.compound',
+  'salvaged.sword','longsword','mace','machete','knife.combat','bone.club',
+  'chainsaw','jackhammer',
+  'syringe.medical','largemedkit','bandage',
+  'torch','supply.signal',
+]);
+const HOTBAR_PRIORITY_KEYWORDS = [
+  'rifle','pistol','shotgun','smg','lmg','revolver','launcher','grenade',
+  'crossbow','bow','sword','machete','mace','knife','chainsaw','jackhammer',
+  'syringe','medkit','bandage',
+];
 
-function getItemSection(item) {
-  // 1. Check explicit section field
-  if (item.section && ['Clothing','Inventory','Hotbar'].includes(item.section)) return item.section;
-  // 2. Check Container field from Rust plugin (wear/main/belt)
-  const container = (item.Container || item.container || '').toLowerCase();
-  if (container === 'wear') return 'Clothing';
-  if (container === 'belt') return 'Hotbar';
-  if (container === 'main') return 'Inventory';
-  // 3. Auto-detect by shortname
+function isHotbarPriority(item) {
   const sn = (item.shortname || item.Shortname || '').toLowerCase();
-  if (sn && WEAR_ITEMS.some(w => sn.includes(w))) return 'Clothing';
-  if (sn && BELT_ITEMS.some(b => sn.includes(b))) return 'Hotbar';
-  // 4. Auto-detect by item name as fallback
+  if (sn && HOTBAR_PRIORITY_SNS.has(sn)) return true;
   const name = (item.name || item.Name || '').toLowerCase();
-  const wearKeywords = ['facemask','chest plate','hoodie','pants','kilt','boots','gloves','poncho','vest','helmet','armor','mask','backpack','hazmat'];
-  const beltKeywords = ['rifle','pistol','shotgun','smg','lmg','syringe','medkit','pickaxe','hatchet','sword','axe','machete','chainsaw','jackhammer','bow','crossbow'];
-  if (wearKeywords.some(k => name.includes(k))) return 'Clothing';
-  if (beltKeywords.some(k => name.includes(k))) return 'Hotbar';
-  // 5. Default to Inventory
-  return 'Inventory';
+  return HOTBAR_PRIORITY_KEYWORDS.some(k => name.includes(k));
+}
+
+function classifyKitItems(items) {
+  const HOTBAR_SLOTS = 6;
+  const clothing = [], hotbar = [], inventory = [];
+
+  const wearItems = items.filter(i => (i.Container || i.container || '').toLowerCase() === 'wear'
+    || (!( (i.Container||i.container||'').toLowerCase() ) && WEAR_ITEMS.some(w => (i.shortname||i.Shortname||'').toLowerCase().includes(w))));
+  const beltItems = items.filter(i => (i.Container || i.container || '').toLowerCase() === 'belt');
+  const mainItems = items.filter(i => !wearItems.includes(i) && !beltItems.includes(i));
+
+  clothing.push(...wearItems);
+  hotbar.push(...beltItems);
+
+  const hotbarFree   = Math.max(0, HOTBAR_SLOTS - hotbar.length);
+  const mainPriority = mainItems.filter(i => isHotbarPriority(i));
+  const mainNormal   = mainItems.filter(i => !isHotbarPriority(i));
+
+  hotbar.push(...mainPriority.slice(0, hotbarFree));
+  inventory.push(...mainPriority.slice(hotbarFree), ...mainNormal);
+
+  return { clothing, hotbar, inventory };
 }
 
 function openKitModal(item) {
@@ -1498,44 +1537,50 @@ function openKitModal(item) {
 
   const container = document.getElementById('kit-modal-items');
   if (item.items && item.items.length > 0) {
-    // Classify all items
-    const classified = item.items.map(i => ({ ...i, _section: getItemSection(i) }));
+    const { clothing, hotbar, inventory } = classifyKitItems(item.items);
+    const CLOTHING_SLOTS = 8;
+    const HOTBAR_SLOTS   = 6;
 
-    const sectionConfig = [
-      { key: 'Clothing', icon: '👕', label: 'CLOTHING', cssClass: 'kit-section-clothing', layout: 'row' },
-      { key: 'Inventory', icon: '🎒', label: 'INVENTORY', cssClass: 'kit-section-inventory', layout: 'grid' },
-      { key: 'Hotbar', icon: '⚡', label: 'HOTBAR', cssClass: 'kit-section-hotbar', layout: 'row' }
-    ];
-    
+    function itemCard(i) {
+      const name   = i.name || i.Name || i.shortname || '';
+      const amount = i.amount || i.Amount || 1;
+      const image  = i.image || i.Image || '';
+      return `<div class="kit-item-card" title="${name} x${amount}">
+        <img src="${image}" alt="${name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
+        <div class="item-label">${name}</div>
+        <div class="item-amount">x${Number(amount).toLocaleString()}</div>
+      </div>`;
+    }
+    function emptySlots(n) { return Array(n).fill('<div class="kit-slot-empty"></div>').join(''); }
+
     let html = '';
-    
-    sectionConfig.forEach(sec => {
-      const secItems = classified.filter(i => i._section === sec.key);
-      if (!secItems.length) return;
-      
-      const itemsHtml = secItems.map(i => `
-        <div class="kit-item-card" title="${i.name || i.Name || i.shortname} x${i.amount || i.Amount || 1}">
-          <img src="${i.image || i.Image || ''}" alt="${i.name || i.Name || ''}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
-          <div class="item-label">${i.name || i.Name || i.shortname || ''}</div>
-          <div class="item-amount">x${(i.amount || i.Amount || 1).toLocaleString()}</div>
-        </div>
-      `).join('');
-      
-      html += `
-        <div class="kit-section ${sec.cssClass}">
-          <div class="kit-section-title">
-            ${sec.icon} ${sec.label}
-            <span class="section-count">${secItems.length} ${secItems.length === 1 ? 'ITEM' : 'ITENS'}</span>
-          </div>
-          <div class="${sec.layout === 'grid' ? 'kit-items-grid' : 'kit-items-row'}">
-            ${itemsHtml}
-          </div>
-        </div>
-      `;
-    });
-    
+
+    if (clothing.length) {
+      const empties = Math.max(0, CLOTHING_SLOTS - clothing.length);
+      html += `<div class="kit-section kit-section-clothing">
+        <div class="kit-section-title">👕 CLOTHING<span class="section-count">${clothing.length}/${CLOTHING_SLOTS} SLOTS</span></div>
+        <div class="kit-items-row">${clothing.map(itemCard).join('')}${emptySlots(empties)}</div>
+      </div>`;
+    }
+
+    if (inventory.length) {
+      html += `<div class="kit-section kit-section-inventory">
+        <div class="kit-section-title">🎒 INVENTORY<span class="section-count">${inventory.length} ITENS</span></div>
+        <div class="kit-items-grid">${inventory.map(itemCard).join('')}</div>
+      </div>`;
+    }
+
+    if (hotbar.length) {
+      const empties = Math.max(0, HOTBAR_SLOTS - hotbar.length);
+      html += `<div class="kit-section kit-section-hotbar">
+        <div class="kit-section-title">⚡ HOTBAR<span class="section-count">${hotbar.length}/${HOTBAR_SLOTS} SLOTS</span></div>
+        <div class="kit-items-row">${hotbar.map(itemCard).join('')}${emptySlots(empties)}</div>
+      </div>`;
+    }
+
     container.innerHTML = html;
   } else {
+
     container.innerHTML = '<p style="color:var(--rust-light);text-align:center;padding:2rem 0;">Nenhum item encontrado.</p>';
   }
 
