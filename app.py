@@ -27,9 +27,9 @@ app.secret_key = _secret
 
 # ── SEGURANÇA: cookies de sessão seguros ──────────────────
 app.config.update(
-    SESSION_COOKIE_HTTPONLY   = True,   # JS não consegue ler o cookie
+    SESSION_COOKIE_HTTPONLY   = True,
     SESSION_COOKIE_SECURE     = os.environ.get('FLASK_ENV') != 'development',
-    SESSION_COOKIE_SAMESITE   = 'Lax',  # Proteção básica contra CSRF
+    SESSION_COOKIE_SAMESITE   = 'Lax',
     PERMANENT_SESSION_LIFETIME = timedelta(days=7),
 )
 
@@ -47,7 +47,7 @@ limiter = Limiter(
 
 # ── MONGODB ───────────────────────────────────────────────
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/firethrone')
-client    = MongoClient(MONGO_URI)
+client    = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
 db        = client.get_database()
 
 users_col       = db['users']
@@ -65,18 +65,6 @@ BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
 EMAIL_FROM    = os.environ.get('EMAIL_FROM', 'firethroneserver@gmail.com')
 
 def send_email(to, subject, html_body):
-    """
-    Envia email via Brevo (antigo Sendinblue).
-
-    DIAGNÓSTICO — Se os emails não chegam, verifique:
-    1. BREVO_API_KEY está definida no Render? (Painel > Environment)
-    2. O domínio/email em EMAIL_FROM está verificado na Brevo?
-       → https://app.brevo.com/senders/domain/list
-    3. O email foi para SPAM? Verifique a pasta de spam.
-    4. Veja os logs do servidor — esta função imprime erros detalhados.
-    5. Use o endpoint GET /api/admin/test-email?to=seu@email.com (requer admin logado)
-       para testar o envio sem precisar criar conta.
-    """
     if not BREVO_API_KEY:
         logger.warning('[EMAIL SKIP] BREVO_API_KEY não configurada! '
                        'Defina no painel do Render em Environment Variables.')
@@ -99,9 +87,6 @@ def send_email(to, subject, html_body):
     except urllib.error.HTTPError as e:
         body = e.read().decode()
         logger.error('[EMAIL ERROR] HTTP %s ao enviar para %s: %s', e.code, to, body)
-        # Erros comuns da Brevo:
-        # 401 → BREVO_API_KEY inválida
-        # 400 → EMAIL_FROM não verificado ou payload inválido
         return False
     except Exception as e:
         logger.error('[EMAIL ERROR] %s: %s', type(e).__name__, e)
@@ -141,7 +126,6 @@ def check_password(pw: str, hashed: str) -> bool:
         return False
 
 def safe_oid(value):
-    """Converte string para ObjectId com segurança. Retorna None se inválido."""
     try:
         return ObjectId(value)
     except (InvalidId, TypeError):
@@ -270,7 +254,6 @@ def register():
     if len(password) < 6:
         return jsonify({'error': 'Senha deve ter no mínimo 6 caracteres'}), 400
 
-    # Mensagem genérica para não revelar se o email já existe
     MSG_GENERICO = {'message': 'Se este email não estiver cadastrado, você receberá um link de confirmação em breve. Verifique também a pasta de SPAM.'}
 
     if users_col.find_one({'email': email}):
@@ -304,23 +287,31 @@ def register():
 
     return jsonify(MSG_GENERICO), 200
 
+# ── ✅ NOVO: check-email endpoint ─────────────────────────
+@app.route('/api/auth/check-email')
+@limiter.limit('30 per minute')
+def check_email():
+    """Verifica se um email já está cadastrado. Usado pelo frontend no registro."""
+    email = request.args.get('email', '').strip().lower()
+    if not email or not is_valid_email(email):
+        return jsonify({'exists': False})
+    exists = users_col.find_one({'email': email}, {'_id': 1}) is not None
+    return jsonify({'exists': exists})
+
 @app.route('/api/auth/resend-verification', methods=['POST'])
 @limiter.limit('3 per hour')
 def resend_verification():
-    """Reenvia o email de verificação. Útil quando o email não chega."""
     data  = request.json or {}
     email = data.get('email', '').strip().lower()
     if not email or not is_valid_email(email):
         return jsonify({'error': 'Email inválido'}), 400
 
-    # Mensagem sempre genérica para não revelar existência da conta
     MSG = {'message': 'Se este email estiver cadastrado e não verificado, um novo link foi enviado. Verifique também o SPAM.'}
 
     user = users_col.find_one({'email': email})
     if not user or user.get('email_verified', False):
         return jsonify(MSG), 200
 
-    # Invalidar tokens anteriores
     tokens_col.update_many(
         {'user_id': str(user['_id']), 'type': 'email_verify', 'used': False},
         {'$set': {'used': True}}
@@ -488,7 +479,6 @@ def buy_item():
     if not item:
         return jsonify({'error': 'Item não encontrado'}), 404
 
-    # CORREÇÃO: operação atômica — verifica e debita em um único comando
     updated_user = users_col.find_one_and_update(
         {'_id': uid_oid, 'balance': {'$gte': item['price']}},
         {'$inc': {'balance': -item['price']}},
@@ -698,10 +688,6 @@ def admin_update_store_item(item_id):
 @app.route('/api/admin/test-email')
 @admin_required
 def admin_test_email():
-    """
-    Endpoint de diagnóstico: envia um email de teste para verificar a configuração.
-    Uso: GET /api/admin/test-email?to=seuemail@exemplo.com (precisa estar logado como admin)
-    """
     to = request.args.get('to', '').strip()
     if not to or not is_valid_email(to):
         return jsonify({'error': 'Informe um email válido: ?to=email@exemplo.com'}), 400
@@ -723,7 +709,7 @@ def admin_test_email():
         'email_from':    EMAIL_FROM,
         'site_url':      SITE_URL,
         'message':       'Email enviado! Verifique sua caixa de entrada e pasta de spam.' if ok
-                         else 'Falha ao enviar. Verifique os logs do servidor e as variáveis de ambiente BREVO_API_KEY e EMAIL_FROM.',
+                         else 'Falha ao enviar. Verifique os logs do servidor e as variáveis BREVO_API_KEY e EMAIL_FROM.',
     })
 
 # ── TICKETS ───────────────────────────────────────────────
