@@ -1,11 +1,21 @@
-from flask import Flask, jsonify, request, session, send_from_directory, redirect, url_for
+from flask import Flask, jsonify, request, session, send_from_directory, redirect
 from flask_cors import CORS
-from pymongo import MongoClient
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from pymongo import MongoClient, ReturnDocument
 from bson import ObjectId
-import bcrypt, os, random, secrets, re, json
+from bson.errors import InvalidId
+import bcrypt, os, secrets, re, json, logging
 from datetime import datetime, timedelta
-from urllib.parse import urlencode, parse_qs
+from urllib.parse import urlencode
 import urllib.request
+
+# ── LOGGING ───────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -15,14 +25,30 @@ if not _secret:
     raise RuntimeError('SECRET_KEY não definida. Defina a variável de ambiente SECRET_KEY antes de iniciar.')
 app.secret_key = _secret
 
+# ── SEGURANÇA: cookies de sessão seguros ──────────────────
+app.config.update(
+    SESSION_COOKIE_HTTPONLY   = True,   # JS não consegue ler o cookie
+    SESSION_COOKIE_SECURE     = os.environ.get('FLASK_ENV') != 'development',
+    SESSION_COOKIE_SAMESITE   = 'Lax',  # Proteção básica contra CSRF
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7),
+)
+
 # ── SEGURANÇA: CORS restrito à origem do frontend ─────────
 ALLOWED_ORIGIN = os.environ.get('ALLOWED_ORIGIN', 'https://firethrone-server.onrender.com')
 CORS(app, supports_credentials=True, origins=[ALLOWED_ORIGIN])
 
+# ── RATE LIMITING ─────────────────────────────────────────
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[],
+    storage_uri="memory://"
+)
+
 # ── MONGODB ───────────────────────────────────────────────
 MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/firethrone')
-client = MongoClient(MONGO_URI)
-db = client.get_database()
+client    = MongoClient(MONGO_URI)
+db        = client.get_database()
 
 users_col       = db['users']
 servers_col     = db['servers']
@@ -34,33 +60,52 @@ tickets_col     = db['tickets']
 tokens_col      = db['email_tokens']
 
 # ── EMAIL HELPER (Brevo API) ──────────────────────────────
-SITE_URL       = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
-BREVO_API_KEY  = os.environ.get('BREVO_API_KEY', '')
-EMAIL_FROM     = os.environ.get('EMAIL_FROM', 'firethroneserver@gmail.com')
+SITE_URL      = os.environ.get('SITE_URL', 'https://firethrone-server.onrender.com')
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+EMAIL_FROM    = os.environ.get('EMAIL_FROM', 'firethroneserver@gmail.com')
 
 def send_email(to, subject, html_body):
+    """
+    Envia email via Brevo (antigo Sendinblue).
+
+    DIAGNÓSTICO — Se os emails não chegam, verifique:
+    1. BREVO_API_KEY está definida no Render? (Painel > Environment)
+    2. O domínio/email em EMAIL_FROM está verificado na Brevo?
+       → https://app.brevo.com/senders/domain/list
+    3. O email foi para SPAM? Verifique a pasta de spam.
+    4. Veja os logs do servidor — esta função imprime erros detalhados.
+    5. Use o endpoint GET /api/admin/test-email?to=seu@email.com (requer admin logado)
+       para testar o envio sem precisar criar conta.
+    """
     if not BREVO_API_KEY:
-        print('[EMAIL SKIP] BREVO_API_KEY nao configurada!')
-        return
+        logger.warning('[EMAIL SKIP] BREVO_API_KEY não configurada! '
+                       'Defina no painel do Render em Environment Variables.')
+        return False
     try:
         payload = json.dumps({
-            'sender': {'name': 'FireThrone', 'email': EMAIL_FROM},
-            'to': [{'email': to}],
-            'subject': subject,
+            'sender':      {'name': 'FireThrone', 'email': EMAIL_FROM},
+            'to':          [{'email': to}],
+            'subject':     subject,
             'htmlContent': html_body
         }).encode()
-        req = urllib.request.Request(
+        req  = urllib.request.Request(
             'https://api.brevo.com/v3/smtp/email',
             data=payload,
-            headers={
-                'api-key': BREVO_API_KEY,
-                'Content-Type': 'application/json'
-            }
+            headers={'api-key': BREVO_API_KEY, 'Content-Type': 'application/json'}
         )
         resp = urllib.request.urlopen(req, timeout=10).read()
-        print(f'[EMAIL OK] Enviado para {to}: {resp}')
+        logger.info('[EMAIL OK] Enviado para %s | Resposta: %s', to, resp)
+        return True
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        logger.error('[EMAIL ERROR] HTTP %s ao enviar para %s: %s', e.code, to, body)
+        # Erros comuns da Brevo:
+        # 401 → BREVO_API_KEY inválida
+        # 400 → EMAIL_FROM não verificado ou payload inválido
+        return False
     except Exception as e:
-        print(f'[EMAIL ERROR] {type(e).__name__}: {e}')
+        logger.error('[EMAIL ERROR] %s: %s', type(e).__name__, e)
+        return False
 
 def send_verification_email(to_email, username, token):
     link = f'{SITE_URL}/api/auth/verify-email?token={token}'
@@ -77,66 +122,108 @@ def send_verification_email(to_email, username, token):
             ✅ CONFIRMAR EMAIL
           </a>
         </div>
-        <p style="font-size:13px;color:#7A6550">Este link expira em 24 horas. Se você não criou uma conta, ignore este email.</p>
+        <p style="font-size:13px;color:#7A6550">Este link expira em 24 horas.</p>
+        <p style="font-size:12px;color:#7A6550;word-break:break-all">
+          Se o botão não funcionar, copie e cole este link no navegador:<br>{link}
+        </p>
       </div>
     </div>'''
-    send_email(to_email, '🔥 FireThrone — Confirme seu email', html)
+    return send_email(to_email, '🔥 FireThrone — Confirme seu email', html)
 
-# ── SEGURANÇA: bcrypt para hash de senha ──────────────────
+# ── HELPERS ───────────────────────────────────────────────
 def hash_password(pw: str) -> str:
-    """Gera hash bcrypt com salt automático."""
     return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
 
 def check_password(pw: str, hashed: str) -> bool:
-    """Verifica senha contra hash bcrypt."""
     try:
         return bcrypt.checkpw(pw.encode(), hashed.encode())
     except Exception:
         return False
+
+def safe_oid(value):
+    """Converte string para ObjectId com segurança. Retorna None se inválido."""
+    try:
+        return ObjectId(value)
+    except (InvalidId, TypeError):
+        return None
 
 def fix_id(doc):
     if doc and '_id' in doc:
         doc['id'] = str(doc.pop('_id'))
     return doc
 
-def seed_db():
-    if users_col.count_documents({}) > 0:
-        return
-    users_col.insert_one({
-        'username': 'Admin', 'email': 'admin@firethrone.gg',
-        'password_hash': hash_password('admin123'),
-        'role': 'admin', 'balance': 99999,
-        'avatar': '/static/default_avatar.png',
-        'email_verified': True,
-        'created_at': datetime.utcnow()
-    })
-    servers_col.insert_many([
-        {'name': 'FireThrone - Main', 'ip': '45.33.32.156', 'port': 28015, 'map': 'Procedural Map', 'max_players': 200, 'current_players': 87, 'status': 'online', 'wipe_schedule': 'Monthly', 'modded': False, 'description': 'Servidor principal vanilla.', 'tags': ['vanilla','pvp','monthly']},
-        {'name': 'FireThrone - 2x Solo/Duo', 'ip': '45.33.32.157', 'port': 28015, 'map': 'Barren', 'max_players': 150, 'current_players': 63, 'status': 'online', 'wipe_schedule': 'Bi-Weekly', 'modded': True, 'description': 'Servidor 2x para solo e duo.', 'tags': ['2x','solo','duo']},
-        {'name': 'FireThrone - 5x Build', 'ip': '45.33.32.158', 'port': 28015, 'map': 'Hapis Island', 'max_players': 100, 'current_players': 41, 'status': 'online', 'wipe_schedule': 'Weekly', 'modded': True, 'description': 'Modo criativo com 5x de recursos.', 'tags': ['5x','build']},
-        {'name': 'FireThrone - Battlefield', 'ip': '45.33.32.159', 'port': 28015, 'map': 'Procedural Map', 'max_players': 300, 'current_players': 0, 'status': 'restarting', 'wipe_schedule': 'Weekly', 'modded': True, 'description': 'PvP puro, sem base building.', 'tags': ['pvp','arena']}
-    ])
-    store_col.insert_many([
-        {'name': 'VIP Bronze',   'description': 'Acesso ao kit bronze, prioridade na fila e tag exclusiva.', 'category': 'vip', 'price': 1500, 'featured': False, 'active': True},
-        {'name': 'VIP Prata',    'description': 'Tudo do Bronze + kit prata, home duplo e canal VIP.',       'category': 'vip', 'price': 2900, 'featured': False, 'active': True},
-        {'name': 'VIP Ouro',     'description': 'Tudo do Prata + kit ouro, /tpr ilimitado e skin exclusiva.','category': 'vip', 'price': 4900, 'featured': True,  'active': True},
-        {'name': 'VIP Diamante', 'description': 'Pacote completo. Todos os benefícios + suporte prioritário.','category': 'vip', 'price': 8900, 'featured': True,  'active': True},
-    ])
-    news_col.insert_many([
-        {'title': 'Wipe Mensal — 1° de Março', 'content': 'O wipe mensal acontecerá no dia 1° de Março às 15h (BRT).', 'author_name': 'Admin', 'category': 'wipe', 'published': True, 'created_at': datetime.utcnow()},
-        {'title': 'Nova Atualização: Battlefield Server', 'content': 'O servidor Battlefield foi completamente reformulado.', 'author_name': 'Admin', 'category': 'update', 'published': True, 'created_at': datetime.utcnow()},
-        {'title': 'Evento: Raid Weekend', 'content': 'Este fim de semana os custos de explosivos foram reduzidos em 50%.', 'author_name': 'Admin', 'category': 'event', 'published': True, 'created_at': datetime.utcnow()},
-    ])
-    print('Banco populado com dados iniciais!')
+def is_valid_email(email):
+    return bool(re.match(r'^[^\@\s]+@[^\@\s]+\.[^\@\s]+$', email))
 
-# ── SEGURANÇA: setup_admin lê credenciais apenas de env vars ──
+VALID_ROLES = {'player', 'vip', 'admin'}
+MAX_NAME    = 50
+MAX_SUBJECT = 120
+MAX_MESSAGE = 2000
+
+# ── DECORADOR ADMIN ───────────────────────────────────────
+from functools import wraps
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        uid = session.get('user_id')
+        if not uid:
+            return jsonify({'error': 'Acesso negado'}), 403
+        oid = safe_oid(uid)
+        if not oid:
+            return jsonify({'error': 'Sessão inválida'}), 403
+        user = users_col.find_one({'_id': oid, 'role': 'admin'})
+        if not user:
+            return jsonify({'error': 'Acesso negado'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+# ── SEED ──────────────────────────────────────────────────
+def seed_db():
+    if users_col.count_documents({}) == 0:
+        users_col.insert_one({
+            'username': 'Admin', 'email': 'admin@firethrone.gg',
+            'password_hash': hash_password('admin123'),
+            'role': 'admin', 'balance': 99999,
+            'avatar': '/static/default_avatar.png',
+            'email_verified': True,
+            'created_at': datetime.utcnow()
+        })
+        logger.info('Usuário Admin criado.')
+
+    if servers_col.count_documents({}) == 0:
+        servers_col.insert_many([
+            {'name': 'FireThrone - Main',        'ip': '45.33.32.156', 'port': 28015, 'map': 'Procedural Map', 'max_players': 200, 'current_players': 87, 'status': 'online',     'wipe_schedule': 'Monthly',    'modded': False, 'description': 'Servidor principal vanilla. PvP intenso.', 'tags': ['vanilla','pvp','monthly']},
+            {'name': 'FireThrone - 2x Solo/Duo', 'ip': '45.33.32.157', 'port': 28015, 'map': 'Barren',         'max_players': 150, 'current_players': 63, 'status': 'online',     'wipe_schedule': 'Bi-Weekly',  'modded': True,  'description': 'Servidor 2x para solo e duo.',            'tags': ['2x','solo','duo']},
+            {'name': 'FireThrone - 5x Build',    'ip': '45.33.32.158', 'port': 28015, 'map': 'Hapis Island',   'max_players': 100, 'current_players': 41, 'status': 'online',     'wipe_schedule': 'Weekly',     'modded': True,  'description': 'Modo criativo com 5x de recursos.',       'tags': ['5x','build']},
+            {'name': 'FireThrone - Battlefield', 'ip': '45.33.32.159', 'port': 28015, 'map': 'Procedural Map', 'max_players': 300, 'current_players': 0,  'status': 'restarting', 'wipe_schedule': 'Weekly',     'modded': True,  'description': 'PvP puro, sem base building.',            'tags': ['pvp','arena']},
+        ])
+        logger.info('Servidores iniciais criados.')
+
+    if store_col.count_documents({}) == 0:
+        store_col.insert_many([
+            {'name': 'VIP Bronze',   'description': 'Acesso ao kit bronze, prioridade na fila e tag exclusiva.', 'category': 'vip', 'price': 1500, 'featured': False, 'active': True},
+            {'name': 'VIP Prata',    'description': 'Tudo do Bronze + kit prata, home duplo e canal VIP.',       'category': 'vip', 'price': 2900, 'featured': False, 'active': True},
+            {'name': 'VIP Ouro',     'description': 'Tudo do Prata + kit ouro, /tpr ilimitado e skin exclusiva.','category': 'vip', 'price': 4900, 'featured': True,  'active': True},
+            {'name': 'VIP Diamante', 'description': 'Pacote completo. Todos os benefícios + suporte prioritário.','category': 'vip', 'price': 8900, 'featured': True,  'active': True},
+        ])
+        logger.info('Itens da loja criados.')
+
+    if news_col.count_documents({}) == 0:
+        news_col.insert_many([
+            {'title': 'Wipe Mensal — 1° de Março',       'content': 'O wipe mensal acontecerá no dia 1° de Março às 15h (BRT).', 'author_name': 'Admin', 'category': 'wipe',   'published': True, 'created_at': datetime.utcnow()},
+            {'title': 'Nova Atualização: Battlefield',   'content': 'O servidor Battlefield foi completamente reformulado.',       'author_name': 'Admin', 'category': 'update', 'published': True, 'created_at': datetime.utcnow()},
+            {'title': 'Evento: Raid Weekend',            'content': 'Custos de explosivos reduzidos em 50% neste fim de semana.', 'author_name': 'Admin', 'category': 'event',  'published': True, 'created_at': datetime.utcnow()},
+        ])
+        logger.info('Notícias iniciais criadas.')
+
 def setup_admin_on_start():
     admin_email    = os.environ.get('ADMIN_EMAIL')
     admin_password = os.environ.get('ADMIN_PASSWORD')
     admin_username = os.environ.get('ADMIN_USERNAME', 'Admin')
 
     if not admin_email or not admin_password:
-        print('[AVISO] ADMIN_EMAIL e/ou ADMIN_PASSWORD não definidos. Admin inicial não será criado/atualizado.')
+        logger.warning('[ADMIN] ADMIN_EMAIL/ADMIN_PASSWORD não definidos. Admin não será criado/atualizado.')
         return
 
     users_col.update_one(
@@ -152,7 +239,7 @@ def setup_admin_on_start():
         }},
         upsert=True
     )
-    print(f'[ADMIN] Admin configurado para: {admin_email}')
+    logger.info('[ADMIN] Admin configurado: %s', admin_email)
 
 # ── FRONT-END ─────────────────────────────────────────────
 @app.route('/')
@@ -165,33 +252,32 @@ def health():
     return jsonify({'status': 'ok'}), 200
 
 # ── AUTH ──────────────────────────────────────────────────
-def is_valid_email(email):
-    return bool(re.match(r'^[^\@\s]+@[^\@\s]+\.[^\@\s]+$', email))
-
-# ── SEGURANÇA: check-email removido para evitar enumeração de usuários ──
-# O frontend deve mostrar mensagem genérica em caso de erro no cadastro/login.
-
 @app.route('/api/auth/register', methods=['POST'])
+@limiter.limit('5 per hour')
 def register():
     data      = request.json or {}
-    firstname = data.get('firstname','').strip()
-    lastname  = data.get('lastname','').strip()
-    email     = data.get('email','').strip().lower()
-    password  = data.get('password','')
+    firstname = data.get('firstname', '').strip()
+    lastname  = data.get('lastname', '').strip()
+    email     = data.get('email', '').strip().lower()
+    password  = data.get('password', '')
 
     if not firstname or not lastname or not email or not password:
         return jsonify({'error': 'Preencha todos os campos'}), 400
+    if len(firstname) > MAX_NAME or len(lastname) > MAX_NAME:
+        return jsonify({'error': f'Nome muito longo (máx {MAX_NAME} caracteres)'}), 400
     if not is_valid_email(email):
         return jsonify({'error': 'Email inválido'}), 400
     if len(password) < 6:
         return jsonify({'error': 'Senha deve ter no mínimo 6 caracteres'}), 400
 
-    # SEGURANÇA: mensagem genérica para não confirmar existência do email
+    # Mensagem genérica para não revelar se o email já existe
+    MSG_GENERICO = {'message': 'Se este email não estiver cadastrado, você receberá um link de confirmação em breve. Verifique também a pasta de SPAM.'}
+
     if users_col.find_one({'email': email}):
-        return jsonify({'message': 'Se este email não estiver cadastrado, você receberá um link de confirmação.'}), 200
+        return jsonify(MSG_GENERICO), 200
 
     username = f'{firstname} {lastname}'
-    result = users_col.insert_one({
+    result   = users_col.insert_one({
         'firstname': firstname, 'lastname': lastname,
         'username': username, 'email': email,
         'password_hash': hash_password(password),
@@ -204,49 +290,92 @@ def register():
 
     token = secrets.token_urlsafe(32)
     tokens_col.insert_one({
-        'user_id': uid, 'token': token, 'type': 'email_verify',
+        'user_id':    uid,
+        'token':      token,
+        'type':       'email_verify',
         'expires_at': datetime.utcnow() + timedelta(hours=24),
-        'used': False
+        'used':       False
     })
-    send_verification_email(email, firstname, token)
 
-    return jsonify({'message': 'Se este email não estiver cadastrado, você receberá um link de confirmação.'}), 200
+    ok = send_verification_email(email, firstname, token)
+    if not ok:
+        logger.error('[REGISTER] Email de verificação NÃO enviado para %s. '
+                     'Verifique BREVO_API_KEY e EMAIL_FROM no Render.', email)
+
+    return jsonify(MSG_GENERICO), 200
+
+@app.route('/api/auth/resend-verification', methods=['POST'])
+@limiter.limit('3 per hour')
+def resend_verification():
+    """Reenvia o email de verificação. Útil quando o email não chega."""
+    data  = request.json or {}
+    email = data.get('email', '').strip().lower()
+    if not email or not is_valid_email(email):
+        return jsonify({'error': 'Email inválido'}), 400
+
+    # Mensagem sempre genérica para não revelar existência da conta
+    MSG = {'message': 'Se este email estiver cadastrado e não verificado, um novo link foi enviado. Verifique também o SPAM.'}
+
+    user = users_col.find_one({'email': email})
+    if not user or user.get('email_verified', False):
+        return jsonify(MSG), 200
+
+    # Invalidar tokens anteriores
+    tokens_col.update_many(
+        {'user_id': str(user['_id']), 'type': 'email_verify', 'used': False},
+        {'$set': {'used': True}}
+    )
+
+    token = secrets.token_urlsafe(32)
+    tokens_col.insert_one({
+        'user_id':    str(user['_id']),
+        'token':      token,
+        'type':       'email_verify',
+        'expires_at': datetime.utcnow() + timedelta(hours=24),
+        'used':       False
+    })
+
+    ok = send_verification_email(email, user.get('firstname') or user.get('username', ''), token)
+    logger.info('[RESEND] Email de verificação para %s: %s', email, 'OK' if ok else 'FALHOU')
+
+    return jsonify(MSG), 200
 
 @app.route('/api/auth/verify-email')
 def verify_email():
-    token = request.args.get('token','')
+    token = request.args.get('token', '')
     rec   = tokens_col.find_one({'token': token, 'type': 'email_verify', 'used': False})
     if not rec:
-        return redirect(f'/?already_verified=1')
+        return redirect('/?already_verified=1')
     if rec['expires_at'] < datetime.utcnow():
-        return redirect(f'/?steam_error=token_expired')
+        return redirect('/?steam_error=token_expired')
     tokens_col.update_one({'_id': rec['_id']}, {'$set': {'used': True}})
-    users_col.update_one({'_id': ObjectId(rec['user_id'])}, {'$set': {'email_verified': True}})
-    return redirect(f'/?email_verified=1')
+    oid = safe_oid(rec['user_id'])
+    if oid:
+        users_col.update_one({'_id': oid}, {'$set': {'email_verified': True}})
+    return redirect('/?email_verified=1')
 
 @app.route('/api/auth/login', methods=['POST'])
+@limiter.limit('10 per minute')
 def login():
     data       = request.json or {}
-    identifier = data.get('identifier','').strip().lower()
-    password   = data.get('password','')
+    identifier = data.get('identifier', '').strip().lower()
+    password   = data.get('password', '')
 
-    user = users_col.find_one({
-        '$or': [{'email': identifier}, {'username': identifier}]
-    })
+    user = users_col.find_one({'$or': [{'email': identifier}, {'username': identifier}]})
 
-    # SEGURANÇA: sempre verificar o hash mesmo se usuário não existir (evita timing attack)
-    # e retornar mensagem genérica
     if not user or not check_password(password, user.get('password_hash', '')):
         return jsonify({'error': 'Credenciais inválidas'}), 401
 
     if not user.get('email_verified', False):
-        return jsonify({'error': 'Confirme seu email antes de entrar.', 'need_verify': True}), 403
+        return jsonify({'error': 'Confirme seu email antes de entrar. Não recebeu? Use "Reenviar email" na tela de cadastro.', 'need_verify': True, 'email': user['email']}), 403
 
     session['user_id'] = str(user['_id'])
     return jsonify({'user': {
-        'id': str(user['_id']), 'username': user['username'],
-        'role': user['role'], 'balance': user['balance'],
-        'avatar': user.get('avatar','')
+        'id':       str(user['_id']),
+        'username': user['username'],
+        'role':     user['role'],
+        'balance':  user['balance'],
+        'avatar':   user.get('avatar', '')
     }})
 
 @app.route('/api/auth/logout', methods=['POST'])
@@ -259,8 +388,12 @@ def me():
     uid = session.get('user_id')
     if not uid:
         return jsonify({'user': None})
-    user = users_col.find_one({'_id': ObjectId(uid)}, {'password_hash': 0})
-    return jsonify({'user': fix_id(user)})
+    oid = safe_oid(uid)
+    if not oid:
+        session.clear()
+        return jsonify({'user': None})
+    user = users_col.find_one({'_id': oid}, {'password_hash': 0})
+    return jsonify({'user': fix_id(user) if user else None})
 
 # ── STEAM OPENID ──────────────────────────────────────────
 STEAM_OPENID  = 'https://steamcommunity.com/openid/login'
@@ -306,7 +439,7 @@ def steam_callback():
             p    = data['response']['players'][0]
             username = p.get('personaname', username)
             avatar   = p.get('avatarfull', '')
-        except:
+        except Exception:
             pass
 
     user = users_col.find_one({'steam_id': steam_id})
@@ -329,13 +462,7 @@ def steam_callback():
 @app.route('/api/servers')
 def get_servers():
     servers = list(servers_col.find())
-    result = []
-    for s in servers:
-        s = fix_id(s)
-        if s['status'] == 'online':
-            s['current_players'] = max(0, min(s['current_players'] + random.randint(-5,5), s['max_players']))
-        result.append(s)
-    return jsonify({'servers': result})
+    return jsonify({'servers': [fix_id(s) for s in servers]})
 
 # ── STORE ─────────────────────────────────────────────────
 @app.route('/api/store')
@@ -343,10 +470,50 @@ def get_store():
     items = list(store_col.find({'active': True}).sort([('featured', -1), ('price', 1)]))
     return jsonify({'items': [fix_id(i) for i in items]})
 
+@app.route('/api/store/buy', methods=['POST'])
+def buy_item():
+    uid = session.get('user_id')
+    if not uid:
+        return jsonify({'error': 'Faça login para comprar'}), 401
+
+    data    = request.json or {}
+    item_id = data.get('item_id')
+
+    uid_oid = safe_oid(uid)
+    itm_oid = safe_oid(item_id)
+    if not uid_oid or not itm_oid:
+        return jsonify({'error': 'ID inválido'}), 400
+
+    item = store_col.find_one({'_id': itm_oid, 'active': True})
+    if not item:
+        return jsonify({'error': 'Item não encontrado'}), 404
+
+    # CORREÇÃO: operação atômica — verifica e debita em um único comando
+    updated_user = users_col.find_one_and_update(
+        {'_id': uid_oid, 'balance': {'$gte': item['price']}},
+        {'$inc': {'balance': -item['price']}},
+        return_document=ReturnDocument.AFTER
+    )
+    if not updated_user:
+        return jsonify({'error': 'Saldo insuficiente'}), 400
+
+    purchases_col.insert_one({
+        'user_id':    uid,
+        'item_id':    item_id,
+        'amount_paid': item['price'],
+        'status':     'completed',
+        'created_at': datetime.utcnow()
+    })
+    return jsonify({'message': f'"{item["name"]}" comprado com sucesso!', 'new_balance': updated_user['balance']})
+
+# ── SYNC (Rust → Site) ────────────────────────────────────
+def _check_sync_secret():
+    secret = request.headers.get('X-Sync-Secret', '') or request.args.get('secret', '')
+    return secret == os.environ.get('SYNC_SECRET', '')
+
 @app.route('/api/sync/kits', methods=['POST'])
 def sync_kits():
-    secret = request.headers.get('X-Sync-Secret', '') or request.args.get('secret', '')
-    if secret != os.environ.get('SYNC_SECRET', ''):
+    if not _check_sync_secret():
         return jsonify({'error': 'Não autorizado'}), 401
     data = request.json
     if not data or 'kits' not in data:
@@ -369,15 +536,15 @@ def sync_kits():
         final_price = existing.get('price', price)
         store_col.update_one(
             {'name': name, 'category': 'vip'},
-            {'$set': {'description': desc, 'price': final_price, 'image': final_image, 'active': True, 'category': 'vip', 'featured': False, 'items': items}},
+            {'$set': {'description': desc, 'price': final_price, 'image': final_image,
+                      'active': True, 'category': 'vip', 'featured': False, 'items': items}},
             upsert=True
         )
-    return jsonify({'message': f'{len(kits)} kits sincronizados com sucesso!'})
+    return jsonify({'message': f'{len(kits)} kits sincronizados!'})
 
 @app.route('/api/sync/kits/items', methods=['POST'])
 def sync_kit_items():
-    secret = request.headers.get('X-Sync-Secret', '') or request.args.get('secret', '')
-    if secret != os.environ.get('SYNC_SECRET', ''):
+    if not _check_sync_secret():
         return jsonify({'error': 'Não autorizado'}), 401
     kit_name = request.args.get('kit', '')
     if not kit_name:
@@ -385,23 +552,20 @@ def sync_kit_items():
     data = request.json
     if not data or 'items' not in data:
         return jsonify({'error': 'Dados inválidos'}), 400
-    store_col.update_one(
-        {'name': kit_name, 'category': 'vip'},
-        {'$set': {'items': data['items']}}
-    )
+    store_col.update_one({'name': kit_name, 'category': 'vip'}, {'$set': {'items': data['items']}})
     return jsonify({'message': f'Itens do kit {kit_name} atualizados!'})
 
 @app.route('/api/sync/kits/items/batch', methods=['POST'])
 def sync_kit_items_batch():
-    secret = request.headers.get('X-Sync-Secret', '') or request.args.get('secret', '')
-    if secret != os.environ.get('SYNC_SECRET', ''):
+    if not _check_sync_secret():
         return jsonify({'error': 'Não autorizado'}), 401
     data = request.json
     if not data or 'items' not in data:
         return jsonify({'error': 'Dados inválidos'}), 400
     for item in data['items']:
         kit_name  = item.get('kit', '')
-        if not kit_name: continue
+        if not kit_name:
+            continue
         shortname = item.get('shortname', '')
         name      = item.get('name', shortname)
         amount    = item.get('amount', 1)
@@ -412,41 +576,22 @@ def sync_kit_items_batch():
         )
     return jsonify({'message': f'{len(data["items"])} itens processados'})
 
-@app.route('/api/store/buy', methods=['POST'])
-def buy_item():
-    uid = session.get('user_id')
-    if not uid:
-        return jsonify({'error': 'Faça login para comprar'}), 401
-    data    = request.json
-    item_id = data.get('item_id')
-    item    = store_col.find_one({'_id': ObjectId(item_id), 'active': True})
-    user    = users_col.find_one({'_id': ObjectId(uid)})
-    if not item:
-        return jsonify({'error': 'Item não encontrado'}), 404
-    if user['balance'] < item['price']:
-        return jsonify({'error': 'Saldo insuficiente'}), 400
-    users_col.update_one({'_id': ObjectId(uid)}, {'$inc': {'balance': -item['price']}})
-    purchases_col.insert_one({'user_id': uid, 'item_id': item_id, 'amount_paid': item['price'], 'status': 'completed', 'created_at': datetime.utcnow()})
-    new_balance = users_col.find_one({'_id': ObjectId(uid)})['balance']
-    return jsonify({'message': f'"{item["name"]}" comprado com sucesso!', 'new_balance': new_balance})
-
 # ── LEADERBOARD ───────────────────────────────────────────
 @app.route('/api/leaderboard')
 def get_leaderboard():
     sort_by = request.args.get('sort', 'kills')
-    if sort_by not in ['kills','deaths','hours_played','resources_gathered','raids_won']:
+    if sort_by not in ['kills', 'deaths', 'hours_played', 'resources_gathered', 'raids_won']:
         sort_by = 'kills'
-    rows = list(leaderboard_col.find().sort(sort_by, -1).limit(50))
+    rows   = list(leaderboard_col.find().sort(sort_by, -1).limit(50))
     result = []
     for r in rows:
-        try:
-            user = users_col.find_one({'_id': ObjectId(r['user_id'])}, {'username':1,'avatar':1,'role':1})
+        oid = safe_oid(r.get('user_id'))
+        if oid:
+            user = users_col.find_one({'_id': oid}, {'username': 1, 'avatar': 1, 'role': 1})
             if user:
                 r['username'] = user['username']
-                r['avatar']   = user.get('avatar','')
-                r['role']     = user.get('role','player')
-        except:
-            pass
+                r['avatar']   = user.get('avatar', '')
+                r['role']     = user.get('role', 'player')
         result.append(fix_id(r))
     return jsonify({'leaderboard': result})
 
@@ -457,96 +602,149 @@ def get_news():
     return jsonify({'news': [fix_id(n) for n in news]})
 
 # ── ADMIN ─────────────────────────────────────────────────
-def require_admin():
-    uid = session.get('user_id')
-    if not uid:
-        return None
-    return users_col.find_one({'_id': ObjectId(uid), 'role': 'admin'})
-
 @app.route('/api/admin/stats')
+@admin_required
 def admin_stats():
-    if not require_admin():
-        return jsonify({'error': 'Acesso negado'}), 403
     total_users     = users_col.count_documents({})
     total_purchases = purchases_col.count_documents({'status': 'completed'})
-    revenue_agg     = list(purchases_col.aggregate([{'$match': {'status':'completed'}}, {'$group': {'_id': None, 'total': {'$sum': '$amount_paid'}}}]))
-    total_revenue   = revenue_agg[0]['total'] if revenue_agg else 0
-    online_servers  = servers_col.count_documents({'status': 'online'})
-    players_agg     = list(servers_col.aggregate([{'$match': {'status':'online'}}, {'$group': {'_id': None, 'total': {'$sum': '$current_players'}}}]))
-    total_players   = players_agg[0]['total'] if players_agg else 0
-    recent_users    = list(users_col.find({}, {'password_hash': 0}).sort('created_at', -1).limit(10))
+    revenue_agg     = list(purchases_col.aggregate([
+        {'$match': {'status': 'completed'}},
+        {'$group': {'_id': None, 'total': {'$sum': '$amount_paid'}}}
+    ]))
+    total_revenue  = revenue_agg[0]['total'] if revenue_agg else 0
+    online_servers = servers_col.count_documents({'status': 'online'})
+    players_agg    = list(servers_col.aggregate([
+        {'$match': {'status': 'online'}},
+        {'$group': {'_id': None, 'total': {'$sum': '$current_players'}}}
+    ]))
+    total_players = players_agg[0]['total'] if players_agg else 0
+    recent_users  = list(users_col.find({}, {'password_hash': 0}).sort('created_at', -1).limit(10))
     return jsonify({
-        'stats': {'total_users': total_users, 'total_purchases': total_purchases, 'total_revenue': total_revenue, 'online_servers': online_servers, 'total_players': total_players},
+        'stats': {
+            'total_users':     total_users,
+            'total_purchases': total_purchases,
+            'total_revenue':   total_revenue,
+            'online_servers':  online_servers,
+            'total_players':   total_players,
+        },
         'recent_users': [fix_id(u) for u in recent_users]
     })
 
 @app.route('/api/admin/users')
+@admin_required
 def admin_users():
-    if not require_admin():
-        return jsonify({'error': 'Acesso negado'}), 403
     users = list(users_col.find({}, {'password_hash': 0}).sort('created_at', -1))
     return jsonify({'users': [fix_id(u) for u in users]})
 
 @app.route('/api/admin/users/<uid>', methods=['PUT'])
+@admin_required
 def update_user(uid):
-    if not require_admin():
-        return jsonify({'error': 'Acesso negado'}), 403
-    d = request.json
-    users_col.update_one({'_id': ObjectId(uid)}, {'$set': {'role': d['role'], 'balance': d['balance']}})
+    oid = safe_oid(uid)
+    if not oid:
+        return jsonify({'error': 'ID inválido'}), 400
+    d       = request.json or {}
+    role    = d.get('role')
+    balance = d.get('balance')
+    if role not in VALID_ROLES:
+        return jsonify({'error': f'Role inválida. Use: {", ".join(VALID_ROLES)}'}), 400
+    if not isinstance(balance, int) or balance < 0:
+        return jsonify({'error': 'Balance deve ser um número inteiro positivo'}), 400
+    users_col.update_one({'_id': oid}, {'$set': {'role': role, 'balance': balance}})
     return jsonify({'message': 'Usuário atualizado!'})
 
 @app.route('/api/admin/servers', methods=['GET', 'POST', 'PUT'])
+@admin_required
 def admin_servers():
-    if not require_admin():
-        return jsonify({'error': 'Acesso negado'}), 403
     if request.method == 'GET':
         servers = list(servers_col.find())
         return jsonify({'servers': [fix_id(s) for s in servers]})
     if request.method == 'POST':
-        d = request.json
-        servers_col.insert_one({'name': d['name'], 'ip': d['ip'], 'port': d['port'], 'map': d.get('map','Procedural Map'), 'max_players': d.get('max_players',200), 'current_players': 0, 'status': d.get('status','online'), 'wipe_schedule': d.get('wipe_schedule','Monthly'), 'modded': d.get('modded',False), 'description': d.get('description',''), 'tags': []})
+        d = request.json or {}
+        servers_col.insert_one({
+            'name': d.get('name', ''), 'ip': d.get('ip', ''), 'port': d.get('port', 28015),
+            'map': d.get('map', 'Procedural Map'), 'max_players': d.get('max_players', 200),
+            'current_players': 0, 'status': d.get('status', 'online'),
+            'wipe_schedule': d.get('wipe_schedule', 'Monthly'),
+            'modded': d.get('modded', False), 'description': d.get('description', ''), 'tags': []
+        })
         return jsonify({'message': 'Servidor criado!'})
     if request.method == 'PUT':
-        d = request.json
-        servers_col.update_one({'_id': ObjectId(d['id'])}, {'$set': {'name': d['name'], 'status': d['status'], 'current_players': d['current_players']}})
+        d   = request.json or {}
+        oid = safe_oid(d.get('id'))
+        if not oid:
+            return jsonify({'error': 'ID inválido'}), 400
+        servers_col.update_one({'_id': oid}, {'$set': {
+            'name': d.get('name'), 'status': d.get('status'),
+            'current_players': d.get('current_players', 0)
+        }})
         return jsonify({'message': 'Servidor atualizado!'})
 
 @app.route('/api/admin/store/<item_id>', methods=['PUT'])
+@admin_required
 def admin_update_store_item(item_id):
-    if not require_admin():
-        return jsonify({'error': 'Acesso negado'}), 403
-    d = request.json
+    oid = safe_oid(item_id)
+    if not oid:
+        return jsonify({'error': 'ID inválido'}), 400
+    d      = request.json or {}
     update = {}
-    if 'price' in d:
-        update['price'] = int(d['price'])
-    if 'featured' in d:
-        update['featured'] = bool(d['featured'])
-    if 'image' in d:
-        update['image'] = str(d['image'])
+    if 'price'    in d: update['price']    = int(d['price'])
+    if 'featured' in d: update['featured'] = bool(d['featured'])
+    if 'image'    in d: update['image']    = str(d['image'])
     if not update:
         return jsonify({'error': 'Nada para atualizar'}), 400
-    store_col.update_one({'_id': ObjectId(item_id)}, {'$set': update})
+    store_col.update_one({'_id': oid}, {'$set': update})
     return jsonify({'message': 'Item atualizado!'})
 
-# ── SEGURANÇA: /api/admin/setup REMOVIDO ─────────────────
-# Essa rota foi eliminada pois não tinha autenticação e permitia
-# que qualquer pessoa redefinisse o admin. Use as variáveis de
-# ambiente ADMIN_EMAIL e ADMIN_PASSWORD para configurar o admin.
+@app.route('/api/admin/test-email')
+@admin_required
+def admin_test_email():
+    """
+    Endpoint de diagnóstico: envia um email de teste para verificar a configuração.
+    Uso: GET /api/admin/test-email?to=seuemail@exemplo.com (precisa estar logado como admin)
+    """
+    to = request.args.get('to', '').strip()
+    if not to or not is_valid_email(to):
+        return jsonify({'error': 'Informe um email válido: ?to=email@exemplo.com'}), 400
 
-# ── SUPPORT TICKETS ───────────────────────────────────────
+    brevo_key_set = bool(BREVO_API_KEY)
+    html = f'''
+    <div style="font-family:Arial,sans-serif;max-width:480px;background:#0D0B09;color:#D4B896;padding:24px;border-radius:8px">
+      <h2 style="color:#C8440A">🔥 FireThrone — Teste de Email</h2>
+      <p>Se você recebeu este email, a configuração do Brevo está funcionando corretamente!</p>
+      <p><strong>SITE_URL:</strong> {SITE_URL}</p>
+      <p><strong>EMAIL_FROM:</strong> {EMAIL_FROM}</p>
+      <p style="color:#888;font-size:12px">Enviado em: {datetime.utcnow().isoformat()}</p>
+    </div>'''
+
+    ok = send_email(to, '🔥 FireThrone — Teste de Configuração de Email', html)
+    return jsonify({
+        'sent':          ok,
+        'brevo_key_set': brevo_key_set,
+        'email_from':    EMAIL_FROM,
+        'site_url':      SITE_URL,
+        'message':       'Email enviado! Verifique sua caixa de entrada e pasta de spam.' if ok
+                         else 'Falha ao enviar. Verifique os logs do servidor e as variáveis de ambiente BREVO_API_KEY e EMAIL_FROM.',
+    })
+
+# ── TICKETS ───────────────────────────────────────────────
 TICKET_CATEGORIES = ['Compra / Pagamento', 'Problema no servidor', 'Bug / Erro', 'Conta / Acesso', 'Abuso / Report', 'Outro']
 
 @app.route('/api/tickets', methods=['POST'])
+@limiter.limit('10 per hour')
 def create_ticket():
     uid = session.get('user_id')
     if not uid:
         return jsonify({'error': 'Faça login para abrir um ticket'}), 401
-    data     = request.json
+    data     = request.json or {}
     subject  = (data.get('subject') or '').strip()
     category = (data.get('category') or '').strip()
     message  = (data.get('message') or '').strip()
     if not subject or not message or not category:
         return jsonify({'error': 'Preencha todos os campos'}), 400
+    if len(subject) > MAX_SUBJECT:
+        return jsonify({'error': f'Assunto muito longo (máx {MAX_SUBJECT} caracteres)'}), 400
+    if len(message) > MAX_MESSAGE:
+        return jsonify({'error': f'Mensagem muito longa (máx {MAX_MESSAGE} caracteres)'}), 400
     if category not in TICKET_CATEGORIES:
         return jsonify({'error': 'Categoria inválida'}), 400
     ticket_id = tickets_col.insert_one({
@@ -566,7 +764,8 @@ def list_tickets():
     uid = session.get('user_id')
     if not uid:
         return jsonify({'error': 'Não autenticado'}), 401
-    user = users_col.find_one({'_id': ObjectId(uid)})
+    oid  = safe_oid(uid)
+    user = users_col.find_one({'_id': oid}) if oid else None
     if user and user.get('role') == 'admin':
         status_filter = request.args.get('status')
         query = {}
@@ -579,9 +778,9 @@ def list_tickets():
     for t in tickets:
         t = fix_id(t)
         try:
-            u = users_col.find_one({'_id': ObjectId(t['user_id'])}, {'username': 1})
+            u = users_col.find_one({'_id': safe_oid(t['user_id'])}, {'username': 1})
             t['username'] = u['username'] if u else 'Desconhecido'
-        except:
+        except Exception:
             t['username'] = 'Desconhecido'
         t['message_count'] = len(t.get('messages', []))
         t.pop('messages', None)
@@ -593,9 +792,13 @@ def get_ticket(ticket_id):
     uid = session.get('user_id')
     if not uid:
         return jsonify({'error': 'Não autenticado'}), 401
-    user     = users_col.find_one({'_id': ObjectId(uid)})
+    tid    = safe_oid(ticket_id)
+    oid    = safe_oid(uid)
+    if not tid:
+        return jsonify({'error': 'ID inválido'}), 400
+    user     = users_col.find_one({'_id': oid}) if oid else None
     is_admin = user and user.get('role') == 'admin'
-    ticket   = tickets_col.find_one({'_id': ObjectId(ticket_id)})
+    ticket   = tickets_col.find_one({'_id': tid})
     if not ticket:
         return jsonify({'error': 'Ticket não encontrado'}), 404
     if not is_admin and ticket['user_id'] != uid:
@@ -603,20 +806,20 @@ def get_ticket(ticket_id):
     ticket = fix_id(ticket)
     for msg in ticket.get('messages', []):
         try:
-            u = users_col.find_one({'_id': ObjectId(msg['author_id'])}, {'username': 1, 'role': 1})
+            u = users_col.find_one({'_id': safe_oid(msg['author_id'])}, {'username': 1, 'role': 1})
             msg['username']   = u['username'] if u else 'Desconhecido'
             msg['role']       = u.get('role', 'player') if u else 'player'
-            msg['created_at'] = msg['created_at'].isoformat() if hasattr(msg.get('created_at'), 'isoformat') else str(msg.get('created_at',''))
-        except:
+            msg['created_at'] = msg['created_at'].isoformat() if hasattr(msg.get('created_at'), 'isoformat') else str(msg.get('created_at', ''))
+        except Exception:
             msg['username'] = 'Desconhecido'
             msg['role']     = 'player'
     try:
-        owner = users_col.find_one({'_id': ObjectId(ticket['user_id'])}, {'username': 1})
+        owner = users_col.find_one({'_id': safe_oid(ticket['user_id'])}, {'username': 1})
         ticket['username'] = owner['username'] if owner else 'Desconhecido'
-    except:
+    except Exception:
         ticket['username'] = 'Desconhecido'
-    ticket['created_at'] = ticket['created_at'].isoformat() if hasattr(ticket.get('created_at'), 'isoformat') else str(ticket.get('created_at',''))
-    ticket['updated_at'] = ticket['updated_at'].isoformat() if hasattr(ticket.get('updated_at'), 'isoformat') else str(ticket.get('updated_at',''))
+    ticket['created_at'] = ticket['created_at'].isoformat() if hasattr(ticket.get('created_at'), 'isoformat') else str(ticket.get('created_at', ''))
+    ticket['updated_at'] = ticket['updated_at'].isoformat() if hasattr(ticket.get('updated_at'), 'isoformat') else str(ticket.get('updated_at', ''))
     return jsonify({'ticket': ticket})
 
 @app.route('/api/tickets/<ticket_id>/reply', methods=['POST'])
@@ -624,34 +827,42 @@ def reply_ticket(ticket_id):
     uid = session.get('user_id')
     if not uid:
         return jsonify({'error': 'Não autenticado'}), 401
-    user     = users_col.find_one({'_id': ObjectId(uid)})
+    tid    = safe_oid(ticket_id)
+    oid    = safe_oid(uid)
+    if not tid:
+        return jsonify({'error': 'ID inválido'}), 400
+    user     = users_col.find_one({'_id': oid}) if oid else None
     is_admin = user and user.get('role') == 'admin'
-    ticket   = tickets_col.find_one({'_id': ObjectId(ticket_id)})
+    ticket   = tickets_col.find_one({'_id': tid})
     if not ticket:
         return jsonify({'error': 'Ticket não encontrado'}), 404
     if not is_admin and ticket['user_id'] != uid:
         return jsonify({'error': 'Acesso negado'}), 403
     if ticket['status'] == 'closed' and not is_admin:
         return jsonify({'error': 'Ticket fechado'}), 400
-    data = request.json
+    data = request.json or {}
     text = (data.get('text') or '').strip()
     if not text:
         return jsonify({'error': 'Mensagem vazia'}), 400
+    if len(text) > MAX_MESSAGE:
+        return jsonify({'error': f'Mensagem muito longa (máx {MAX_MESSAGE} caracteres)'}), 400
     msg        = {'author_id': uid, 'author_role': 'admin' if is_admin else 'user', 'text': text, 'created_at': datetime.utcnow()}
     new_status = ticket['status']
     if is_admin and ticket['status'] == 'open':
         new_status = 'in_progress'
     tickets_col.update_one(
-        {'_id': ObjectId(ticket_id)},
+        {'_id': tid},
         {'$push': {'messages': msg}, '$set': {'updated_at': datetime.utcnow(), 'status': new_status}}
     )
     return jsonify({'message': 'Resposta enviada!'})
 
 @app.route('/api/tickets/<ticket_id>/status', methods=['PUT'])
+@admin_required
 def update_ticket_status(ticket_id):
-    if not require_admin():
-        return jsonify({'error': 'Acesso negado'}), 403
-    data     = request.json
+    tid = safe_oid(ticket_id)
+    if not tid:
+        return jsonify({'error': 'ID inválido'}), 400
+    data     = request.json or {}
     status   = data.get('status')
     priority = data.get('priority')
     update   = {'updated_at': datetime.utcnow()}
@@ -659,13 +870,12 @@ def update_ticket_status(ticket_id):
         update['status'] = status
     if priority in ('normal', 'high', 'urgent'):
         update['priority'] = priority
-    tickets_col.update_one({'_id': ObjectId(ticket_id)}, {'$set': update})
+    tickets_col.update_one({'_id': tid}, {'$set': update})
     return jsonify({'message': 'Ticket atualizado!'})
 
 @app.route('/api/admin/tickets/stats')
+@admin_required
 def admin_ticket_stats():
-    if not require_admin():
-        return jsonify({'error': 'Acesso negado'}), 403
     return jsonify({
         'open':        tickets_col.count_documents({'status': 'open'}),
         'in_progress': tickets_col.count_documents({'status': 'in_progress'}),
@@ -677,4 +887,5 @@ if __name__ == '__main__':
     seed_db()
     setup_admin_on_start()
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    app.run(host='0.0.0.0', port=port, debug=debug)

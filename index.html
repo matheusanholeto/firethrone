@@ -1290,15 +1290,22 @@ select.form-input {
 
 <!-- Email verification notice modal -->
 <div class="modal-overlay" id="modal-verify-email">
-  <div class="modal" style="text-align:center;max-width:400px;">
+  <div class="modal" style="text-align:center;max-width:420px;">
     <div style="font-size:3rem;margin-bottom:1rem;">📧</div>
     <div class="modal-title" style="font-size:1.4rem;">Verifique seu Email</div>
-    <div class="modal-sub" style="margin-bottom:1.5rem;">
+    <div class="modal-sub" style="margin-bottom:1rem;">
       Enviamos um link de confirmação para <strong id="verify-email-addr"></strong>.<br>
       Clique no link para ativar sua conta.
     </div>
-    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.5rem;">Não recebeu? Verifique a pasta de spam.</p>
-    <button class="btn btn-outline" onclick="closeModal('verify-email')">Fechar</button>
+    <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:.5rem;">⚠️ Verifique também a pasta de <strong>SPAM / Lixo Eletrônico</strong>.</p>
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.5rem;">O link expira em 24 horas.</p>
+    <div id="resend-msg" style="margin-bottom:.75rem;min-height:1.4rem;font-size:.85rem;"></div>
+    <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="resendVerification()" id="btn-resend-email">
+        🔄 Reenviar Email
+      </button>
+      <button class="btn btn-outline" onclick="closeModal('verify-email')">Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -1562,13 +1569,20 @@ function clearUser() {
   document.getElementById('store-balance').textContent = '—';
 }
 
+let emailCheckTimer = null;
 function checkEmailAvailable(val) {
   const st = document.getElementById('reg-email-status');
-  if (!val) { st.innerHTML = ''; return; }
-  // Validação local de formato (endpoint check-email removido do backend por segurança)
-  const valid = /^[^\@\s]+@[^\@\s]+\.[^\@\s]+$/.test(val);
-  if (!valid) st.innerHTML = '<span style="color:var(--red)">❌ Email inválido</span>';
-  else        st.innerHTML = '<span style="color:var(--green)">✅ Formato válido</span>';
+  if (!val || !val.includes('@')) { st.innerHTML=''; return; }
+  clearTimeout(emailCheckTimer);
+  st.innerHTML = '<span style="color:var(--text-muted)">Verificando...</span>';
+  emailCheckTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(`${API}/auth/check-email?email=${encodeURIComponent(val)}`);
+      const d = await r.json();
+      if (d.exists) st.innerHTML = '<span style="color:var(--red)">❌ Email já cadastrado</span>';
+      else          st.innerHTML = '<span style="color:var(--green)">✅ Email disponível</span>';
+    } catch(e) { st.innerHTML = ''; }
+  }, 600);
 }
 
 function checkPassMatch() {
@@ -1578,6 +1592,31 @@ function checkPassMatch() {
   if (!p2) { st.innerHTML=''; return; }
   if (p1 === p2) st.innerHTML = '<span style="color:var(--green)">✅ Senhas coincidem</span>';
   else           st.innerHTML = '<span style="color:var(--red)">❌ Senhas não coincidem</span>';
+}
+
+async function resendVerification() {
+  const emailEl = document.getElementById('verify-email-addr');
+  const msgEl   = document.getElementById('resend-msg');
+  const btn     = document.getElementById('btn-resend-email');
+  const email   = emailEl.textContent.trim();
+  if (!email) { msgEl.innerHTML = '<span style="color:var(--red)">Email não encontrado. Tente se cadastrar novamente.</span>'; return; }
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+  try {
+    const r = await fetch(`${API}/auth/resend-verification`, {
+      method: 'POST', credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const d = await r.json();
+    msgEl.innerHTML = `<span style="color:var(--green)">✅ ${d.message || 'Email reenviado!'}</span>`;
+    btn.textContent = '✅ Enviado!';
+    setTimeout(() => { btn.textContent = '🔄 Reenviar Email'; btn.disabled = false; }, 30000);
+  } catch(e) {
+    msgEl.innerHTML = '<span style="color:var(--red)">Erro de conexão. Tente novamente.</span>';
+    btn.textContent = '🔄 Reenviar Email';
+    btn.disabled = false;
+  }
 }
 
 async function doLogin() {
@@ -1594,7 +1633,10 @@ async function doLogin() {
     const d = await r.json();
     if (!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
     if (d.need_verify) {
-      msg.innerHTML = '<div class="form-error">⚠️ Confirme seu email antes de entrar. Verifique sua caixa de entrada.</div>';
+      closeModal('login');
+      document.getElementById('verify-email-addr').textContent = d.email || identifier;
+      document.getElementById('resend-msg').innerHTML = '';
+      openModal('verify-email');
       return;
     }
     setUser(d.user);
@@ -1630,6 +1672,7 @@ async function doRegister() {
     if (!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
     closeModal('register');
     document.getElementById('verify-email-addr').textContent = email;
+    document.getElementById('resend-msg').innerHTML = '';
     openModal('verify-email');
   } catch(e) { msg.innerHTML = '<div class="form-error">Erro de conexão com o servidor</div>'; }
 }
@@ -1669,7 +1712,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 // ── SERVERS ───────────────────────────────────────────────
 async function loadServers() {
   try {
-    const r = await fetch(`${API}/servers`, {credentials:'include'});
+    const r = await fetch(`${API}/servers`);
     const d = await r.json();
     renderServers(d.servers);
     renderHeroServers(d.servers);
@@ -1745,7 +1788,7 @@ function copyConnect(ip, port) {
 // ── STORE ─────────────────────────────────────────────────
 async function loadStore() {
   try {
-    const r = await fetch(`${API}/store`, {credentials:'include'});
+    const r = await fetch(`${API}/store`);
     const d = await r.json();
     allStoreItems = d.items;
     const vipItems = allStoreItems.filter(i=>i.category==='vip');
@@ -2102,7 +2145,7 @@ function renderLeaderboard(rows) {
 // ── NEWS ──────────────────────────────────────────────────
 async function loadNews() {
   try {
-    const r = await fetch(`${API}/news`, {credentials:'include'});
+    const r = await fetch(`${API}/news`);
     const d = await r.json();
     renderNews(d.news);
     renderHomeNews(d.news);

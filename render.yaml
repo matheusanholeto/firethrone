@@ -15,7 +15,8 @@ services:
       - key: SYNC_SECRET
         generateValue: true
 
-      # ── PREENCHER NO PAINEL DO RENDER (não colocar aqui) ──
+      # ── PREENCHER NO PAINEL DO RENDER ─────────────────────
+      # Admin inicial do site
       - key: ADMIN_EMAIL
         sync: false
 
@@ -25,22 +26,28 @@ services:
       - key: ADMIN_USERNAME
         sync: false
 
+      # MongoDB Atlas connection string
       - key: MONGO_URI
         sync: false
 
+      # Steam API (opcional, para login via Steam)
       - key: STEAM_API_KEY
         sync: false
 
-      - key: ALLOWED_ORIGIN
-        sync: false
-
+      # URL pública do site (sem barra no final)
+      # Exemplo: https://firethrone-server.onrender.com
       - key: SITE_URL
         sync: false
 
-      - key: EMAIL_USER
+      # CORS: mesma URL do site
+      - key: ALLOWED_ORIGIN
         sync: false
 
-      - key: EMAIL_PASS
+      # ── EMAIL (Brevo / Sendinblue) ─────────────────────────
+      # Chave de API do Brevo: https://app.brevo.com/settings/keys/api
+      # IMPORTANTE: O email em EMAIL_FROM precisa estar verificado no Brevo!
+      # Verificar em: https://app.brevo.com/senders/domain/list
+      - key: BREVO_API_KEY
         sync: false
 
       - key: EMAIL_FROM
