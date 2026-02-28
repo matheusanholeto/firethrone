@@ -345,8 +345,27 @@ main { padding-top:64px; }
   font-family:'Share Tech Mono'; font-size:.55rem; letter-spacing:1px;
   padding:.1rem .35rem; border-radius:2px; margin-left:.4rem;
 }
-.role-badge.vip { background:rgba(200,68,10,.2); color:var(--rust-orange); border:1px solid rgba(200,68,10,.3); }
-.role-badge.admin { background:rgba(139,26,26,.3); color:#ff6b6b; border:1px solid rgba(139,26,26,.4); }
+/* ── ROLE BADGE VARIANTS (merged from roles_panel) ── */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  font-family: 'Share Tech Mono', monospace;
+  vertical-align: middle;
+}
+.role-badge.owner     { color: #FFD700; background: rgba(255,215,0,.12); }
+.role-badge.admin     { color: #ff6b6b; background: rgba(255,107,107,.12); }
+.role-badge.moderator { color: #4FC3F7; background: rgba(79,195,247,.12); }
+.role-badge.vip       { color: #C8440A; background: rgba(200,68,10,.12); }
+.role-badge.player    { color: #7A6550; background: rgba(122,101,80,.12); }
+
 .lb-num { font-family:'Share Tech Mono'; font-size:.85rem; }
 
 /* ── AUTH MODAL ── */
@@ -490,333 +509,131 @@ footer .footer-logo span { color:var(--rust-orange); }
 .empty-state .icon { font-size:3rem; margin-bottom:1rem; opacity:.4; }
 .empty-state p { font-size:.9rem; }
 
-/* ── KIT ITEMS MODAL ─────────────────────────────────── */
-.kit-inventory-wrapper {
-  margin-top: 0.3rem;
-}
-
-.kit-section {
-  margin-bottom: 0.4rem;
-}
+/* ── KIT ITEMS MODAL ── */
+.kit-inventory-wrapper { margin-top: 0.3rem; }
+.kit-section { margin-bottom: 0.4rem; }
 .kit-section:last-child { margin-bottom: 0; }
-
 .kit-section-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 0.9rem;
-  letter-spacing: 2px;
-  color: #fff;
-  padding: 0.2rem 0.5rem;
-  margin-bottom: 0.3rem;
+  font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem; letter-spacing: 2px; color: #fff;
+  padding: 0.2rem 0.5rem; margin-bottom: 0.3rem;
   background: linear-gradient(90deg, rgba(200,68,10,.2), transparent);
   border-left: 3px solid var(--rust-orange);
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  display: flex; align-items: center; gap: 0.4rem;
 }
 .kit-section-title .section-count {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.6rem;
-  color: var(--text-muted);
-  letter-spacing: 1px;
-  margin-left: auto;
+  font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--text-muted);
+  letter-spacing: 1px; margin-left: auto;
 }
-
-/* Clothing: 8 colunas fixas */
 .kit-section-clothing .kit-items-row {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 0.3rem;
-  padding: 0.4rem;
-  background: rgba(100,149,237,.04);
-  border: 1px solid rgba(100,149,237,.1);
-  border-radius: 4px;
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.3rem; padding: 0.4rem;
+  background: rgba(100,149,237,.04); border: 1px solid rgba(100,149,237,.1); border-radius: 4px;
 }
-
-/* Inventory: 6 colunas fixas */
 .kit-section-inventory .kit-items-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.3rem;
-  padding: 0.4rem;
-  background: rgba(0,0,0,.18);
-  border: 1px solid rgba(255,255,255,.05);
-  border-radius: 4px;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.3rem; padding: 0.4rem;
+  background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.05); border-radius: 4px;
 }
-
-/* Hotbar: 6 colunas fixas */
 .kit-section-hotbar .kit-items-row {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.3rem;
-  padding: 0.4rem;
-  background: rgba(76,175,80,.04);
-  border: 1px solid rgba(76,175,80,.12);
-  border-radius: 4px;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.3rem; padding: 0.4rem;
+  background: rgba(76,175,80,.04); border: 1px solid rgba(76,175,80,.12); border-radius: 4px;
 }
-
-/* Card base — aspect-ratio garante todos quadrados iguais */
 .kit-item-card {
-  background: rgba(26,21,16,.95);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 4px;
-  padding: 0.4rem 0.3rem 0.3rem;
-  text-align: center;
-  transition: all .18s;
-  position: relative;
-  aspect-ratio: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-width: 0;
+  background: rgba(26,21,16,.95); border: 1px solid rgba(255,255,255,.08);
+  border-radius: 4px; padding: 0.4rem 0.3rem 0.3rem; text-align: center;
+  transition: all .18s; position: relative; aspect-ratio: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; min-width: 0;
 }
 .kit-item-card:hover {
-  border-color: var(--rust-orange);
-  background: rgba(200,68,10,.1);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0,0,0,.5);
-  z-index: 2;
+  border-color: var(--rust-orange); background: rgba(200,68,10,.1);
+  transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.5); z-index: 2;
 }
 .kit-item-card img {
-  width: 52px;
-  height: 52px;
-  max-width: 70%;
-  max-height: 55%;
-  object-fit: contain;
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,.6));
-  display: block;
+  width: 52px; height: 52px; max-width: 70%; max-height: 55%;
+  object-fit: contain; filter: drop-shadow(0 1px 3px rgba(0,0,0,.6)); display: block;
 }
 .kit-item-card .item-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--rust-light);
-  line-height: 1.15;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
+  font-size: 0.75rem; font-weight: 700; color: var(--rust-light); line-height: 1.15;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
 }
 .kit-item-card .item-amount {
-  font-size: 0.78rem;
-  color: var(--rust-orange);
-  font-weight: 700;
-  font-family: 'Share Tech Mono', monospace;
-  line-height: 1;
+  font-size: 0.78rem; color: var(--rust-orange); font-weight: 700;
+  font-family: 'Share Tech Mono', monospace; line-height: 1;
 }
-
-/* Slot vazio */
 .kit-slot-empty {
-  background: rgba(26,21,16,.4);
-  border: 1px dashed rgba(255,255,255,.06);
-  border-radius: 4px;
-  aspect-ratio: 1;
+  background: rgba(26,21,16,.4); border: 1px dashed rgba(255,255,255,.06);
+  border-radius: 4px; aspect-ratio: 1;
 }
-
-/* Hotbar items get a subtle green tint */
-.kit-section-hotbar .kit-item-card {
-  border-color: rgba(76,175,80,.15);
-}
-.kit-section-hotbar .kit-item-card:hover {
-  border-color: var(--green);
-}
-
-/* Clothing items get a subtle blue tint */
-.kit-section-clothing .kit-item-card {
-  border-color: rgba(100,149,237,.12);
-}
-.kit-section-clothing .kit-item-card:hover {
-  border-color: cornflowerblue;
-}
-
-.modal-kit-header {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-bottom: 0.4rem;
-}
+.kit-section-hotbar .kit-item-card { border-color: rgba(76,175,80,.15); }
+.kit-section-hotbar .kit-item-card:hover { border-color: var(--green); }
+.kit-section-clothing .kit-item-card { border-color: rgba(100,149,237,.12); }
+.kit-section-clothing .kit-item-card:hover { border-color: cornflowerblue; }
+.modal-kit-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
 .modal-kit-image {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  border-radius: 6px;
-  background: var(--rust-dim);
-  padding: 4px;
+  width: 48px; height: 48px; object-fit: contain; border-radius: 6px;
+  background: var(--rust-dim); padding: 4px;
 }
 
-
-/* ── ADMIN PRICE EDIT ─────────────────────────────────── */
+/* ── ADMIN PRICE EDIT ── */
 .admin-price-edit {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.5rem;
-  background: rgba(200,68,10,.1);
-  border: 1px dashed rgba(200,68,10,.4);
-  border-radius: 6px;
-  padding: 0.3rem 0.5rem;
+  display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem;
+  background: rgba(200,68,10,.1); border: 1px dashed rgba(200,68,10,.4);
+  border-radius: 6px; padding: 0.3rem 0.5rem;
 }
-.admin-price-edit label {
-  font-size: 0.65rem;
-  color: var(--rust-orange);
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  white-space: nowrap;
-}
-.admin-price-edit input {
-  background: transparent;
-  border: none;
-  color: var(--rust-light);
-  font-size: 0.85rem;
-  font-weight: 700;
-  width: 80px;
-  outline: none;
-}
-.admin-price-edit button {
-  background: var(--rust-orange);
-  border: none;
-  color: #fff;
-  font-size: 0.65rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-}
+.admin-price-edit label { font-size: 0.65rem; color: var(--rust-orange); text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+.admin-price-edit input { background: transparent; border: none; color: var(--rust-light); font-size: 0.85rem; font-weight: 700; width: 80px; outline: none; }
+.admin-price-edit button { background: var(--rust-orange); border: none; color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
 .admin-price-edit button:hover { opacity: .85; }
 
-
-/* ── LANGUAGE SELECTOR ───────────────────────────────── */
-.lang-selector {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
+/* ── LANGUAGE SELECTOR ── */
+.lang-selector { position: relative; display: flex; align-items: center; }
 .lang-btn {
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.1);
-  color: var(--rust-light);
-  padding: 0.3rem 0.6rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  transition: border-color .2s;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+  color: var(--rust-light); padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer;
+  font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem; transition: border-color .2s;
 }
 .lang-btn:hover { border-color: var(--rust-orange); }
 .lang-dropdown {
-  display: none;
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  background: var(--rust-brown);
-  border: 1px solid rgba(200,68,10,.3);
-  border-radius: 8px;
-  min-width: 140px;
-  z-index: 1000;
-  overflow: hidden;
+  display: none; position: absolute; top: calc(100% + 6px); right: 0;
+  background: var(--rust-brown); border: 1px solid rgba(200,68,10,.3);
+  border-radius: 8px; min-width: 140px; z-index: 1000; overflow: hidden;
 }
 .lang-dropdown.open { display: block; }
 .lang-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: var(--rust-light);
-  transition: background .15s;
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;
+  cursor: pointer; font-size: 0.85rem; color: var(--rust-light); transition: background .15s;
 }
 .lang-option:hover { background: rgba(200,68,10,.15); }
 .lang-option.active { color: var(--rust-orange); font-weight: 700; }
 
-
-/* ── ADMIN IMAGE EDIT ────────────────────────────────── */
+/* ── ADMIN IMAGE EDIT ── */
 .admin-img-edit {
-  margin-bottom: 0.4rem;
-  background: rgba(200,68,10,.08);
-  border: 1px dashed rgba(200,68,10,.3);
-  border-radius: 6px;
-  padding: 0.4rem 0.5rem;
+  margin-bottom: 0.4rem; background: rgba(200,68,10,.08);
+  border: 1px dashed rgba(200,68,10,.3); border-radius: 6px; padding: 0.4rem 0.5rem;
 }
-.admin-img-edit label {
-  font-size: 0.65rem;
-  color: var(--rust-orange);
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  display: block;
-  margin-bottom: 0.3rem;
-}
-.admin-img-edit-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
+.admin-img-edit label { font-size: 0.65rem; color: var(--rust-orange); text-transform: uppercase; letter-spacing: .05em; display: block; margin-bottom: 0.3rem; }
+.admin-img-edit-row { display: flex; align-items: center; gap: 0.4rem; }
 .admin-img-edit input[type="text"] {
-  background: rgba(0,0,0,.3);
-  border: 1px solid rgba(255,255,255,.1);
-  color: var(--rust-light);
-  font-size: 0.75rem;
-  padding: 3px 6px;
-  border-radius: 4px;
-  flex: 1;
-  outline: none;
-  min-width: 0;
+  background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.1); color: var(--rust-light);
+  font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; flex: 1; outline: none; min-width: 0;
 }
 .admin-img-edit input[type="file"] { display: none; }
-.admin-img-edit .img-btn {
-  background: var(--rust-orange);
-  border: none;
-  color: #fff;
-  font-size: 0.65rem;
-  padding: 3px 7px;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+.admin-img-edit .img-btn { background: var(--rust-orange); border: none; color: #fff; font-size: 0.65rem; padding: 3px 7px; border-radius: 4px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
 .admin-img-edit .img-btn:hover { opacity: .85; }
-.admin-img-preview {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  border-radius: 4px;
-  background: var(--rust-dim);
-  flex-shrink: 0;
-}
+.admin-img-preview { width: 36px; height: 36px; object-fit: contain; border-radius: 4px; background: var(--rust-dim); flex-shrink: 0; }
 
 /* ── SUPPORT ── */
-.support-tabs {
-  display:flex; gap:.4rem; margin-bottom:1.5rem; flex-wrap:wrap;
-}
+.support-tabs { display:flex; gap:.4rem; margin-bottom:1.5rem; flex-wrap:wrap; }
 .support-tab {
   font-family:'Rajdhani'; font-weight:700; font-size:.82rem; letter-spacing:1.2px;
   text-transform:uppercase; padding:.45rem 1.1rem; border-radius:3px;
   border:1px solid var(--border); background:transparent; color:var(--text-muted);
   cursor:pointer; transition:all .2s;
 }
-.support-tab.active, .support-tab:hover {
-  border-color:var(--rust-orange); color:var(--rust-orange); background:rgba(200,68,10,.1);
-}
-
-.support-form-wrap {
-  max-width:640px;
-  background:rgba(13,11,9,.5); border:1px solid var(--border);
-  border-radius:6px; padding:1.5rem;
-}
-.form-input textarea, textarea.form-input {
-  resize:vertical; min-height:120px; font-family:'Rajdhani',sans-serif; font-size:.9rem;
-  width:100%; background:rgba(0,0,0,.3); border:1px solid var(--border);
-  color:var(--rust-light); border-radius:4px; padding:.6rem .8rem; outline:none;
-  transition:border-color .2s;
-}
+.support-tab.active, .support-tab:hover { border-color:var(--rust-orange); color:var(--rust-orange); background:rgba(200,68,10,.1); }
+.support-form-wrap { max-width:640px; background:rgba(13,11,9,.5); border:1px solid var(--border); border-radius:6px; padding:1.5rem; }
+.form-input textarea, textarea.form-input { resize:vertical; min-height:120px; font-family:'Rajdhani',sans-serif; font-size:.9rem; width:100%; background:rgba(0,0,0,.3); border:1px solid var(--border); color:var(--rust-light); border-radius:4px; padding:.6rem .8rem; outline:none; transition:border-color .2s; }
 textarea.form-input:focus { border-color:var(--rust-orange); }
-select.form-input {
-  appearance:none; cursor:pointer;
-}
-
-/* Ticket card list */
+select.form-input { appearance:none; cursor:pointer; }
 .ticket-card {
   background:linear-gradient(160deg, rgba(42,26,14,.5), rgba(13,11,9,.7));
   border:1px solid var(--border); border-radius:6px; padding:1rem 1.25rem;
@@ -824,105 +641,49 @@ select.form-input {
   display:flex; align-items:center; gap:1rem;
 }
 .ticket-card:hover { border-color:rgba(200,68,10,.4); transform:translateX(3px); }
-.ticket-card .t-status-dot {
-  width:10px; height:10px; border-radius:50%; flex-shrink:0;
-}
+.ticket-card .t-status-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 .t-status-dot.open        { background:var(--rust-orange); box-shadow:0 0 6px var(--rust-orange); }
-.t-status-dot.in_progress { background:var(--yellow);      box-shadow:0 0 6px var(--yellow); animation:blink 2s infinite; }
+.t-status-dot.in_progress { background:var(--yellow); box-shadow:0 0 6px var(--yellow); animation:blink 2s infinite; }
 .t-status-dot.closed      { background:var(--text-muted); }
 .ticket-card .t-main { flex:1; min-width:0; }
 .ticket-card .t-subject { font-weight:700; font-size:.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ticket-card .t-meta { font-size:.75rem; color:var(--text-muted); margin-top:.2rem; display:flex; gap:1rem; flex-wrap:wrap; }
-.ticket-card .t-badge {
-  font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:1px;
-  padding:.15rem .45rem; border-radius:2px; white-space:nowrap; flex-shrink:0;
-}
+.ticket-card .t-badge { font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:1px; padding:.15rem .45rem; border-radius:2px; white-space:nowrap; flex-shrink:0; }
 .t-badge.open        { background:rgba(200,68,10,.15); color:var(--rust-orange); border:1px solid rgba(200,68,10,.3); }
-.t-badge.in_progress { background:rgba(255,193,7,.1);  color:var(--yellow);      border:1px solid rgba(255,193,7,.3); }
+.t-badge.in_progress { background:rgba(255,193,7,.1); color:var(--yellow); border:1px solid rgba(255,193,7,.3); }
 .t-badge.closed      { background:rgba(255,255,255,.04); color:var(--text-muted); border:1px solid var(--border); }
-
-/* Ticket thread */
-.ticket-thread-header {
-  background:linear-gradient(135deg, rgba(200,68,10,.15), rgba(139,26,26,.08));
-  border:1px solid var(--border); border-radius:6px; padding:1.25rem 1.5rem;
-  margin-bottom:1rem;
-}
+.ticket-thread-header { background:linear-gradient(135deg, rgba(200,68,10,.15), rgba(139,26,26,.08)); border:1px solid var(--border); border-radius:6px; padding:1.25rem 1.5rem; margin-bottom:1rem; }
 .ticket-thread-header h3 { font-family:'Bebas Neue'; font-size:1.4rem; letter-spacing:2px; margin-bottom:.5rem; }
 .ticket-thread-meta { display:flex; gap:1.5rem; font-size:.8rem; color:var(--text-muted); flex-wrap:wrap; }
-
-.ticket-admin-controls {
-  display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.75rem; padding-top:.75rem;
-  border-top:1px solid var(--border);
-}
-.ticket-admin-controls select {
-  font-family:'Rajdhani'; font-size:.8rem; font-weight:700; letter-spacing:1px;
-  background:rgba(0,0,0,.3); border:1px solid var(--border); color:var(--rust-light);
-  padding:.3rem .6rem; border-radius:3px; cursor:pointer;
-}
-
+.ticket-admin-controls { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.75rem; padding-top:.75rem; border-top:1px solid var(--border); }
+.ticket-admin-controls select { font-family:'Rajdhani'; font-size:.8rem; font-weight:700; letter-spacing:1px; background:rgba(0,0,0,.3); border:1px solid var(--border); color:var(--rust-light); padding:.3rem .6rem; border-radius:3px; cursor:pointer; }
 .ticket-messages { display:flex; flex-direction:column; gap:.6rem; margin-bottom:1rem; }
-.ticket-msg {
-  display:flex; gap:.75rem; align-items:flex-start;
-}
+.ticket-msg { display:flex; gap:.75rem; align-items:flex-start; }
 .ticket-msg.is-admin { flex-direction:row-reverse; }
-.ticket-msg .msg-avatar {
-  width:34px; height:34px; border-radius:50%; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:.9rem; font-weight:700;
-}
+.ticket-msg .msg-avatar { width:34px; height:34px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.9rem; font-weight:700; }
 .ticket-msg.is-user  .msg-avatar { background:linear-gradient(135deg, var(--rust-metal), #2a2520); border:1px solid var(--border); }
 .ticket-msg.is-admin .msg-avatar { background:linear-gradient(135deg, var(--rust-orange), var(--rust-red)); }
-.ticket-msg .msg-bubble {
-  max-width:75%; background:rgba(26,21,16,.9); border:1px solid var(--border);
-  border-radius:6px; padding:.7rem .9rem;
-}
-.ticket-msg.is-admin .msg-bubble {
-  background:rgba(200,68,10,.1); border-color:rgba(200,68,10,.3);
-}
-.msg-bubble .msg-author {
-  font-size:.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase;
-  margin-bottom:.3rem;
-}
+.ticket-msg .msg-bubble { max-width:75%; background:rgba(26,21,16,.9); border:1px solid var(--border); border-radius:6px; padding:.7rem .9rem; }
+.ticket-msg.is-admin .msg-bubble { background:rgba(200,68,10,.1); border-color:rgba(200,68,10,.3); }
+.msg-bubble .msg-author { font-size:.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:.3rem; }
 .ticket-msg.is-admin .msg-author { color:var(--rust-orange); }
 .ticket-msg.is-user  .msg-author { color:var(--text-muted); }
 .msg-bubble .msg-text { font-size:.9rem; line-height:1.55; color:var(--rust-light); white-space:pre-wrap; }
 .msg-bubble .msg-time { font-size:.65rem; color:var(--text-muted); margin-top:.35rem; text-align:right; }
-
-.ticket-reply-box {
-  background:rgba(13,11,9,.5); border:1px solid var(--border);
-  border-radius:6px; padding:1rem;
-}
-.ticket-reply-box textarea {
-  width:100%; background:rgba(0,0,0,.3); border:1px solid var(--border);
-  color:var(--rust-light); border-radius:4px; padding:.6rem .8rem;
-  font-family:'Rajdhani'; font-size:.9rem; outline:none; resize:vertical;
-  min-height:80px; transition:border-color .2s;
-}
+.ticket-reply-box { background:rgba(13,11,9,.5); border:1px solid var(--border); border-radius:6px; padding:1rem; }
+.ticket-reply-box textarea { width:100%; background:rgba(0,0,0,.3); border:1px solid var(--border); color:var(--rust-light); border-radius:4px; padding:.6rem .8rem; font-family:'Rajdhani'; font-size:.9rem; outline:none; resize:vertical; min-height:80px; transition:border-color .2s; }
 .ticket-reply-box textarea:focus { border-color:var(--rust-orange); }
 .ticket-reply-actions { display:flex; justify-content:flex-end; gap:.5rem; margin-top:.6rem; }
-
-/* Admin stats bar */
-.support-admin-stats {
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:.75rem; margin-bottom:1.25rem;
-}
-.support-stat-card {
-  background:rgba(13,11,9,.6); border:1px solid var(--border); border-radius:6px;
-  padding:.85rem; text-align:center;
-}
+.support-admin-stats { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.75rem; margin-bottom:1.25rem; }
+.support-stat-card { background:rgba(13,11,9,.6); border:1px solid var(--border); border-radius:6px; padding:.85rem; text-align:center; }
 .support-stat-card .s-num { font-family:'Bebas Neue'; font-size:1.8rem; color:var(--rust-orange); line-height:1; }
 .support-stat-card .s-label { font-size:.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-top:.2rem; }
-
 .support-filter-row { display:flex; gap:.4rem; margin-bottom:1rem; flex-wrap:wrap; }
-
-/* Priority badges */
-.priority-badge {
-  font-family:'Share Tech Mono'; font-size:.55rem; letter-spacing:1px;
-  padding:.1rem .35rem; border-radius:2px;
-}
+.priority-badge { font-family:'Share Tech Mono'; font-size:.55rem; letter-spacing:1px; padding:.1rem .35rem; border-radius:2px; }
 .priority-badge.normal { background:rgba(255,255,255,.05); color:var(--text-muted); border:1px solid var(--border); }
 .priority-badge.high   { background:rgba(255,193,7,.1); color:var(--yellow); border:1px solid rgba(255,193,7,.3); }
 .priority-badge.urgent { background:rgba(244,67,54,.15); color:#f44336; border:1px solid rgba(244,67,54,.3); }
+
 /* ── AUTH STEAM ── */
 .btn-steam {
   display:flex; align-items:center; justify-content:center; gap:.6rem;
@@ -934,14 +695,53 @@ select.form-input {
   transition:all .2s; margin-bottom:.1rem;
 }
 .btn-steam:hover { background:linear-gradient(135deg,#2a475e,#1b2838); border-color:#66c0f4; color:#fff; }
-.auth-divider {
-  display:flex; align-items:center; gap:.75rem;
-  margin:.9rem 0; color:var(--text-muted); font-size:.75rem;
-}
-.auth-divider::before, .auth-divider::after {
-  content:''; flex:1; height:1px; background:var(--border);
-}
+.auth-divider { display:flex; align-items:center; gap:.75rem; margin:.9rem 0; color:var(--text-muted); font-size:.75rem; }
+.auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background:var(--border); }
 
+/* ══════════════════════════════════════════════════
+   ROLES PAGE STYLES
+══════════════════════════════════════════════════ */
+.roles-page { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
+.roles-page-header { text-align: center; padding: 40px 0 32px; }
+.roles-page-header h1 { font-family: 'Bebas Neue', cursive; font-size: 2.8rem; letter-spacing: 4px; color: #fff; margin: 0 0 8px; }
+.roles-page-header p { color: #7A6550; margin: 0; }
+.roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 48px; }
+.role-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 20px; text-align: center; transition: transform .2s, border-color .2s; }
+.role-card:hover { transform: translateY(-4px); border-color: rgba(200,68,10,.4); }
+.role-card .role-emoji { font-size: 2.4rem; margin-bottom: 10px; }
+.role-card .role-name  { font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
+.role-card .role-desc  { font-size: 12px; color: #7A6550; line-height: 1.4; }
+.owner-panel { background: rgba(255,215,0,.04); border: 1px solid rgba(255,215,0,.2); border-radius: 12px; padding: 28px; margin-bottom: 32px; }
+.owner-panel h2 { font-family: 'Bebas Neue', cursive; font-size: 1.6rem; letter-spacing: 3px; color: #FFD700; margin: 0 0 20px; display: flex; align-items: center; gap: 10px; }
+.assign-role-form { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: end; }
+.assign-role-form .form-group { display: flex; flex-direction: column; gap: 6px; }
+.assign-role-form label { font-size: 12px; color: #7A6550; letter-spacing: 1px; text-transform: uppercase; }
+.assign-role-form input,
+.assign-role-form select { background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.12); border-radius: 6px; color: #D4B896; padding: 10px 14px; font-size: 14px; outline: none; transition: border-color .2s; }
+.assign-role-form input:focus,
+.assign-role-form select:focus { border-color: #C8440A; }
+.assign-role-form .btn-assign { background: linear-gradient(135deg, #C8440A, #8B1A1A); color: #fff; border: none; border-radius: 6px; padding: 10px 20px; font-weight: 700; cursor: pointer; font-size: 14px; letter-spacing: 1px; transition: opacity .2s; white-space: nowrap; }
+.assign-role-form .btn-assign:hover { opacity: .85; }
+@media (max-width: 600px) { .assign-role-form { grid-template-columns: 1fr; } }
+.user-preview { margin-top: 16px; padding: 14px 16px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; display: flex; align-items: center; gap: 14px; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.user-preview img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.user-preview .user-info .name { font-weight: 700; color: #fff; }
+.user-preview .user-info .email { font-size: 12px; color: #7A6550; }
+.staff-section h2 { font-family: 'Bebas Neue', cursive; font-size: 1.6rem; letter-spacing: 3px; color: #fff; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; }
+.staff-list { display: flex; flex-direction: column; gap: 10px; }
+.staff-item { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; }
+.staff-item img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.staff-item .info { flex: 1; min-width: 0; }
+.staff-item .info .name { font-weight: 700; color: #fff; font-size: 15px; }
+.staff-item .info .email { font-size: 12px; color: #7A6550; }
+.staff-item .actions { display: flex; align-items: center; gap: 8px; }
+.btn-change-role { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); color: #D4B896; border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer; transition: background .2s; }
+.btn-change-role:hover { background: rgba(200,68,10,.2); border-color: #C8440A; }
+.inline-role-select { display: flex; gap: 8px; align-items: center; }
+.inline-role-select select { background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.12); color: #D4B896; border-radius: 6px; padding: 6px 10px; font-size: 12px; }
+.inline-role-select .btn-save-role { background: #C8440A; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+.inline-role-select .btn-cancel-role { background: transparent; color: #7A6550; border: none; cursor: pointer; font-size: 12px; padding: 6px; }
 </style>
 </head>
 <body>
@@ -960,19 +760,19 @@ select.form-input {
     <li><a onclick="showPage('news')" id="nav-news">Notícias</a></li>
     <li id="nav-support-link"><a onclick="showPage('support')" id="nav-support">Suporte</a></li>
     <li id="nav-admin-link" style="display:none"><a onclick="showPage('admin')" id="nav-admin">Admin</a></li>
+    <li id="nav-roles-link" style="display:none"><a onclick="showPage('roles'); loadRolesPage()" id="nav-roles">⚙️ Cargos</a></li>
   </ul>
   <div class="nav-actions">
-  <div class="lang-selector">
-    <button class="lang-btn" onclick="toggleLangDropdown()" id="lang-current">🇧🇷 Português</button>
-    <div class="lang-dropdown" id="lang-dropdown">
-      <div class="lang-option active" data-lang="pt" onclick="setLang('pt')">🇧🇷 Português (BR)</div>
-      <div class="lang-option" data-lang="pt_pt" onclick="setLang('pt_pt')">🇵🇹 Português (PT)</div>
-      <div class="lang-option" data-lang="en" onclick="setLang('en')">🇺🇸 English</div>
-      <div class="lang-option" data-lang="de" onclick="setLang('de')">🇩🇪 Deutsch</div>
-      <div class="lang-option" data-lang="ru" onclick="setLang('ru')">🇷🇺 Русский</div>
+    <div class="lang-selector">
+      <button class="lang-btn" onclick="toggleLangDropdown()" id="lang-current">🇧🇷 Português</button>
+      <div class="lang-dropdown" id="lang-dropdown">
+        <div class="lang-option active" data-lang="pt" onclick="setLang('pt')">🇧🇷 Português (BR)</div>
+        <div class="lang-option" data-lang="pt_pt" onclick="setLang('pt_pt')">🇵🇹 Português (PT)</div>
+        <div class="lang-option" data-lang="en" onclick="setLang('en')">🇺🇸 English</div>
+        <div class="lang-option" data-lang="de" onclick="setLang('de')">🇩🇪 Deutsch</div>
+        <div class="lang-option" data-lang="ru" onclick="setLang('ru')">🇷🇺 Русский</div>
+      </div>
     </div>
-  </div>
-  
     <div id="auth-buttons">
       <button id="btn-login" class="btn btn-outline btn-sm" onclick="openModal('login')">Entrar</button>
       <button id="btn-register" class="btn btn-primary btn-sm" onclick="openModal('register')">Cadastrar</button>
@@ -1020,8 +820,6 @@ select.form-input {
       </div>
     </div>
   </div>
-
-  <!-- News strip -->
   <div style="background:rgba(200,68,10,.08); border-top:1px solid rgba(200,68,10,.2); border-bottom:1px solid rgba(200,68,10,.2); padding:1rem 0;">
     <div class="section" style="padding:0 2rem;">
       <div style="display:flex; gap:2rem; overflow-x:auto; padding:.5rem 0;" id="home-news"></div>
@@ -1134,7 +932,7 @@ select.form-input {
   </div>
 </div>
 
-<!-- ── SUPPORT PAGE ── -->
+<!-- ═══ SUPPORT ═══ -->
 <div id="page-support" class="page">
   <div class="section">
     <div class="section-header">
@@ -1142,20 +940,14 @@ select.form-input {
       <h2 class="section-title">Suporte</h2>
       <div class="section-divider"></div>
     </div>
-
-    <!-- Tabs: Meus Tickets | Novo Ticket | (admin) Todos -->
     <div class="support-tabs" id="support-tabs">
-      <button class="support-tab active" id="stab-list"   onclick="supportTab('list',this)">📋 Meus Tickets</button>
-      <button class="support-tab"        id="stab-new"    onclick="supportTab('new',this)">➕ Novo Ticket</button>
+      <button class="support-tab active" id="stab-list"  onclick="supportTab('list',this)">📋 Meus Tickets</button>
+      <button class="support-tab"        id="stab-new"   onclick="supportTab('new',this)">➕ Novo Ticket</button>
       <button class="support-tab admin-only" id="stab-admin" onclick="supportTab('admin',this)" style="display:none">🛡️ Admin — Todos</button>
     </div>
-
-    <!-- Lista de tickets do usuário -->
     <div id="support-panel-list">
       <div id="support-ticket-list"><div class="empty-state"><div class="icon">🎫</div><p>Carregando tickets...</p></div></div>
     </div>
-
-    <!-- Novo ticket -->
     <div id="support-panel-new" style="display:none">
       <div class="support-form-wrap">
         <div class="form-group">
@@ -1181,8 +973,6 @@ select.form-input {
         <button class="btn btn-primary" onclick="submitTicket()">🎫 Abrir Ticket</button>
       </div>
     </div>
-
-    <!-- Admin: todos os tickets -->
     <div id="support-panel-admin" style="display:none">
       <div class="support-admin-stats" id="support-admin-stats"></div>
       <div class="support-filter-row">
@@ -1193,13 +983,60 @@ select.form-input {
       </div>
       <div id="admin-ticket-list"></div>
     </div>
-
-    <!-- Visualização de ticket individual -->
     <div id="support-panel-thread" style="display:none">
       <button class="btn btn-outline btn-sm" onclick="backToTicketList()" style="margin-bottom:1rem">← Voltar</button>
       <div id="ticket-thread-content"></div>
     </div>
+  </div>
+</div>
 
+<!-- ═══ ROLES ═══ -->
+<div id="page-roles" class="page">
+  <div class="roles-page">
+    <div class="roles-page-header">
+      <h1>⚙️ SISTEMA DE CARGOS</h1>
+      <p>Gerencie os cargos e permissões do FireThrone Network</p>
+    </div>
+
+    <!-- Cards públicos dos cargos -->
+    <div class="roles-grid" id="rolesGrid"></div>
+
+    <!-- Painel Owner: atribuir cargo por email -->
+    <div class="owner-panel" id="ownerPanel" style="display:none">
+      <h2>👑 PAINEL DO OWNER</h2>
+      <div class="assign-role-form">
+        <div class="form-group">
+          <label>Email do usuário</label>
+          <input type="email" id="assignEmailInput" placeholder="usuario@email.com"
+                 oninput="debouncedSearchUser(this.value)" autocomplete="off"/>
+        </div>
+        <div class="form-group">
+          <label>Novo cargo</label>
+          <select id="assignRoleSelect">
+            <option value="player">🎮 Player</option>
+            <option value="vip">⭐ VIP</option>
+            <option value="moderator">🔰 Moderador</option>
+            <option value="admin">🛡️ Admin</option>
+            <option value="owner">👑 Owner</option>
+          </select>
+        </div>
+        <button class="btn-assign" onclick="assignRole()">ATRIBUIR</button>
+      </div>
+      <div class="user-preview" id="userPreview" style="display:none">
+        <img id="userPreviewAvatar" src="/static/default_avatar.png" alt="avatar" onerror="this.style.display='none'"/>
+        <div class="user-info">
+          <div class="name" id="userPreviewName"></div>
+          <div class="email" id="userPreviewEmail"></div>
+        </div>
+        <span id="userPreviewBadge"></span>
+      </div>
+    </div>
+
+    <!-- Lista de staff atual -->
+    <div class="staff-section" id="staffSection" style="display:none">
+      <h2>🛡️ EQUIPE ATUAL</h2>
+      <div class="staff-list" id="staffList"></div>
+    </div>
   </div>
 </div>
 
@@ -1217,15 +1054,11 @@ select.form-input {
     <button class="modal-close" onclick="closeModal('login')">✕</button>
     <div id="login-title" class="modal-title">Entrar</div>
     <div id="login-sub" class="modal-sub">Acesse sua conta FireThrone</div>
-
-    <!-- Steam login -->
     <a href="/api/auth/steam" class="btn-steam" id="btn-steam-login">
       <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.606 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.298-.249-1.878-.03l1.523.63c.956.4 1.409 1.497 1.009 2.455-.397.957-1.497 1.41-2.455 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.252 0-2.265-1.014-2.265-2.265z"/></svg>
       Entrar com Steam
     </a>
-
     <div class="auth-divider"><span>ou</span></div>
-
     <div class="form-group">
       <label id="login-field-label" class="form-label">Email</label>
       <input class="form-input" id="login-identifier" type="email" placeholder="seu@email.com">
@@ -1246,15 +1079,11 @@ select.form-input {
     <button class="modal-close" onclick="closeModal('register')">✕</button>
     <div id="reg-title" class="modal-title">Criar Conta</div>
     <div id="reg-sub" class="modal-sub">Junte-se ao FireThrone Network</div>
-
-    <!-- Steam -->
     <a href="/api/auth/steam" class="btn-steam" id="btn-steam-register">
       <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.606 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.298-.249-1.878-.03l1.523.63c.956.4 1.409 1.497 1.009 2.455-.397.957-1.497 1.41-2.455 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.252 0-2.265-1.014-2.265-2.265z"/></svg>
       Cadastrar com Steam
     </a>
-
     <div class="auth-divider"><span>ou cadastre com email</span></div>
-
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
       <div class="form-group">
         <label class="form-label">Nome</label>
@@ -1288,7 +1117,7 @@ select.form-input {
   </div>
 </div>
 
-<!-- Email verification notice modal -->
+<!-- Email verification modal -->
 <div class="modal-overlay" id="modal-verify-email">
   <div class="modal" style="text-align:center;max-width:420px;">
     <div style="font-size:3rem;margin-bottom:1rem;">📧</div>
@@ -1301,14 +1130,11 @@ select.form-input {
     <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.5rem;">O link expira em 24 horas.</p>
     <div id="resend-msg" style="margin-bottom:.75rem;min-height:1.4rem;font-size:.85rem;"></div>
     <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="resendVerification()" id="btn-resend-email">
-        🔄 Reenviar Email
-      </button>
+      <button class="btn btn-primary" onclick="resendVerification()" id="btn-resend-email">🔄 Reenviar Email</button>
       <button class="btn btn-outline" onclick="closeModal('verify-email')">Fechar</button>
     </div>
   </div>
 </div>
-
 
 <!-- KIT ITEMS MODAL -->
 <div class="modal-overlay" id="modal-kit-items">
@@ -1444,16 +1270,15 @@ const LANGS = {
 };
 
 let currentLang = localStorage.getItem('ft_lang') || 'pt';
-
 function t(key) { return (LANGS[currentLang] || LANGS['pt'])[key] || key; }
 
 function applyLang() {
   const T = LANGS[currentLang] || LANGS['pt'];
-  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  const set    = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
   const setHtml = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
   set('nav-home', T.nav_home); set('nav-servers', T.nav_servers); set('nav-store', T.nav_store);
   set('nav-leaderboard', T.nav_leaderboard); set('nav-news', T.nav_news); set('nav-admin', T.nav_admin);
-  set('btn-login', T.btn_login); set('btn-register', T.btn_register); set('btn-logout', T.btn_logout);
+  set('btn-login', T.btn_login); set('btn-register', T.btn_register);
   set('hero-tag', T.hero_tag); set('hero-sub', T.hero_sub);
   set('hero-btn-servers', T.hero_btn_servers); set('hero-btn-store', T.hero_btn_store);
   set('stat-players-label', T.stat_players); set('stat-servers-label', T.stat_servers); set('stat-uptime-label', T.stat_uptime);
@@ -1463,7 +1288,7 @@ function applyLang() {
   set('login-field-label', T.login_field); set('login-pass-label', T.login_pass); set('login-btn', T.login_btn);
   setHtml('login-switch', T.login_switch + ` <a onclick="switchModal('login','register')">${T.login_switch_link}</a>`);
   set('reg-title', T.reg_title); set('reg-sub', T.reg_sub);
-  set('reg-user-label', T.reg_user); set('reg-email-label', T.reg_email); set('reg-pass-label', T.reg_pass); set('reg-btn', T.reg_btn);
+  set('reg-email-label', T.reg_email); set('reg-pass-label', T.reg_pass); set('reg-btn', T.reg_btn);
   setHtml('reg-switch', T.reg_switch + ` <a onclick="switchModal('register','login')">${T.reg_switch_link}</a>`);
   set('tab-users', T.tab_users); set('tab-servers', T.tab_servers);
   set('lang-current', T.flag + ' ' + T.label);
@@ -1490,22 +1315,15 @@ document.addEventListener('click', e => {
   }
 });
 
-
 // ── KIT IMAGE MAP ─────────────────────────────────────────
 const KIT_IMAGES = {
-  'DAILY':         '/static/kit_images/DAILY.svg',
-  'STEAM GROUP':   '/static/kit_images/STEAM_GROUP.svg',
-  'DISCORD NITRO': '/static/kit_images/DISCORD_NITRO.svg',
-  'DISCORD':       '/static/kit_images/DISCORD.svg',
-  'WIPE':          '/static/kit_images/WIPE.svg',
-  'VIP1':          '/static/kit_images/VIP1.svg',
-  'VIP2':          '/static/kit_images/VIP2.svg',
-  'VIP3':          '/static/kit_images/VIP3.svg',
-  'VIP4':          '/static/kit_images/VIP4.svg',
+  'DAILY':'/static/kit_images/DAILY.svg','STEAM GROUP':'/static/kit_images/STEAM_GROUP.svg',
+  'DISCORD NITRO':'/static/kit_images/DISCORD_NITRO.svg','DISCORD':'/static/kit_images/DISCORD.svg',
+  'WIPE':'/static/kit_images/WIPE.svg','VIP1':'/static/kit_images/VIP1.svg',
+  'VIP2':'/static/kit_images/VIP2.svg','VIP3':'/static/kit_images/VIP3.svg','VIP4':'/static/kit_images/VIP4.svg',
 };
 function getKitImage(name) {
-  // Tenta match exato, depois uppercase, depois parcial
-  return KIT_IMAGES[name] || KIT_IMAGES[name?.toUpperCase()] || 
+  return KIT_IMAGES[name] || KIT_IMAGES[name?.toUpperCase()] ||
     Object.entries(KIT_IMAGES).find(([k]) => name?.toUpperCase().includes(k))?.[1] || '';
 }
 
@@ -1518,19 +1336,21 @@ let lbSort = 'kills';
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  const navEl = document.getElementById('nav-'+name);
+  const pageEl = document.getElementById('page-' + name);
+  if (!pageEl) return;
+  pageEl.classList.add('active');
+  const navEl = document.getElementById('nav-' + name);
   if(navEl) navEl.classList.add('active');
-  window.scrollTo(0,0);
-  if(name==='servers') loadServers();
-  if(name==='store') loadStore();
-  if(name==='leaderboard') loadLeaderboard();
-  if(name==='news') loadNews();
-  if(name==='profile') loadProfile();
-  if(name==='admin') loadAdmin();
-  if(name==='support') {
-    // Mostrar tab admin se for admin
-    if(currentUser?.role === 'admin') {
+  window.scrollTo(0, 0);
+  if(name === 'servers')    loadServers();
+  if(name === 'store')      loadStore();
+  if(name === 'leaderboard') loadLeaderboard();
+  if(name === 'news')       loadNews();
+  if(name === 'profile')    loadProfile();
+  if(name === 'admin')      loadAdmin();
+  if(name === 'roles')      loadRolesPage();
+  if(name === 'support') {
+    if(currentUser?.role === 'admin' || currentUser?.role === 'owner') {
       document.getElementById('stab-admin').style.display = 'inline-flex';
     }
     supportTab('list', document.getElementById('stab-list'));
@@ -1554,10 +1374,12 @@ function setUser(user) {
   document.getElementById('nav-balance').textContent = user.balance + ' CR';
   document.getElementById('nav-avatar').textContent = '🪖';
   document.getElementById('store-balance').textContent = user.balance + ' CR';
-  if(user.role === 'admin') {
+  // Mostrar links de admin/owner na nav
+  if(user.role === 'admin' || user.role === 'owner') {
     document.getElementById('nav-admin-link').style.display = 'block';
-    const stabAdmin = document.getElementById('stab-admin');
-    if(stabAdmin) stabAdmin.style.display = 'inline-flex';
+  }
+  if(user.role === 'owner' || user.role === 'admin') {
+    document.getElementById('nav-roles-link').style.display = 'block';
   }
 }
 
@@ -1566,13 +1388,14 @@ function clearUser() {
   document.getElementById('auth-buttons').style.display = 'flex';
   document.getElementById('user-menu').style.display = 'none';
   document.getElementById('nav-admin-link').style.display = 'none';
+  document.getElementById('nav-roles-link').style.display = 'none';
   document.getElementById('store-balance').textContent = '—';
 }
 
 let emailCheckTimer = null;
 function checkEmailAvailable(val) {
   const st = document.getElementById('reg-email-status');
-  if (!val || !val.includes('@')) { st.innerHTML=''; return; }
+  if (!val || !val.includes('@')) { st.innerHTML = ''; return; }
   clearTimeout(emailCheckTimer);
   st.innerHTML = '<span style="color:var(--text-muted)">Verificando...</span>';
   emailCheckTimer = setTimeout(async () => {
@@ -1589,7 +1412,7 @@ function checkPassMatch() {
   const p1 = document.getElementById('reg-password')?.value || '';
   const p2 = document.getElementById('reg-password2')?.value || '';
   const st = document.getElementById('reg-pass-status');
-  if (!p2) { st.innerHTML=''; return; }
+  if (!p2) { st.innerHTML = ''; return; }
   if (p1 === p2) st.innerHTML = '<span style="color:var(--green)">✅ Senhas coincidem</span>';
   else           st.innerHTML = '<span style="color:var(--red)">❌ Senhas não coincidem</span>';
 }
@@ -1600,8 +1423,7 @@ async function resendVerification() {
   const btn     = document.getElementById('btn-resend-email');
   const email   = emailEl.textContent.trim();
   if (!email) { msgEl.innerHTML = '<span style="color:var(--red)">Email não encontrado. Tente se cadastrar novamente.</span>'; return; }
-  btn.disabled = true;
-  btn.textContent = '⏳ Enviando...';
+  btn.disabled = true; btn.textContent = '⏳ Enviando...';
   try {
     const r = await fetch(`${API}/auth/resend-verification`, {
       method: 'POST', credentials: 'include',
@@ -1614,8 +1436,7 @@ async function resendVerification() {
     setTimeout(() => { btn.textContent = '🔄 Reenviar Email'; btn.disabled = false; }, 30000);
   } catch(e) {
     msgEl.innerHTML = '<span style="color:var(--red)">Erro de conexão. Tente novamente.</span>';
-    btn.textContent = '🔄 Reenviar Email';
-    btn.disabled = false;
+    btn.textContent = '🔄 Reenviar Email'; btn.disabled = false;
   }
 }
 
@@ -1623,7 +1444,7 @@ async function doLogin() {
   const identifier = document.getElementById('login-identifier').value.trim();
   const password   = document.getElementById('login-password').value;
   const msg        = document.getElementById('login-msg');
-  if (!identifier || !password) { msg.innerHTML='<div class="form-error">Preencha todos os campos</div>'; return; }
+  if (!identifier || !password) { msg.innerHTML = '<div class="form-error">Preencha todos os campos</div>'; return; }
   try {
     const r = await fetch(`${API}/auth/login`, {
       method:'POST', credentials:'include',
@@ -1652,16 +1473,11 @@ async function doRegister() {
   const password  = document.getElementById('reg-password').value;
   const password2 = document.getElementById('reg-password2').value;
   const msg       = document.getElementById('reg-msg');
-
   if (!firstname || !lastname || !email || !password || !password2) {
     msg.innerHTML = '<div class="form-error">Preencha todos os campos</div>'; return;
   }
-  if (password !== password2) {
-    msg.innerHTML = '<div class="form-error">As senhas não coincidem</div>'; return;
-  }
-  if (password.length < 6) {
-    msg.innerHTML = '<div class="form-error">Senha deve ter no mínimo 6 caracteres</div>'; return;
-  }
+  if (password !== password2) { msg.innerHTML = '<div class="form-error">As senhas não coincidem</div>'; return; }
+  if (password.length < 6)    { msg.innerHTML = '<div class="form-error">Senha deve ter no mínimo 6 caracteres</div>'; return; }
   try {
     const r = await fetch(`${API}/auth/register`, {
       method:'POST', credentials:'include',
@@ -1677,14 +1493,12 @@ async function doRegister() {
   } catch(e) { msg.innerHTML = '<div class="form-error">Erro de conexão com o servidor</div>'; }
 }
 
-// Verificar se veio de login Steam com erro
 window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('steam_error')) toast('Erro ao autenticar com Steam. Tente novamente.', 'error');
-  if (params.get('email_verified')) toast('Email confirmado! Você já pode entrar.', 'success');
-  if (params.get('already_verified')) toast('Email já confirmado anteriormente.', 'info');
-  if (params.get('steam_ok')) { checkAuth(); toast('Login com Steam realizado!', 'success'); }
-  // Limpar params da URL sem recarregar
+  if (params.get('steam_error'))       toast('Erro ao autenticar com Steam. Tente novamente.', 'error');
+  if (params.get('email_verified'))    toast('Email confirmado! Você já pode entrar.', 'success');
+  if (params.get('already_verified'))  toast('Email já confirmado anteriormente.', 'info');
+  if (params.get('steam_ok'))          { checkAuth(); toast('Login com Steam realizado!', 'success'); }
   if ([...params].length) window.history.replaceState({}, '', '/');
 });
 
@@ -1696,17 +1510,11 @@ async function logout() {
 }
 
 // ── MODALS ────────────────────────────────────────────────
-function openModal(name) {
-  document.getElementById('modal-'+name).classList.add('open');
-}
-function closeModal(name) {
-  document.getElementById('modal-'+name).classList.remove('open');
-}
-function switchModal(from, to) {
-  closeModal(from); openModal(to);
-}
+function openModal(name) { document.getElementById('modal-' + name).classList.add('open'); }
+function closeModal(name) { document.getElementById('modal-' + name).classList.remove('open'); }
+function switchModal(from, to) { closeModal(from); openModal(to); }
 document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
 });
 
 // ── SERVERS ───────────────────────────────────────────────
@@ -1724,10 +1532,10 @@ function renderServers(servers) {
   const grid = document.getElementById('servers-grid');
   if(!servers?.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">🖥️</div><p>Nenhum servidor encontrado.</p></div>'; return; }
   grid.innerHTML = servers.map(s => {
-    const pct = Math.round(s.current_players/s.max_players*100);
+    const pct = Math.round(s.current_players / s.max_players * 100);
     const tags = safeParseJSON(s.tags, []);
     return `
-    <div class="server-card ${s.modded?'modded':''}" onclick="">
+    <div class="server-card ${s.modded ? 'modded' : ''}">
       <div class="s-header">
         <div>
           <div class="s-title">${s.name}</div>
@@ -1735,7 +1543,7 @@ function renderServers(servers) {
         </div>
         <div>
           <div class="s-players">${s.current_players}<span>/ ${s.max_players}</span></div>
-          <div style="text-align:right; margin-top:.3rem; font-size:.7rem;">
+          <div style="text-align:right;margin-top:.3rem;font-size:.7rem;">
             <span class="status-dot ${s.status}"></span>${s.status==='online'?'Online':s.status==='restarting'?'Reiniciando':'Offline'}
           </div>
         </div>
@@ -1753,7 +1561,7 @@ function renderServers(servers) {
 function renderHeroServers(servers) {
   const el = document.getElementById('hero-servers');
   el.innerHTML = servers.slice(0,3).map(s => {
-    const pct = Math.round(s.current_players/s.max_players*100);
+    const pct = Math.round(s.current_players / s.max_players * 100);
     return `
     <div class="live-server-card" onclick="showPage('servers')">
       <div class="s-header" style="margin-bottom:0">
@@ -1774,15 +1582,15 @@ function renderHeroServers(servers) {
 }
 
 function updateHeroStats(servers) {
-  const online = servers.filter(s=>s.status==='online');
-  const players = online.reduce((a,s)=>a+s.current_players,0);
+  const online = servers.filter(s => s.status === 'online');
+  const players = online.reduce((a, s) => a + s.current_players, 0);
   document.getElementById('stat-players').textContent = players;
   document.getElementById('stat-servers').textContent = online.length;
 }
 
 function copyConnect(ip, port) {
   const addr = `client.connect ${ip}:${port}`;
-  navigator.clipboard.writeText(addr).then(()=>toast(`Copiado: ${addr}`, 'success'));
+  navigator.clipboard.writeText(addr).then(() => toast(`Copiado: ${addr}`, 'success'));
 }
 
 // ── STORE ─────────────────────────────────────────────────
@@ -1791,27 +1599,25 @@ async function loadStore() {
     const r = await fetch(`${API}/store`);
     const d = await r.json();
     allStoreItems = d.items;
-    const vipItems = allStoreItems.filter(i=>i.category==='vip');
-    renderStore(vipItems);
+    renderStore(allStoreItems.filter(i => i.category === 'vip'));
     if(currentUser) document.getElementById('store-balance').textContent = currentUser.balance + ' CR';
   } catch(e) {}
 }
 
-const itemEmojis = { vip:'👑', kits:'⚔️', cosmetics:'🎨', credits:'💰' };
 const itemColors = { vip:'gold', kits:'#cc3300', cosmetics:'#7c3aed', credits:'var(--rust-orange)' };
 
 function renderStore(items) {
   const grid = document.getElementById('store-grid');
   if(!items?.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">🛒</div><p>Sem itens disponíveis.</p></div>'; return; }
   grid.innerHTML = items.map(item => `
-    <div class="store-item ${item.featured?'featured':''}" data-category="${item.category}">
+    <div class="store-item ${item.featured ? 'featured' : ''}" data-category="${item.category}">
       <div class="item-img" style="color:${itemColors[item.category]||'var(--rust-orange)'}">
         ${(item.image || getKitImage(item.name)) ? `<img src="${item.image || getKitImage(item.name)}" style="width:100%;height:100%;object-fit:contain;padding:8px;" onerror="this.parentElement.innerHTML='👑'">` : '👑'}
       </div>
       <div class="item-body">
         <div class="item-name">${item.name}</div>
         <div class="item-desc">${item.description}</div>
-        ${currentUser?.role === 'admin' ? `
+        ${currentUser?.role === 'admin' || currentUser?.role === 'owner' ? `
         <div class="admin-price-edit">
           <label>💰 Preço</label>
           <input type="number" id="price-${item.id}" value="${item.price}" min="0">
@@ -1841,61 +1647,37 @@ function renderStore(items) {
   `).join('');
 }
 
-// ── RUST ITEM CLASSIFICATION ─────────────────────────────
-
-// Roupas e mochilas → Clothing
+// ── RUST ITEM CLASSIFICATION ──────────────────────────────
 const CLOTHING_SNS = new Set([
-  'metal.facemask','metal.plate.torso','roadsign.jacket','roadsign.kilt',
-  'coffeecan.helmet','hoodie','pants','shoes.boots','tactical.gloves','burlap.shoes',
-  'attire.hide.poncho','attire.hide.vest','attire.hide.pants','wood.armor.helmet',
-  'wood.armor.pants','mask.bandana','hat.beenie','hat.boonie','burlap.headwrap',
-  'burlap.shirt','burlap.trousers','burlap.gloves','deer.skull.mask','bone.armor.suit',
-  'heavy.plate.helmet','heavy.plate.jacket','heavy.plate.pants','attire.hide.boots',
-  'attire.hide.helterneck','shirt.collared','shirt.tanktop','pants.shorts','mask.balaclava',
-  'nightvisiongoggles','hazmatsuit','hazmatsuit.nomadsuit','attire.banditguard',
+  'metal.facemask','metal.plate.torso','roadsign.jacket','roadsign.kilt','coffeecan.helmet',
+  'hoodie','pants','shoes.boots','tactical.gloves','burlap.shoes','attire.hide.poncho',
+  'attire.hide.vest','attire.hide.pants','wood.armor.helmet','wood.armor.pants','mask.bandana',
+  'hat.beenie','hat.boonie','burlap.headwrap','burlap.shirt','burlap.trousers','burlap.gloves',
+  'deer.skull.mask','bone.armor.suit','heavy.plate.helmet','heavy.plate.jacket','heavy.plate.pants',
+  'attire.hide.boots','attire.hide.helterneck','shirt.collared','shirt.tanktop','pants.shorts',
+  'mask.balaclava','nightvisiongoggles','hazmatsuit','hazmatsuit.nomadsuit','attire.banditguard',
   'largebackpack','smallbackpack','burlap.suit','halloween.mummy.suit','scarecrow.suit',
   'scarecrow.gloves','ghost.costume','clatter.helmet','riot.helmet','jumpsuit',
 ]);
-const CLOTHING_KEYWORDS = [
-  'helmet','jacket','pants','shirt','boots','gloves','kilt','vest','poncho',
-  'backpack','facemask','hazmat','hoodie','balaclava','costume','suit','goggles',
-];
-
-// Armas, médicos e comida → Hotbar (prioridade)
+const CLOTHING_KEYWORDS = ['helmet','jacket','pants','shirt','boots','gloves','kilt','vest','poncho','backpack','facemask','hazmat','hoodie','balaclava','costume','suit','goggles'];
 const HOTBAR_SNS = new Set([
-  // Rifles
-  'rifle.ak','rifle.lr300','rifle.bolt','rifle.semiauto','lmg.m249','rifle.l96',
-  // SMGs
-  'smg.thompson','smg.mp5','smg.2',
-  // Pistols
-  'pistol.semiauto','pistol.revolver','pistol.python','pistol.eoka','pistol.nailgun',
-  // Shotguns
-  'shotgun.pump','shotgun.spas12','shotgun.double','shotgun.waterpipe',
-  // Lançadores / explosivos
-  'rocket.launcher','multiplegrenadelauncher','grenade.f1','grenade.beancan','explosive.timed',
-  // Arcos
-  'crossbow','bow.hunting','bow.compound',
-  // Corpo-a-corpo
-  'salvaged.sword','longsword','mace','machete','knife.combat','bone.club','salvaged.cleaver',
-  // Ferramentas ofensivas
-  'chainsaw','jackhammer','flamethrower',
-  // Médicos
-  'syringe.medical','largemedkit','bandage','antiradpills',
-  // Comida
-  'can.tuna','can.beans','chocolate','grub','apple','orange','pumpkin','corn',
-  'chicken.cooked','chicken.raw','chicken.burned','bearmeat.cooked','bearmeat',
-  'deermeat.cooked','deermeat.raw','wolfmeat.cooked','wolfmeat.raw',
-  'humanmeat.cooked','humanmeat.raw','fish.cooked','fish.raw','fish.minnows','fish.troutsmall',
-  'smallwaterbottle','waterjug','water.purified','water.salt','black.raspberries',
-  'mushroom','corn.clone','potato','potato.clone','pumpkin.seed',
-  // Utilitários hotbar
-  'torch','supply.signal','fun.guitar','fun.trumpet',
+  'rifle.ak','rifle.lr300','rifle.bolt','rifle.semiauto','lmg.m249','rifle.l96','smg.thompson',
+  'smg.mp5','smg.2','pistol.semiauto','pistol.revolver','pistol.python','pistol.eoka','pistol.nailgun',
+  'shotgun.pump','shotgun.spas12','shotgun.double','shotgun.waterpipe','rocket.launcher',
+  'multiplegrenadelauncher','grenade.f1','grenade.beancan','explosive.timed','crossbow',
+  'bow.hunting','bow.compound','salvaged.sword','longsword','mace','machete','knife.combat',
+  'bone.club','salvaged.cleaver','chainsaw','jackhammer','flamethrower','syringe.medical',
+  'largemedkit','bandage','antiradpills','can.tuna','can.beans','chocolate','grub','apple','orange',
+  'pumpkin','corn','chicken.cooked','chicken.raw','chicken.burned','bearmeat.cooked','bearmeat',
+  'deermeat.cooked','deermeat.raw','wolfmeat.cooked','wolfmeat.raw','humanmeat.cooked','humanmeat.raw',
+  'fish.cooked','fish.raw','fish.minnows','fish.troutsmall','smallwaterbottle','waterjug',
+  'water.purified','water.salt','black.raspberries','mushroom','corn.clone','potato','potato.clone',
+  'pumpkin.seed','torch','supply.signal','fun.guitar','fun.trumpet',
 ]);
 const HOTBAR_KEYWORDS = [
-  'rifle','pistol','shotgun','smg','lmg','revolver','launcher','grenade',
-  'crossbow','bow','sword','machete','mace','knife','chainsaw','flamethrower',
-  'syringe','medkit','bandage','antirad',
-  'cooked','can.tuna','can.beans','chocolate','apple','orange','mushroom','corn',
+  'rifle','pistol','shotgun','smg','lmg','revolver','launcher','grenade','crossbow','bow',
+  'sword','machete','mace','knife','chainsaw','flamethrower','syringe','medkit','bandage',
+  'antirad','cooked','can.tuna','can.beans','chocolate','apple','orange','mushroom','corn',
   'chicken','bearmeat','deermeat','wolfmeat','humanmeat','fish','water bottle','waterjug',
 ];
 
@@ -1903,50 +1685,36 @@ function getItemSection(item) {
   const sn   = (item.shortname || item.Shortname || item.sn || '').toLowerCase();
   const name = (item.name || item.Name || '').toLowerCase();
   const cont = (item.Container || item.container || '').toLowerCase();
-
-  // Container explícito tem prioridade máxima
   if (cont === 'wear') return 'Clothing';
   if (cont === 'belt') return 'Hotbar';
   if (cont === 'main') {
-    // Mesmo vindo como main, arma/med/comida vai pra hotbar
     if (sn && HOTBAR_SNS.has(sn)) return 'Hotbar';
     if (HOTBAR_KEYWORDS.some(k => name.includes(k) || sn.includes(k))) return 'Hotbar';
     return 'Inventory';
   }
-
-  // Sem container — auto-detectar por shortname
   if (sn && CLOTHING_SNS.has(sn)) return 'Clothing';
   if (sn && HOTBAR_SNS.has(sn))   return 'Hotbar';
-
-  // Auto-detectar por keywords no nome
   if (CLOTHING_KEYWORDS.some(k => name.includes(k) || sn.includes(k))) return 'Clothing';
   if (HOTBAR_KEYWORDS.some(k => name.includes(k) || sn.includes(k)))   return 'Hotbar';
-
   return 'Inventory';
 }
 
 function classifyKitItems(items) {
   const HOTBAR_SLOTS = 6;
   const clothing = [], hotbarExplicit = [], hotbarPromoted = [], inventory = [];
-
   items.forEach(i => {
     const section = getItemSection(i);
     if      (section === 'Clothing') clothing.push(i);
     else if (section === 'Hotbar') {
       const cont = (i.Container || i.container || '').toLowerCase();
-      if (cont === 'belt') hotbarExplicit.push(i); // belt sempre vai
-      else hotbarPromoted.push(i);                 // promovidos da main
-    }
-    else inventory.push(i);
+      if (cont === 'belt') hotbarExplicit.push(i);
+      else hotbarPromoted.push(i);
+    } else inventory.push(i);
   });
-
-  // Belt explícito sempre entra; promovidos preenchem até 6 slots
   const hotbar = [...hotbarExplicit];
   const free   = Math.max(0, HOTBAR_SLOTS - hotbar.length);
   hotbar.push(...hotbarPromoted.slice(0, free));
-  // Excedente vai pro inventory
   inventory.unshift(...hotbarPromoted.slice(free));
-
   return { clothing, hotbar, inventory };
 }
 
@@ -1960,10 +1728,8 @@ function openKitModal(item) {
   const container = document.getElementById('kit-modal-items');
   if (item.items && item.items.length > 0) {
     const { clothing, hotbar, inventory } = classifyKitItems(item.items);
-    const CLOTHING_SLOTS = 8;
-    const HOTBAR_SLOTS   = 6;
-
-    function itemCard(i) {
+    const CLOTHING_SLOTS = 8, HOTBAR_SLOTS = 6;
+    const itemCard = i => {
       const name   = i.name || i.Name || i.shortname || '';
       const amount = i.amount || i.Amount || 1;
       const image  = i.image || i.Image || '';
@@ -1972,60 +1738,49 @@ function openKitModal(item) {
         <div class="item-label">${name}</div>
         <div class="item-amount">x${Number(amount).toLocaleString()}</div>
       </div>`;
-    }
-    function emptySlots(n) { return Array(n).fill('<div class="kit-slot-empty"></div>').join(''); }
-
+    };
+    const emptySlots = n => Array(n).fill('<div class="kit-slot-empty"></div>').join('');
     let html = '';
-
     if (clothing.length) {
-      const empties = Math.max(0, CLOTHING_SLOTS - clothing.length);
+      const emp = Math.max(0, CLOTHING_SLOTS - clothing.length);
       html += `<div class="kit-section kit-section-clothing">
         <div class="kit-section-title">👕 CLOTHING<span class="section-count">${clothing.length}/${CLOTHING_SLOTS} SLOTS</span></div>
-        <div class="kit-items-row">${clothing.map(itemCard).join('')}${emptySlots(empties)}</div>
+        <div class="kit-items-row">${clothing.map(itemCard).join('')}${emptySlots(emp)}</div>
       </div>`;
     }
-
     if (inventory.length) {
       html += `<div class="kit-section kit-section-inventory">
         <div class="kit-section-title">🎒 INVENTORY<span class="section-count">${inventory.length} ITENS</span></div>
         <div class="kit-items-grid">${inventory.map(itemCard).join('')}</div>
       </div>`;
     }
-
     if (hotbar.length) {
-      const empties = Math.max(0, HOTBAR_SLOTS - hotbar.length);
+      const emp = Math.max(0, HOTBAR_SLOTS - hotbar.length);
       html += `<div class="kit-section kit-section-hotbar">
         <div class="kit-section-title">⚡ HOTBAR<span class="section-count">${hotbar.length}/${HOTBAR_SLOTS} SLOTS</span></div>
-        <div class="kit-items-row">${hotbar.map(itemCard).join('')}${emptySlots(empties)}</div>
+        <div class="kit-items-row">${hotbar.map(itemCard).join('')}${emptySlots(emp)}</div>
       </div>`;
     }
-
     container.innerHTML = html;
   } else {
-
     container.innerHTML = '<p style="color:var(--rust-light);text-align:center;padding:2rem 0;">Nenhum item encontrado.</p>';
   }
-
   const buyBtn = document.getElementById('kit-modal-buy-btn');
   buyBtn.onclick = () => { closeModal('kit-items'); buyItem(item.id, item.name, item.price); };
   buyBtn.textContent = item.price > 0 ? `Comprar — ${item.price.toLocaleString()} créditos` : 'Pegar Kit';
-
   openModal('kit-items');
 }
 
-
-
 function previewImgFile(itemId, input) {
   if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = e => {
     const url = e.target.result;
     document.getElementById(`img-url-${itemId}`).value = url;
     const preview = document.getElementById(`img-preview-${itemId}`);
     if (preview) { preview.src = url; preview.style.opacity = '1'; }
   };
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(input.files[0]);
 }
 
 async function saveItemImage(itemId) {
@@ -2034,24 +1789,18 @@ async function saveItemImage(itemId) {
   if (!image) { toast('Cole uma URL ou selecione um arquivo', 'error'); return; }
   try {
     const r = await fetch(`${API}/admin/store/${itemId}`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      credentials: 'include',
+      method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include',
       body: JSON.stringify({ image })
     });
     const d = await r.json();
     if (r.ok) {
       toast('Imagem atualizada!', 'success');
       const idx = allStoreItems.findIndex(i => i.id === itemId);
-      if (idx !== -1) { allStoreItems[idx].image = image; }
+      if (idx !== -1) allStoreItems[idx].image = image;
       const preview = document.getElementById(`img-preview-${itemId}`);
       if (preview) { preview.src = image; preview.style.opacity = '1'; }
-    } else {
-      toast(d.error || 'Erro ao salvar', 'error');
-    }
-  } catch(e) {
-    toast('Erro de conexão', 'error');
-  }
+    } else toast(d.error || 'Erro ao salvar', 'error');
+  } catch(e) { toast('Erro de conexão', 'error'); }
 }
 
 async function saveItemPrice(itemId) {
@@ -2060,29 +1809,22 @@ async function saveItemPrice(itemId) {
   if (isNaN(price) || price < 0) { toast('Preço inválido!', 'error'); return; }
   try {
     const r = await fetch(`${API}/admin/store/${itemId}`, {
-      method: 'PUT',
-      headers: {'Content-Type':'application/json'},
-      credentials: 'include',
+      method:'PUT', headers:{'Content-Type':'application/json'}, credentials:'include',
       body: JSON.stringify({ price })
     });
     const d = await r.json();
     if (r.ok) {
       toast(`Preço atualizado para ${price.toLocaleString()} créditos!`, 'success');
-      // Atualiza o item na lista local
       const idx = allStoreItems.findIndex(i => i.id === itemId);
       if (idx !== -1) allStoreItems[idx].price = price;
-    } else {
-      toast(d.error || 'Erro ao salvar', 'error');
-    }
-  } catch(e) {
-    toast('Erro de conexão', 'error');
-  }
+    } else toast(d.error || 'Erro ao salvar', 'error');
+  } catch(e) { toast('Erro de conexão', 'error'); }
 }
 
 function filterStore(cat, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const filtered = cat==='all' ? allStoreItems : allStoreItems.filter(i=>i.category===cat);
+  const filtered = cat === 'all' ? allStoreItems : allStoreItems.filter(i => i.category === cat);
   renderStore(filtered);
 }
 
@@ -2093,12 +1835,12 @@ async function buyItem(id, name, price) {
     const r = await fetch(`${API}/store/buy`, {
       method:'POST', credentials:'include',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({item_id:id})
+      body: JSON.stringify({item_id: id})
     });
     const d = await r.json();
     if(!r.ok) { toast(d.error, 'error'); return; }
     currentUser.balance = d.new_balance;
-    document.getElementById('nav-balance').textContent = d.new_balance + ' CR';
+    document.getElementById('nav-balance').textContent   = d.new_balance + ' CR';
     document.getElementById('store-balance').textContent = d.new_balance + ' CR';
     toast(d.message, 'success');
   } catch(e) { toast('Erro ao processar compra', 'error'); }
@@ -2115,7 +1857,7 @@ async function loadLeaderboard(sort) {
 }
 
 function sortLB(by, btn) {
-  document.querySelectorAll('.lb-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.lb-filters .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   loadLeaderboard(by);
 }
@@ -2124,12 +1866,11 @@ const rankEmojis = ['🥇','🥈','🥉'];
 function renderLeaderboard(rows) {
   const tbody = document.getElementById('lb-body');
   if(!rows?.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted)">Sem dados disponíveis.</td></tr>'; return; }
-  tbody.innerHTML = rows.map((r,i) => {
+  tbody.innerHTML = rows.map((r, i) => {
     const rankClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
     const role = r.role !== 'player' ? `<span class="role-badge ${r.role}">${r.role.toUpperCase()}</span>` : '';
-    return `
-    <tr>
-      <td class="lb-rank ${rankClass}">${i<3 ? rankEmojis[i] : '#'+(i+1)}</td>
+    return `<tr>
+      <td class="lb-rank ${rankClass}">${i < 3 ? rankEmojis[i] : '#'+(i+1)}</td>
       <td><div class="lb-player">
         <div class="lb-avatar">${r.username[0].toUpperCase()}</div>
         <div><span class="lb-username">${r.username}</span>${role}</div>
@@ -2171,9 +1912,9 @@ function renderHomeNews(news) {
   const el = document.getElementById('home-news');
   if(!news?.length) return;
   el.innerHTML = news.map(n => `
-    <div style="min-width:280px; padding:.5rem 1rem; border-left:2px solid rgba(200,68,10,.3); cursor:pointer;" onclick="showPage('news')">
-      <div style="font-size:.65rem; color:var(--rust-orange); font-family:'Share Tech Mono'; letter-spacing:2px; margin-bottom:.2rem">${n.category.toUpperCase()}</div>
-      <div style="font-size:.85rem; font-weight:700;">${n.title}</div>
+    <div style="min-width:280px;padding:.5rem 1rem;border-left:2px solid rgba(200,68,10,.3);cursor:pointer;" onclick="showPage('news')">
+      <div style="font-size:.65rem;color:var(--rust-orange);font-family:'Share Tech Mono';letter-spacing:2px;margin-bottom:.2rem">${n.category.toUpperCase()}</div>
+      <div style="font-size:.85rem;font-weight:700;">${n.title}</div>
     </div>`).join('');
 }
 
@@ -2188,26 +1929,26 @@ async function loadProfile() {
     const meD = await meR.json();
     const lbD = await lbR.json();
     const user = meD.user;
-    const myStats = lbD.leaderboard?.find(r=>r.user_id===user.id);
+    const myStats = lbD.leaderboard?.find(r => r.user_id === user.id);
     const el = document.getElementById('profile-content');
     el.innerHTML = `
       <div class="profile-header">
         <div class="profile-avatar">${user.username[0].toUpperCase()}</div>
         <div class="profile-info">
-          <h2>${user.username} ${user.role!=='player'?`<span class="role-badge ${user.role}" style="vertical-align:middle">${user.role.toUpperCase()}</span>`:''}</h2>
+          <h2>${user.username} ${user.role !== 'player' ? `<span class="role-badge ${user.role}" style="vertical-align:middle">${roleBadgeHTML(user.role)}</span>` : ''}</h2>
           <p>📧 ${user.email}</p>
           <p style="margin-top:.2rem">📅 Membro desde ${new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
           <div class="profile-stats">
             <div><div class="profile-stat-num">${user.balance.toLocaleString()}</div><div class="profile-stat-label">Créditos</div></div>
-            ${myStats?`
+            ${myStats ? `
             <div><div class="profile-stat-num">${myStats.kills}</div><div class="profile-stat-label">Kills</div></div>
             <div><div class="profile-stat-num">${myStats.raids_won}</div><div class="profile-stat-label">Raids</div></div>
             <div><div class="profile-stat-num">${myStats.hours_played.toFixed(0)}h</div><div class="profile-stat-label">Horas</div></div>
-            `:''}
+            ` : ''}
           </div>
         </div>
       </div>
-      ${myStats?`
+      ${myStats ? `
       <div style="background:rgba(13,11,9,.6);border:1px solid var(--border);border-radius:6px;padding:1.5rem;">
         <div style="font-family:'Bebas Neue';font-size:1.2rem;letter-spacing:2px;margin-bottom:1rem;">Estatísticas de Combate</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;">
@@ -2216,7 +1957,7 @@ async function loadProfile() {
              ['🪨 Recursos',myStats.resources_gathered.toLocaleString(),'var(--rust-tan)'],
              ['🏚️ Raids',myStats.raids_won,'var(--rust-orange)'],
              ['K/D',myStats.deaths>0?(myStats.kills/myStats.deaths).toFixed(2):'∞','var(--green)']
-          ].map(([l,v,c])=>`
+          ].map(([l,v,c]) => `
           <div style="background:rgba(42,26,14,.4);border:1px solid var(--border);border-radius:4px;padding:1rem;text-align:center;">
             <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem">${l}</div>
             <div style="font-family:'Bebas Neue';font-size:1.6rem;color:${c}">${v}</div>
@@ -2229,7 +1970,7 @@ async function loadProfile() {
 
 // ── ADMIN ─────────────────────────────────────────────────
 async function loadAdmin() {
-  if(!currentUser || currentUser.role !== 'admin') {
+  if(!currentUser || !['admin','owner'].includes(currentUser.role)) {
     document.getElementById('page-admin').innerHTML = '<div class="section"><div class="empty-state"><div class="icon">🔒</div><p>Acesso negado.</p></div></div>';
     return;
   }
@@ -2243,7 +1984,7 @@ async function loadAdmin() {
       ['💰','Receita Total', 'R$ ' + (d.stats.total_revenue/100).toFixed(2)],
       ['🖥️','Servidores Online', d.stats.online_servers],
       ['🎮','Jogadores Agora', d.stats.total_players],
-    ].map(([icon,label,val])=>`
+    ].map(([icon, label, val]) => `
       <div class="stat-card">
         <div class="stat-card-icon">${icon}</div>
         <div class="stat-card-num">${val}</div>
@@ -2262,19 +2003,22 @@ async function loadAdminUsers() {
         <table class="data-table">
           <thead><tr><th>#</th><th>Usuário</th><th>Email</th><th>Role</th><th>Saldo</th><th>Cadastro</th><th>Ações</th></tr></thead>
           <tbody>
-            ${d.users.map(u=>`
+            ${d.users.map(u => `
             <tr>
               <td style="color:var(--text-muted)">${u.id}</td>
               <td style="font-weight:700">${u.username}</td>
               <td style="color:var(--text-muted);font-size:.8rem">${u.email}</td>
-              <td><span class="role-badge ${u.role}">${u.role.toUpperCase()}</span></td>
+              <td>${roleBadgeHTML(u.role)}</td>
               <td style="font-family:'Share Tech Mono';color:var(--rust-orange)">${u.balance.toLocaleString()}</td>
               <td style="color:var(--text-muted);font-size:.8rem">${new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
               <td>
-                <select onchange="updateUserRole(${u.id},this.value,${u.balance})" style="background:var(--rust-dark);border:1px solid var(--border);color:var(--rust-light);padding:.2rem .4rem;border-radius:3px;font-size:.75rem;">
-                  <option value="player" ${u.role==='player'?'selected':''}>Player</option>
-                  <option value="vip" ${u.role==='vip'?'selected':''}>VIP</option>
-                  <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+                <select onchange="updateUserRole(${u.id},this.value,${u.balance})"
+                  style="background:var(--rust-dark);border:1px solid var(--border);color:var(--rust-light);padding:.2rem .4rem;border-radius:3px;font-size:.75rem;">
+                  <option value="player"    ${u.role==='player'?'selected':''}>Player</option>
+                  <option value="vip"       ${u.role==='vip'?'selected':''}>VIP</option>
+                  <option value="moderator" ${u.role==='moderator'?'selected':''}>Moderador</option>
+                  <option value="admin"     ${u.role==='admin'?'selected':''}>Admin</option>
+                  <option value="owner"     ${u.role==='owner'?'selected':''}>Owner</option>
                 </select>
               </td>
             </tr>`).join('')}
@@ -2296,11 +2040,11 @@ async function updateUserRole(uid, role, balance) {
 }
 
 function adminTab(tab, btn) {
-  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('admin-tab-users').style.display = tab==='users'?'block':'none';
-  document.getElementById('admin-tab-servers').style.display = tab==='servers'?'block':'none';
-  if(tab==='servers') loadAdminServers();
+  document.getElementById('admin-tab-users').style.display   = tab === 'users'   ? 'block' : 'none';
+  document.getElementById('admin-tab-servers').style.display = tab === 'servers' ? 'block' : 'none';
+  if(tab === 'servers') loadAdminServers();
 }
 
 async function loadAdminServers() {
@@ -2312,7 +2056,7 @@ async function loadAdminServers() {
         <table class="data-table">
           <thead><tr><th>#</th><th>Nome</th><th>IP:Porta</th><th>Mapa</th><th>Players</th><th>Status</th></tr></thead>
           <tbody>
-            ${d.servers.map(s=>`
+            ${d.servers.map(s => `
             <tr>
               <td style="color:var(--text-muted)">${s.id}</td>
               <td style="font-weight:700">${s.name}</td>
@@ -2335,8 +2079,10 @@ function toast(msg, type='info') {
   t.className = `toast ${type}`;
   t.innerHTML = `<span>${icons[type]||'🔥'}</span> ${msg}`;
   container.appendChild(t);
-  setTimeout(()=>t.remove(), 3500);
+  setTimeout(() => t.remove(), 3500);
 }
+// Alias para compatibilidade com roles_panel que usa showToast
+function showToast(msg, type) { toast(msg, type); }
 
 // ── UTILS ─────────────────────────────────────────────────
 function safeParseJSON(str, fallback) {
@@ -2396,8 +2142,7 @@ function ticketCardHTML(t) {
 
 async function openTicketThread(ticketId) {
   currentTicketId = ticketId;
-  const panels = ['list','new','admin','thread'];
-  panels.forEach(p => {
+  ['list','new','admin','thread'].forEach(p => {
     const el = document.getElementById('support-panel-' + p);
     if (el) el.style.display = p === 'thread' ? 'block' : 'none';
   });
@@ -2414,9 +2159,8 @@ async function openTicketThread(ticketId) {
 }
 
 function renderTicketThread(t) {
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'owner';
   const statusLabel = {open:'Aberto', in_progress:'Em Andamento', closed:'Fechado'};
-
   const adminControls = isAdmin ? `
     <div class="ticket-admin-controls">
       <select onchange="updateTicketStatus('${t.id}','status',this.value)" title="Status">
@@ -2430,20 +2174,17 @@ function renderTicketThread(t) {
         <option value="urgent" ${t.priority==='urgent'?'selected':''}>🚨 Urgente</option>
       </select>
     </div>` : '';
-
   const messagesHtml = (t.messages || []).map(msg => {
-    const isAdminMsg = msg.author_role === 'admin';
-    const time = new Date(msg.created_at).toLocaleString('pt-BR');
+    const isAdminMsg = msg.author_role === 'admin' || msg.author_role === 'owner';
     return `<div class="ticket-msg ${isAdminMsg ? 'is-admin' : 'is-user'}">
       <div class="msg-avatar">${isAdminMsg ? '🛡️' : '🪖'}</div>
       <div class="msg-bubble">
         <div class="msg-author">${isAdminMsg ? '🛡️ ' : ''}${msg.username || 'Usuário'}${isAdminMsg ? ' — Suporte' : ''}</div>
         <div class="msg-text">${msg.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-        <div class="msg-time">${time}</div>
+        <div class="msg-time">${new Date(msg.created_at).toLocaleString('pt-BR')}</div>
       </div>
     </div>`;
   }).join('');
-
   const replyBox = t.status !== 'closed' || isAdmin ? `
     <div class="ticket-reply-box">
       <textarea id="reply-text" placeholder="${isAdmin ? 'Responder como suporte...' : 'Escreva sua mensagem...'}" rows="3"></textarea>
@@ -2452,7 +2193,6 @@ function renderTicketThread(t) {
         <button class="btn btn-primary btn-sm" onclick="sendReply('${t.id}')">📨 Enviar</button>
       </div>
     </div>` : `<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:.85rem;">⚫ Ticket fechado — sem novas respostas.</div>`;
-
   document.getElementById('ticket-thread-content').innerHTML = `
     <div class="ticket-thread-header">
       <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
@@ -2499,11 +2239,8 @@ async function updateTicketStatus(ticketId, field, value) {
     const d = await r.json();
     if (!r.ok) { toast(d.error || 'Erro', 'error'); return; }
     toast('Ticket atualizado!', 'success');
-    if (field === 'status' && value === 'closed') {
-      backToTicketList();
-    } else {
-      openTicketThread(ticketId);
-    }
+    if (field === 'status' && value === 'closed') backToTicketList();
+    else openTicketThread(ticketId);
     if (currentSupportTab === 'admin') loadAdminTicketStats();
   } catch(e) { toast('Erro de conexão', 'error'); }
 }
@@ -2574,6 +2311,170 @@ async function loadAdminTickets(status, btn) {
   }
 }
 
+// ════════════════════════════════════════════════════════
+// ROLES SYSTEM
+// ════════════════════════════════════════════════════════
+
+const ROLES_INFO = {
+  owner:     { emoji: '👑', label: 'Owner',     color: '#FFD700', description: 'Dono — poder total sobre o site' },
+  admin:     { emoji: '🛡️', label: 'Admin',     color: '#ff6b6b', description: 'Administrador — edita o site completo' },
+  moderator: { emoji: '🔰', label: 'Moderador', color: '#4FC3F7', description: 'Modera tickets e usuários' },
+  vip:       { emoji: '⭐', label: 'VIP',       color: '#C8440A', description: 'Jogador premium com benefícios' },
+  player:    { emoji: '🎮', label: 'Player',    color: '#7A6550', description: 'Jogador padrão' },
+};
+
+function roleBadgeHTML(role) {
+  const r = ROLES_INFO[role] || ROLES_INFO.player;
+  return `<span class="role-badge ${role}">${r.emoji} ${r.label}</span>`;
+}
+
+async function loadRolesPage() {
+  // Renderizar cards públicos
+  const grid = document.getElementById('rolesGrid');
+  if (grid) {
+    grid.innerHTML = Object.entries(ROLES_INFO).reverse().map(([key, r]) => `
+      <div class="role-card">
+        <div class="role-emoji">${r.emoji}</div>
+        <div class="role-name" style="color:${r.color}">${r.label}</div>
+        <div class="role-desc">${r.description}</div>
+      </div>
+    `).join('');
+  }
+
+  const isOwner = currentUser && currentUser.role === 'owner';
+  const isAdmin = currentUser && ['owner','admin'].includes(currentUser.role);
+
+  const ownerPanel   = document.getElementById('ownerPanel');
+  const staffSection = document.getElementById('staffSection');
+  if (ownerPanel)   ownerPanel.style.display   = isOwner ? 'block' : 'none';
+  if (staffSection) staffSection.style.display = isAdmin ? 'block' : 'none';
+
+  if (isAdmin) await loadStaffList();
+}
+
+async function loadStaffList() {
+  const list = document.getElementById('staffList');
+  if (!list) return;
+  list.innerHTML = '<div style="color:#7A6550;padding:16px">Carregando...</div>';
+  try {
+    const res  = await fetch('/api/owner/staff', {credentials:'include'});
+    const data = await res.json();
+    if (!data.staff || data.staff.length === 0) {
+      list.innerHTML = '<div style="color:#7A6550;padding:16px">Nenhum membro da equipe encontrado.</div>';
+      return;
+    }
+    const isOwner = currentUser && currentUser.role === 'owner';
+    list.innerHTML = data.staff.map(u => `
+      <div class="staff-item" id="staff-${u.id}">
+        <img src="${u.avatar || '/static/default_avatar.png'}" alt="${u.username}" onerror="this.src='/static/default_avatar.png'"/>
+        <div class="info">
+          <div class="name">${u.username}</div>
+          <div class="email">${u.email || 'Steam Login'}</div>
+        </div>
+        <div class="actions" id="staff-actions-${u.id}">
+          ${roleBadgeHTML(u.role)}
+          ${isOwner && u.id !== currentUser.id ? `
+            <button class="btn-change-role" onclick="toggleRoleEdit('${u.id}', '${u.role}', '${u.email}', '${u.username}')">
+              Alterar
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="color:#ff6b6b;padding:16px">Erro ao carregar staff.</div>';
+  }
+}
+
+function toggleRoleEdit(userId, currentRole, email, username) {
+  const actions = document.getElementById(`staff-actions-${userId}`);
+  if (!actions) return;
+  if (actions.querySelector('.inline-role-select')) {
+    actions.innerHTML = `
+      ${roleBadgeHTML(currentRole)}
+      <button class="btn-change-role" onclick="toggleRoleEdit('${userId}', '${currentRole}', '${email}', '${username}')">Alterar</button>
+    `;
+    return;
+  }
+  const roleOptions = Object.entries(ROLES_INFO).map(([key, r]) =>
+    `<option value="${key}" ${key === currentRole ? 'selected' : ''}>${r.emoji} ${r.label}</option>`
+  ).join('');
+  actions.innerHTML = `
+    <div class="inline-role-select">
+      <select id="inline-select-${userId}">${roleOptions}</select>
+      <button class="btn-save-role" onclick="saveRoleInline('${userId}', '${email}', '${username}', '${currentRole}')">✓</button>
+      <button class="btn-cancel-role" onclick="toggleRoleEdit('${userId}', '${currentRole}', '${email}', '${username}')">✕</button>
+    </div>
+  `;
+}
+
+async function saveRoleInline(userId, email, username, oldRole) {
+  const select = document.getElementById(`inline-select-${userId}`);
+  if (!select) return;
+  const newRole = select.value;
+  if (newRole === oldRole) { toggleRoleEdit(userId, oldRole, email, username); return; }
+  try {
+    const res  = await fetch('/api/owner/assign-role', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, role: newRole})
+    });
+    const data = await res.json();
+    if (res.ok) { toast(data.message || 'Cargo atualizado!', 'success'); await loadStaffList(); }
+    else { toast(data.error || 'Erro ao atualizar cargo', 'error'); toggleRoleEdit(userId, oldRole, email, username); }
+  } catch { toast('Erro de conexão', 'error'); }
+}
+
+let _searchTimer = null;
+function debouncedSearchUser(email) {
+  clearTimeout(_searchTimer);
+  const preview = document.getElementById('userPreview');
+  if (!email || !email.includes('@')) { if (preview) preview.style.display = 'none'; return; }
+  _searchTimer = setTimeout(() => searchUserByEmail(email), 600);
+}
+
+async function searchUserByEmail(email) {
+  const preview = document.getElementById('userPreview');
+  try {
+    const res  = await fetch(`/api/owner/search-user?email=${encodeURIComponent(email)}`, {credentials:'include'});
+    const data = await res.json();
+    if (data.user) {
+      document.getElementById('userPreviewName').textContent  = data.user.username;
+      document.getElementById('userPreviewEmail').textContent = data.user.email;
+      const avatarEl = document.getElementById('userPreviewAvatar');
+      if (avatarEl) avatarEl.src = data.user.avatar || '/static/default_avatar.png';
+      const badgeEl = document.getElementById('userPreviewBadge');
+      if (badgeEl) badgeEl.outerHTML = roleBadgeHTML(data.user.role).replace('>', ' id="userPreviewBadge">');
+      const sel = document.getElementById('assignRoleSelect');
+      if (sel) sel.value = data.user.role;
+      if (preview) preview.style.display = 'flex';
+    } else {
+      if (preview) preview.style.display = 'none';
+    }
+  } catch { if (preview) preview.style.display = 'none'; }
+}
+
+async function assignRole() {
+  const email = document.getElementById('assignEmailInput')?.value?.trim();
+  const role  = document.getElementById('assignRoleSelect')?.value;
+  if (!email) { toast('Informe o email do usuário', 'error'); return; }
+  if (!role)  { toast('Selecione um cargo', 'error'); return; }
+  try {
+    const res  = await fetch('/api/owner/assign-role', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, role})
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast(data.message || 'Cargo atualizado!', 'success');
+      document.getElementById('assignEmailInput').value = '';
+      document.getElementById('userPreview').style.display = 'none';
+      await loadStaffList();
+    } else toast(data.error || 'Erro ao atribuir cargo', 'error');
+  } catch { toast('Erro de conexão', 'error'); }
+}
+
 // ── INIT ──────────────────────────────────────────────────
 async function init() {
   applyLang();
@@ -2583,7 +2484,9 @@ async function init() {
 }
 
 init();
-setInterval(()=>{ if(document.getElementById('page-home').classList.contains('active')) loadServers(); }, 30000);
+setInterval(() => {
+  if(document.getElementById('page-home').classList.contains('active')) loadServers();
+}, 30000);
 </script>
 </body>
 </html>
