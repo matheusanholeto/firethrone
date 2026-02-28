@@ -1,0 +1,2546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FireThrone — Rust Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rust-orange: #C8440A;
+  --rust-red: #8B1A1A;
+  --rust-dark: #0D0B09;
+  --rust-darker: #080706;
+  --rust-brown: #2A1A0E;
+  --rust-tan: #8B6914;
+  --rust-metal: #3A3530;
+  --rust-light: #D4B896;
+  --rust-glow: #FF5500;
+  --rust-dim: #1A1510;
+  --border: #3D2E1E;
+  --text-muted: #7A6550;
+  --green: #4CAF50;
+  --yellow: #FFC107;
+  --red: #F44336;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--rust-darker);
+  color: var(--rust-light);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:1000; opacity:.4;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background: var(--rust-darker); }
+::-webkit-scrollbar-thumb { background: var(--rust-orange); border-radius:3px; }
+
+/* ── NAVBAR ── */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:900;
+  background: linear-gradient(180deg, rgba(8,7,6,.98) 0%, rgba(13,11,9,.9) 100%);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 64px;
+  backdrop-filter: blur(12px);
+}
+
+.nav-logo {
+  display:flex; align-items:center; gap:.75rem; cursor:pointer;
+}
+.nav-logo-icon {
+  width:38px; height:38px;
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-red));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; box-shadow: 0 0 20px rgba(200,68,10,.4);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%,100% { box-shadow: 0 0 20px rgba(200,68,10,.4); }
+  50% { box-shadow: 0 0 35px rgba(200,68,10,.7); }
+}
+.nav-logo-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem; letter-spacing: 3px;
+  background: linear-gradient(180deg, #fff 0%, var(--rust-light) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.nav-logo-text span {
+  background: linear-gradient(180deg, var(--rust-orange), var(--rust-red));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+
+.nav-links {
+  display:flex; gap:.25rem; list-style:none;
+}
+.nav-links a {
+  color: var(--text-muted); text-decoration:none;
+  font-weight:600; font-size:.85rem; letter-spacing:1.5px; text-transform:uppercase;
+  padding: .5rem .9rem; border-radius:4px;
+  transition: all .2s; cursor:pointer;
+  position:relative;
+}
+.nav-links a:hover, .nav-links a.active {
+  color: var(--rust-light);
+  background: rgba(200,68,10,.15);
+}
+.nav-links a.active::after {
+  content:''; position:absolute; bottom:-1px; left:0; right:0;
+  height:2px; background: var(--rust-orange);
+}
+
+.nav-actions { display:flex; gap:.75rem; align-items:center; }
+
+.btn {
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.8rem;
+  letter-spacing:1.5px; text-transform:uppercase; cursor:pointer;
+  padding:.5rem 1.2rem; border-radius:3px; border:none;
+  transition: all .2s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-red));
+  color:#fff; box-shadow: 0 2px 12px rgba(200,68,10,.3);
+}
+.btn-primary:hover { transform:translateY(-1px); box-shadow: 0 4px 20px rgba(200,68,10,.5); }
+.btn-outline {
+  background:transparent; color:var(--rust-light);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { border-color:var(--rust-orange); color:var(--rust-orange); }
+.btn-sm { padding:.35rem .8rem; font-size:.75rem; }
+.btn-danger { background: linear-gradient(135deg, #8B1A1A, #600); color:#fff; }
+.btn-success { background: linear-gradient(135deg, #1a5c1a, #0d3d0d); color: var(--green); border:1px solid #1a5c1a; }
+
+/* ── USER CHIP ── */
+.user-chip {
+  display:flex; align-items:center; gap:.5rem;
+  background: rgba(42,26,14,.6); border: 1px solid var(--border);
+  border-radius:4px; padding:.35rem .75rem; cursor:pointer;
+}
+.user-chip img { width:24px; height:24px; border-radius:50%; object-fit:cover; }
+.user-chip .username { font-weight:700; font-size:.85rem; }
+.user-chip .balance { font-family:'Share Tech Mono'; font-size:.75rem; color:var(--rust-tan); }
+
+/* ── MAIN CONTENT ── */
+main { padding-top:64px; }
+
+.page { display:none; }
+.page.active { display:block; }
+
+/* ── HERO ── */
+.hero {
+  position:relative; min-height:90vh;
+  display:flex; align-items:center; overflow:hidden;
+}
+.hero-bg {
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 80%, rgba(139,26,26,.15) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 20% 50%, rgba(200,68,10,.08) 0%, transparent 60%),
+    linear-gradient(180deg, var(--rust-darker) 0%, #0F0A06 50%, var(--rust-darker) 100%);
+}
+.hero-grid {
+  position:absolute; inset:0; opacity:.06;
+  background-image:
+    linear-gradient(rgba(200,68,10,.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,68,10,.5) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.hero-content {
+  position:relative; z-index:2;
+  max-width:1200px; margin:0 auto; padding:4rem 2rem;
+  display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center;
+}
+.hero-left {}
+.hero-tag {
+  display:inline-flex; align-items:center; gap:.5rem;
+  font-family:'Share Tech Mono'; font-size:.7rem; letter-spacing:3px; text-transform:uppercase;
+  color:var(--rust-orange); border: 1px solid rgba(200,68,10,.3);
+  padding:.3rem .8rem; border-radius:2px; margin-bottom:1.5rem;
+}
+.hero-title {
+  font-family:'Bebas Neue'; font-size:clamp(3.5rem,7vw,6rem);
+  line-height:.95; letter-spacing:2px; margin-bottom:1.5rem;
+}
+.hero-title .line1 { display:block; color:#fff; }
+.hero-title .line2 {
+  display:block;
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-tan));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.hero-sub {
+  font-size:1rem; color:var(--text-muted); line-height:1.7; margin-bottom:2rem; max-width:480px;
+}
+.hero-buttons { display:flex; gap:1rem; flex-wrap:wrap; }
+.hero-stats {
+  display:flex; gap:2rem; margin-top:3rem;
+}
+.hero-stat {}
+.hero-stat-num {
+  font-family:'Bebas Neue'; font-size:2.2rem; color:var(--rust-orange);
+  letter-spacing:1px; line-height:1;
+}
+.hero-stat-label { font-size:.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+
+.hero-right {
+  display:flex; flex-direction:column; gap:1rem;
+}
+.live-server-card {
+  background: linear-gradient(135deg, rgba(42,26,14,.8), rgba(26,21,16,.8));
+  border: 1px solid var(--border); border-radius:6px; padding:1.25rem;
+  transition: border-color .2s, transform .2s;
+  cursor:pointer;
+}
+.live-server-card:hover { border-color:var(--rust-orange); transform:translateX(4px); }
+.live-server-card .s-name { font-weight:700; font-size:.95rem; margin-bottom:.3rem; }
+.live-server-card .s-meta { display:flex; gap:1rem; font-size:.75rem; color:var(--text-muted); }
+.live-server-card .s-bar { margin-top:.75rem; }
+.progress-bar { height:4px; background:rgba(255,255,255,.05); border-radius:2px; overflow:hidden; }
+.progress-fill {
+  height:100%; border-radius:2px;
+  background: linear-gradient(90deg, var(--rust-orange), var(--rust-red));
+  transition: width .5s ease;
+}
+.status-dot {
+  width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:.3rem;
+}
+.status-dot.online { background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s infinite; }
+.status-dot.offline { background:var(--red); }
+.status-dot.restarting { background:var(--yellow); animation:blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── SECTION WRAPPER ── */
+.section { max-width:1200px; margin:0 auto; padding:4rem 2rem; }
+.section-header { margin-bottom:2.5rem; }
+.section-tag {
+  font-family:'Share Tech Mono'; font-size:.7rem; letter-spacing:3px; color:var(--rust-orange);
+  text-transform:uppercase; margin-bottom:.5rem;
+}
+.section-title {
+  font-family:'Bebas Neue'; font-size:clamp(2rem,4vw,3rem); letter-spacing:2px;
+  color:#fff;
+}
+.section-divider {
+  height:2px; width:60px; margin-top:.75rem;
+  background: linear-gradient(90deg, var(--rust-orange), transparent);
+}
+
+/* ── SERVER CARDS ── */
+.servers-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.25rem; }
+.server-card {
+  background: linear-gradient(160deg, rgba(42,26,14,.6), rgba(13,11,9,.8));
+  border: 1px solid var(--border); border-radius:6px; padding:1.5rem;
+  transition:all .25s; cursor:pointer; position:relative; overflow:hidden;
+}
+.server-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, var(--rust-orange), transparent);
+  opacity:0; transition:.25s;
+}
+.server-card:hover { border-color:rgba(200,68,10,.5); transform:translateY(-3px); box-shadow:0 8px 30px rgba(0,0,0,.4); }
+.server-card:hover::before { opacity:1; }
+.server-card.modded::after {
+  content:'MOD'; position:absolute; top:.75rem; right:.75rem;
+  font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:2px;
+  background:rgba(200,68,10,.2); color:var(--rust-orange);
+  border: 1px solid rgba(200,68,10,.3); padding:.2rem .4rem; border-radius:2px;
+}
+.s-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.75rem; }
+.s-title { font-weight:700; font-size:1.05rem; }
+.s-map { font-size:.75rem; color:var(--text-muted); margin-top:.2rem; }
+.s-players { font-family:'Bebas Neue'; font-size:1.4rem; color:var(--rust-orange); text-align:right; }
+.s-players span { font-family:'Rajdhani'; font-size:.75rem; color:var(--text-muted); display:block; }
+.s-tags { display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.75rem; }
+.tag {
+  font-size:.65rem; font-family:'Share Tech Mono'; letter-spacing:1px;
+  padding:.2rem .5rem; border-radius:2px;
+  background:rgba(255,255,255,.04); color:var(--text-muted); border: 1px solid var(--border);
+}
+.s-footer { display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:.75rem; border-top:1px solid var(--border); }
+.wipe-info { font-size:.75rem; color:var(--text-muted); }
+.wipe-info strong { color:var(--rust-light); }
+.connect-btn {
+  font-family:'Rajdhani'; font-weight:700; font-size:.75rem; letter-spacing:1.5px;
+  text-transform:uppercase; background:rgba(200,68,10,.15); color:var(--rust-orange);
+  border:1px solid rgba(200,68,10,.3); padding:.35rem .75rem; border-radius:3px; cursor:pointer;
+  transition:all .2s;
+}
+.connect-btn:hover { background:var(--rust-orange); color:#fff; }
+
+/* ── STORE ── */
+.store-filters { display:flex; gap:.5rem; margin-bottom:2rem; flex-wrap:wrap; }
+.filter-btn {
+  font-family:'Rajdhani'; font-weight:700; font-size:.8rem; letter-spacing:1px; text-transform:uppercase;
+  padding:.4rem 1rem; border-radius:3px; border: 1px solid var(--border);
+  background:transparent; color:var(--text-muted); cursor:pointer; transition:all .2s;
+}
+.filter-btn.active, .filter-btn:hover {
+  border-color:var(--rust-orange); color:var(--rust-orange);
+  background:rgba(200,68,10,.1);
+}
+.store-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.25rem; }
+.store-item {
+  background: linear-gradient(160deg, rgba(42,26,14,.5), rgba(13,11,9,.7));
+  border: 1px solid var(--border); border-radius:6px; overflow:hidden;
+  transition:all .25s; position:relative;
+}
+.store-item.featured { border-color:rgba(200,68,10,.4); }
+.store-item.featured::before {
+  content:'★ DESTAQUE'; position:absolute; top:.6rem; right:.6rem;
+  font-family:'Share Tech Mono'; font-size:.55rem; letter-spacing:1px;
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-red));
+  color:#fff; padding:.2rem .4rem; border-radius:2px;
+}
+.store-item:hover { transform:translateY(-3px); box-shadow:0 8px 30px rgba(0,0,0,.4); border-color:rgba(200,68,10,.4); }
+.item-img {
+  height:140px; display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(135deg, rgba(42,26,14,.8), rgba(26,21,16,.9));
+  font-size:3.5rem; border-bottom: 1px solid var(--border);
+}
+.item-body { padding:1.25rem; }
+.item-name { font-weight:700; font-size:1rem; margin-bottom:.3rem; }
+.item-desc { font-size:.8rem; color:var(--text-muted); line-height:1.5; margin-bottom:1rem; }
+.item-footer { display:flex; align-items:center; justify-content:space-between; }
+.item-price {
+  font-family:'Bebas Neue'; font-size:1.4rem; color:var(--rust-orange); letter-spacing:1px;
+}
+.item-price small { font-family:'Rajdhani'; font-size:.65rem; color:var(--text-muted); display:block; }
+
+/* ── LEADERBOARD ── */
+.lb-filters { display:flex; gap:.5rem; margin-bottom:1.5rem; }
+.lb-table-wrap {
+  background: rgba(13,11,9,.6); border: 1px solid var(--border); border-radius:6px; overflow:hidden;
+}
+.lb-table { width:100%; border-collapse:collapse; }
+.lb-table th {
+  font-family:'Share Tech Mono'; font-size:.7rem; letter-spacing:2px; text-transform:uppercase;
+  color:var(--text-muted); padding:.75rem 1rem; background:rgba(0,0,0,.3);
+  border-bottom: 1px solid var(--border); text-align:left;
+}
+.lb-table td { padding:.85rem 1rem; border-bottom: 1px solid rgba(61,46,30,.3); font-size:.9rem; }
+.lb-table tr:last-child td { border-bottom:none; }
+.lb-table tr:hover td { background:rgba(200,68,10,.05); }
+.lb-rank { font-family:'Bebas Neue'; font-size:1.2rem; color:var(--text-muted); width:50px; }
+.lb-rank.gold { color:#FFD700; }
+.lb-rank.silver { color:#C0C0C0; }
+.lb-rank.bronze { color:#CD7F32; }
+.lb-player { display:flex; align-items:center; gap:.75rem; }
+.lb-avatar { width:32px; height:32px; border-radius:50%; background:var(--rust-metal); display:flex; align-items:center; justify-content:center; font-size:.8rem; }
+.lb-username { font-weight:700; }
+.role-badge {
+  font-family:'Share Tech Mono'; font-size:.55rem; letter-spacing:1px;
+  padding:.1rem .35rem; border-radius:2px; margin-left:.4rem;
+}
+.role-badge.vip { background:rgba(200,68,10,.2); color:var(--rust-orange); border:1px solid rgba(200,68,10,.3); }
+.role-badge.admin { background:rgba(139,26,26,.3); color:#ff6b6b; border:1px solid rgba(139,26,26,.4); }
+.lb-num { font-family:'Share Tech Mono'; font-size:.85rem; }
+
+/* ── AUTH MODAL ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,.8); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background: linear-gradient(160deg, #1A1208, var(--rust-dark));
+  border: 1px solid var(--border); border-radius:8px; padding:2.5rem;
+  width:100%; max-width:420px; position:relative;
+  animation: slide-up .25s ease;
+}
+@keyframes slide-up { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-close {
+  position:absolute; top:1rem; right:1rem;
+  background:rgba(255,255,255,.05); border:none; color:var(--text-muted);
+  width:28px; height:28px; border-radius:4px; cursor:pointer; font-size:1rem;
+  display:flex; align-items:center; justify-content:center; transition:.2s;
+}
+.modal-close:hover { background:rgba(200,68,10,.2); color:var(--rust-orange); }
+.modal-title { font-family:'Bebas Neue'; font-size:1.8rem; letter-spacing:2px; margin-bottom:.3rem; }
+.modal-sub { font-size:.85rem; color:var(--text-muted); margin-bottom:1.75rem; }
+.form-group { margin-bottom:1rem; }
+.form-label { font-size:.75rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:.4rem; display:block; }
+.form-input {
+  width:100%; background:rgba(0,0,0,.3); border: 1px solid var(--border);
+  border-radius:4px; padding:.7rem 1rem; color:var(--rust-light);
+  font-family:'Rajdhani'; font-size:.95rem; outline:none; transition:.2s;
+}
+.form-input:focus { border-color:var(--rust-orange); background:rgba(200,68,10,.05); }
+.form-input::placeholder { color:var(--text-muted); }
+.form-switch { text-align:center; margin-top:1rem; font-size:.85rem; color:var(--text-muted); }
+.form-switch a { color:var(--rust-orange); cursor:pointer; text-decoration:none; }
+.form-error { font-size:.8rem; color:var(--red); margin-top:.25rem; }
+.form-success { font-size:.8rem; color:var(--green); margin-top:.25rem; }
+
+/* ── ADMIN PANEL ── */
+.admin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; margin-bottom:2.5rem; }
+.stat-card {
+  background: linear-gradient(135deg, rgba(42,26,14,.7), rgba(13,11,9,.8));
+  border: 1px solid var(--border); border-radius:6px; padding:1.25rem;
+}
+.stat-card-icon { font-size:1.5rem; margin-bottom:.5rem; }
+.stat-card-num { font-family:'Bebas Neue'; font-size:2rem; color:var(--rust-orange); }
+.stat-card-label { font-size:.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+
+.admin-tabs { display:flex; gap:.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border); }
+.admin-tab {
+  font-weight:700; font-size:.8rem; letter-spacing:1px; text-transform:uppercase;
+  padding:.6rem 1rem; border:none; background:transparent; color:var(--text-muted);
+  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:.2s;
+}
+.admin-tab.active { color:var(--rust-orange); border-bottom-color:var(--rust-orange); }
+
+.data-table { width:100%; border-collapse:collapse; font-size:.85rem; }
+.data-table th {
+  font-family:'Share Tech Mono'; font-size:.65rem; letter-spacing:2px; text-transform:uppercase;
+  color:var(--text-muted); padding:.6rem 1rem; text-align:left; border-bottom:1px solid var(--border);
+}
+.data-table td { padding:.7rem 1rem; border-bottom:1px solid rgba(61,46,30,.2); }
+.data-table tr:hover td { background:rgba(200,68,10,.04); }
+
+/* ── NEWS CARDS ── */
+.news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:1.25rem; }
+.news-card {
+  background: linear-gradient(160deg, rgba(42,26,14,.5), rgba(13,11,9,.7));
+  border: 1px solid var(--border); border-radius:6px; padding:1.5rem;
+  transition:.2s;
+}
+.news-card:hover { border-color:rgba(200,68,10,.3); }
+.news-badge {
+  font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:2px; text-transform:uppercase;
+  padding:.2rem .5rem; border-radius:2px; margin-bottom:.75rem; display:inline-block;
+}
+.news-badge.wipe { background:rgba(200,68,10,.15); color:var(--rust-orange); border:1px solid rgba(200,68,10,.2); }
+.news-badge.update { background:rgba(76,175,80,.1); color:var(--green); border:1px solid rgba(76,175,80,.2); }
+.news-badge.event { background:rgba(255,193,7,.1); color:var(--yellow); border:1px solid rgba(255,193,7,.2); }
+.news-badge.maintenance { background:rgba(244,67,54,.1); color:var(--red); border:1px solid rgba(244,67,54,.2); }
+.news-title { font-weight:700; font-size:1rem; margin-bottom:.5rem; }
+.news-content { font-size:.85rem; color:var(--text-muted); line-height:1.6; }
+.news-footer { display:flex; justify-content:space-between; margin-top:1rem; font-size:.75rem; color:var(--text-muted); padding-top:.75rem; border-top:1px solid var(--border); }
+
+/* ── TOAST ── */
+.toast-container { position:fixed; bottom:1.5rem; right:1.5rem; z-index:2000; display:flex; flex-direction:column; gap:.5rem; }
+.toast {
+  background: linear-gradient(135deg, #1A1208, var(--rust-dark));
+  border: 1px solid var(--border); border-radius:6px; padding:.75rem 1.25rem;
+  font-size:.85rem; min-width:280px; animation: toast-in .3s ease;
+  display:flex; align-items:center; gap:.75rem;
+}
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error { border-left: 3px solid var(--red); }
+.toast.info { border-left: 3px solid var(--rust-orange); }
+@keyframes toast-in { from{transform:translateX(100px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+/* ── PROFILE ── */
+.profile-header {
+  background: linear-gradient(160deg, rgba(42,26,14,.8), rgba(13,11,9,.9));
+  border: 1px solid var(--border); border-radius:8px; padding:2rem; margin-bottom:2rem;
+  display:flex; align-items:center; gap:2rem;
+}
+.profile-avatar {
+  width:80px; height:80px; border-radius:50%;
+  background: linear-gradient(135deg, var(--rust-orange), var(--rust-red));
+  display:flex; align-items:center; justify-content:center; font-size:2rem;
+  border: 3px solid var(--rust-orange);
+}
+.profile-info h2 { font-family:'Bebas Neue'; font-size:1.8rem; letter-spacing:2px; }
+.profile-info p { color:var(--text-muted); font-size:.85rem; }
+.profile-stats { display:flex; gap:2rem; margin-top:1rem; }
+.profile-stat-num { font-family:'Bebas Neue'; font-size:1.4rem; color:var(--rust-orange); }
+.profile-stat-label { font-size:.7rem; color:var(--text-muted); text-transform:uppercase; }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--rust-darker); border-top:1px solid var(--border);
+  padding:2rem; text-align:center; font-size:.8rem; color:var(--text-muted);
+  margin-top:4rem;
+}
+footer .footer-logo { font-family:'Bebas Neue'; font-size:1.4rem; letter-spacing:3px; margin-bottom:.5rem; }
+footer .footer-logo span { color:var(--rust-orange); }
+
+/* ── LOADING SKELETON ── */
+.skeleton {
+  background: linear-gradient(90deg, rgba(42,26,14,.4) 25%, rgba(58,42,28,.6) 50%, rgba(42,26,14,.4) 75%);
+  background-size:200% 100%; border-radius:4px;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ── SEPARATOR ── */
+.divider { border:none; border-top:1px solid var(--border); margin:1.5rem 0; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align:center; padding:4rem 2rem; color:var(--text-muted);
+}
+.empty-state .icon { font-size:3rem; margin-bottom:1rem; opacity:.4; }
+.empty-state p { font-size:.9rem; }
+
+/* ── KIT ITEMS MODAL ─────────────────────────────────── */
+.kit-inventory-wrapper {
+  margin-top: 0.3rem;
+}
+
+.kit-section {
+  margin-bottom: 0.4rem;
+}
+.kit-section:last-child { margin-bottom: 0; }
+
+.kit-section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  color: #fff;
+  padding: 0.2rem 0.5rem;
+  margin-bottom: 0.3rem;
+  background: linear-gradient(90deg, rgba(200,68,10,.2), transparent);
+  border-left: 3px solid var(--rust-orange);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.kit-section-title .section-count {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  margin-left: auto;
+}
+
+/* Clothing: 8 colunas fixas */
+.kit-section-clothing .kit-items-row {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.3rem;
+  padding: 0.4rem;
+  background: rgba(100,149,237,.04);
+  border: 1px solid rgba(100,149,237,.1);
+  border-radius: 4px;
+}
+
+/* Inventory: 6 colunas fixas */
+.kit-section-inventory .kit-items-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.3rem;
+  padding: 0.4rem;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.05);
+  border-radius: 4px;
+}
+
+/* Hotbar: 6 colunas fixas */
+.kit-section-hotbar .kit-items-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.3rem;
+  padding: 0.4rem;
+  background: rgba(76,175,80,.04);
+  border: 1px solid rgba(76,175,80,.12);
+  border-radius: 4px;
+}
+
+/* Card base — aspect-ratio garante todos quadrados iguais */
+.kit-item-card {
+  background: rgba(26,21,16,.95);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 4px;
+  padding: 0.4rem 0.3rem 0.3rem;
+  text-align: center;
+  transition: all .18s;
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+}
+.kit-item-card:hover {
+  border-color: var(--rust-orange);
+  background: rgba(200,68,10,.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.5);
+  z-index: 2;
+}
+.kit-item-card img {
+  width: 52px;
+  height: 52px;
+  max-width: 70%;
+  max-height: 55%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.6));
+  display: block;
+}
+.kit-item-card .item-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--rust-light);
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+.kit-item-card .item-amount {
+  font-size: 0.78rem;
+  color: var(--rust-orange);
+  font-weight: 700;
+  font-family: 'Share Tech Mono', monospace;
+  line-height: 1;
+}
+
+/* Slot vazio */
+.kit-slot-empty {
+  background: rgba(26,21,16,.4);
+  border: 1px dashed rgba(255,255,255,.06);
+  border-radius: 4px;
+  aspect-ratio: 1;
+}
+
+/* Hotbar items get a subtle green tint */
+.kit-section-hotbar .kit-item-card {
+  border-color: rgba(76,175,80,.15);
+}
+.kit-section-hotbar .kit-item-card:hover {
+  border-color: var(--green);
+}
+
+/* Clothing items get a subtle blue tint */
+.kit-section-clothing .kit-item-card {
+  border-color: rgba(100,149,237,.12);
+}
+.kit-section-clothing .kit-item-card:hover {
+  border-color: cornflowerblue;
+}
+
+.modal-kit-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+.modal-kit-image {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: var(--rust-dim);
+  padding: 4px;
+}
+
+
+/* ── ADMIN PRICE EDIT ─────────────────────────────────── */
+.admin-price-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  background: rgba(200,68,10,.1);
+  border: 1px dashed rgba(200,68,10,.4);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+}
+.admin-price-edit label {
+  font-size: 0.65rem;
+  color: var(--rust-orange);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+.admin-price-edit input {
+  background: transparent;
+  border: none;
+  color: var(--rust-light);
+  font-size: 0.85rem;
+  font-weight: 700;
+  width: 80px;
+  outline: none;
+}
+.admin-price-edit button {
+  background: var(--rust-orange);
+  border: none;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.admin-price-edit button:hover { opacity: .85; }
+
+
+/* ── LANGUAGE SELECTOR ───────────────────────────────── */
+.lang-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.lang-btn {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--rust-light);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: border-color .2s;
+}
+.lang-btn:hover { border-color: var(--rust-orange); }
+.lang-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--rust-brown);
+  border: 1px solid rgba(200,68,10,.3);
+  border-radius: 8px;
+  min-width: 140px;
+  z-index: 1000;
+  overflow: hidden;
+}
+.lang-dropdown.open { display: block; }
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--rust-light);
+  transition: background .15s;
+}
+.lang-option:hover { background: rgba(200,68,10,.15); }
+.lang-option.active { color: var(--rust-orange); font-weight: 700; }
+
+
+/* ── ADMIN IMAGE EDIT ────────────────────────────────── */
+.admin-img-edit {
+  margin-bottom: 0.4rem;
+  background: rgba(200,68,10,.08);
+  border: 1px dashed rgba(200,68,10,.3);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+}
+.admin-img-edit label {
+  font-size: 0.65rem;
+  color: var(--rust-orange);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.admin-img-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.admin-img-edit input[type="text"] {
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.1);
+  color: var(--rust-light);
+  font-size: 0.75rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  flex: 1;
+  outline: none;
+  min-width: 0;
+}
+.admin-img-edit input[type="file"] { display: none; }
+.admin-img-edit .img-btn {
+  background: var(--rust-orange);
+  border: none;
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 3px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.admin-img-edit .img-btn:hover { opacity: .85; }
+.admin-img-preview {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: var(--rust-dim);
+  flex-shrink: 0;
+}
+
+/* ── SUPPORT ── */
+.support-tabs {
+  display:flex; gap:.4rem; margin-bottom:1.5rem; flex-wrap:wrap;
+}
+.support-tab {
+  font-family:'Rajdhani'; font-weight:700; font-size:.82rem; letter-spacing:1.2px;
+  text-transform:uppercase; padding:.45rem 1.1rem; border-radius:3px;
+  border:1px solid var(--border); background:transparent; color:var(--text-muted);
+  cursor:pointer; transition:all .2s;
+}
+.support-tab.active, .support-tab:hover {
+  border-color:var(--rust-orange); color:var(--rust-orange); background:rgba(200,68,10,.1);
+}
+
+.support-form-wrap {
+  max-width:640px;
+  background:rgba(13,11,9,.5); border:1px solid var(--border);
+  border-radius:6px; padding:1.5rem;
+}
+.form-input textarea, textarea.form-input {
+  resize:vertical; min-height:120px; font-family:'Rajdhani',sans-serif; font-size:.9rem;
+  width:100%; background:rgba(0,0,0,.3); border:1px solid var(--border);
+  color:var(--rust-light); border-radius:4px; padding:.6rem .8rem; outline:none;
+  transition:border-color .2s;
+}
+textarea.form-input:focus { border-color:var(--rust-orange); }
+select.form-input {
+  appearance:none; cursor:pointer;
+}
+
+/* Ticket card list */
+.ticket-card {
+  background:linear-gradient(160deg, rgba(42,26,14,.5), rgba(13,11,9,.7));
+  border:1px solid var(--border); border-radius:6px; padding:1rem 1.25rem;
+  margin-bottom:.6rem; cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; gap:1rem;
+}
+.ticket-card:hover { border-color:rgba(200,68,10,.4); transform:translateX(3px); }
+.ticket-card .t-status-dot {
+  width:10px; height:10px; border-radius:50%; flex-shrink:0;
+}
+.t-status-dot.open        { background:var(--rust-orange); box-shadow:0 0 6px var(--rust-orange); }
+.t-status-dot.in_progress { background:var(--yellow);      box-shadow:0 0 6px var(--yellow); animation:blink 2s infinite; }
+.t-status-dot.closed      { background:var(--text-muted); }
+.ticket-card .t-main { flex:1; min-width:0; }
+.ticket-card .t-subject { font-weight:700; font-size:.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ticket-card .t-meta { font-size:.75rem; color:var(--text-muted); margin-top:.2rem; display:flex; gap:1rem; flex-wrap:wrap; }
+.ticket-card .t-badge {
+  font-family:'Share Tech Mono'; font-size:.6rem; letter-spacing:1px;
+  padding:.15rem .45rem; border-radius:2px; white-space:nowrap; flex-shrink:0;
+}
+.t-badge.open        { background:rgba(200,68,10,.15); color:var(--rust-orange); border:1px solid rgba(200,68,10,.3); }
+.t-badge.in_progress { background:rgba(255,193,7,.1);  color:var(--yellow);      border:1px solid rgba(255,193,7,.3); }
+.t-badge.closed      { background:rgba(255,255,255,.04); color:var(--text-muted); border:1px solid var(--border); }
+
+/* Ticket thread */
+.ticket-thread-header {
+  background:linear-gradient(135deg, rgba(200,68,10,.15), rgba(139,26,26,.08));
+  border:1px solid var(--border); border-radius:6px; padding:1.25rem 1.5rem;
+  margin-bottom:1rem;
+}
+.ticket-thread-header h3 { font-family:'Bebas Neue'; font-size:1.4rem; letter-spacing:2px; margin-bottom:.5rem; }
+.ticket-thread-meta { display:flex; gap:1.5rem; font-size:.8rem; color:var(--text-muted); flex-wrap:wrap; }
+
+.ticket-admin-controls {
+  display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.75rem; padding-top:.75rem;
+  border-top:1px solid var(--border);
+}
+.ticket-admin-controls select {
+  font-family:'Rajdhani'; font-size:.8rem; font-weight:700; letter-spacing:1px;
+  background:rgba(0,0,0,.3); border:1px solid var(--border); color:var(--rust-light);
+  padding:.3rem .6rem; border-radius:3px; cursor:pointer;
+}
+
+.ticket-messages { display:flex; flex-direction:column; gap:.6rem; margin-bottom:1rem; }
+.ticket-msg {
+  display:flex; gap:.75rem; align-items:flex-start;
+}
+.ticket-msg.is-admin { flex-direction:row-reverse; }
+.ticket-msg .msg-avatar {
+  width:34px; height:34px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.9rem; font-weight:700;
+}
+.ticket-msg.is-user  .msg-avatar { background:linear-gradient(135deg, var(--rust-metal), #2a2520); border:1px solid var(--border); }
+.ticket-msg.is-admin .msg-avatar { background:linear-gradient(135deg, var(--rust-orange), var(--rust-red)); }
+.ticket-msg .msg-bubble {
+  max-width:75%; background:rgba(26,21,16,.9); border:1px solid var(--border);
+  border-radius:6px; padding:.7rem .9rem;
+}
+.ticket-msg.is-admin .msg-bubble {
+  background:rgba(200,68,10,.1); border-color:rgba(200,68,10,.3);
+}
+.msg-bubble .msg-author {
+  font-size:.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  margin-bottom:.3rem;
+}
+.ticket-msg.is-admin .msg-author { color:var(--rust-orange); }
+.ticket-msg.is-user  .msg-author { color:var(--text-muted); }
+.msg-bubble .msg-text { font-size:.9rem; line-height:1.55; color:var(--rust-light); white-space:pre-wrap; }
+.msg-bubble .msg-time { font-size:.65rem; color:var(--text-muted); margin-top:.35rem; text-align:right; }
+
+.ticket-reply-box {
+  background:rgba(13,11,9,.5); border:1px solid var(--border);
+  border-radius:6px; padding:1rem;
+}
+.ticket-reply-box textarea {
+  width:100%; background:rgba(0,0,0,.3); border:1px solid var(--border);
+  color:var(--rust-light); border-radius:4px; padding:.6rem .8rem;
+  font-family:'Rajdhani'; font-size:.9rem; outline:none; resize:vertical;
+  min-height:80px; transition:border-color .2s;
+}
+.ticket-reply-box textarea:focus { border-color:var(--rust-orange); }
+.ticket-reply-actions { display:flex; justify-content:flex-end; gap:.5rem; margin-top:.6rem; }
+
+/* Admin stats bar */
+.support-admin-stats {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:.75rem; margin-bottom:1.25rem;
+}
+.support-stat-card {
+  background:rgba(13,11,9,.6); border:1px solid var(--border); border-radius:6px;
+  padding:.85rem; text-align:center;
+}
+.support-stat-card .s-num { font-family:'Bebas Neue'; font-size:1.8rem; color:var(--rust-orange); line-height:1; }
+.support-stat-card .s-label { font-size:.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-top:.2rem; }
+
+.support-filter-row { display:flex; gap:.4rem; margin-bottom:1rem; flex-wrap:wrap; }
+
+/* Priority badges */
+.priority-badge {
+  font-family:'Share Tech Mono'; font-size:.55rem; letter-spacing:1px;
+  padding:.1rem .35rem; border-radius:2px;
+}
+.priority-badge.normal { background:rgba(255,255,255,.05); color:var(--text-muted); border:1px solid var(--border); }
+.priority-badge.high   { background:rgba(255,193,7,.1); color:var(--yellow); border:1px solid rgba(255,193,7,.3); }
+.priority-badge.urgent { background:rgba(244,67,54,.15); color:#f44336; border:1px solid rgba(244,67,54,.3); }
+/* ── AUTH STEAM ── */
+.btn-steam {
+  display:flex; align-items:center; justify-content:center; gap:.6rem;
+  width:100%; padding:.6rem 1rem; border-radius:4px; cursor:pointer;
+  background: linear-gradient(135deg, #1b2838, #2a475e);
+  color:#c6d4df; border:1px solid #4c6b8a;
+  font-family:'Rajdhani',sans-serif; font-weight:700; font-size:.85rem;
+  letter-spacing:1px; text-transform:uppercase; text-decoration:none;
+  transition:all .2s; margin-bottom:.1rem;
+}
+.btn-steam:hover { background:linear-gradient(135deg,#2a475e,#1b2838); border-color:#66c0f4; color:#fff; }
+.auth-divider {
+  display:flex; align-items:center; gap:.75rem;
+  margin:.9rem 0; color:var(--text-muted); font-size:.75rem;
+}
+.auth-divider::before, .auth-divider::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">
+    <div class="nav-logo-icon">🔥</div>
+    <div class="nav-logo-text">Fire<span>Throne</span></div>
+  </div>
+  <ul class="nav-links">
+    <li><a onclick="showPage('home')" id="nav-home" class="active">Início</a></li>
+    <li><a onclick="showPage('servers')" id="nav-servers">Servidores</a></li>
+    <li><a onclick="showPage('store')" id="nav-store">Loja VIP</a></li>
+    <li><a onclick="showPage('leaderboard')" id="nav-leaderboard">Ranking</a></li>
+    <li><a onclick="showPage('news')" id="nav-news">Notícias</a></li>
+    <li id="nav-support-link"><a onclick="showPage('support')" id="nav-support">Suporte</a></li>
+    <li id="nav-admin-link" style="display:none"><a onclick="showPage('admin')" id="nav-admin">Admin</a></li>
+  </ul>
+  <div class="nav-actions">
+  <div class="lang-selector">
+    <button class="lang-btn" onclick="toggleLangDropdown()" id="lang-current">🇧🇷 Português</button>
+    <div class="lang-dropdown" id="lang-dropdown">
+      <div class="lang-option active" data-lang="pt" onclick="setLang('pt')">🇧🇷 Português (BR)</div>
+      <div class="lang-option" data-lang="pt_pt" onclick="setLang('pt_pt')">🇵🇹 Português (PT)</div>
+      <div class="lang-option" data-lang="en" onclick="setLang('en')">🇺🇸 English</div>
+      <div class="lang-option" data-lang="de" onclick="setLang('de')">🇩🇪 Deutsch</div>
+      <div class="lang-option" data-lang="ru" onclick="setLang('ru')">🇷🇺 Русский</div>
+    </div>
+  </div>
+  
+    <div id="auth-buttons">
+      <button id="btn-login" class="btn btn-outline btn-sm" onclick="openModal('login')">Entrar</button>
+      <button id="btn-register" class="btn btn-primary btn-sm" onclick="openModal('register')">Cadastrar</button>
+    </div>
+    <div id="user-menu" style="display:none">
+      <div class="user-chip" onclick="showPage('profile')">
+        <span id="nav-avatar">🪖</span>
+        <span class="username" id="nav-username">—</span>
+        <span class="balance" id="nav-balance">0 CR</span>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="logout()" style="margin-left:.5rem">Sair</button>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══ HOME ═══ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-left">
+        <div id="hero-tag" class="hero-tag">🔴 Servidores Online</div>
+        <h1 class="hero-title">
+          <span class="line1">Sobreviva.</span>
+          <span class="line2">Construa. Domine.</span>
+        </h1>
+        <p id="hero-sub" class="hero-sub">FireThrone é a rede de servidores de Rust mais competitiva do Brasil. Servidores vanilla e modificados com economia balanceada e comunidade ativa.</p>
+        <div class="hero-buttons">
+          <button id="hero-btn-servers" class="btn btn-primary" onclick="showPage('servers')">🎮 Ver Servidores</button>
+          <button id="hero-btn-store" class="btn btn-outline" onclick="showPage('store')">🛒 Loja VIP</button>
+        </div>
+        <div class="hero-stats" id="hero-stats">
+          <div class="hero-stat"><div class="hero-stat-num" id="stat-players">—</div><div id="stat-players-label" class="hero-stat-label">Jogadores Online</div></div>
+          <div class="hero-stat"><div class="hero-stat-num" id="stat-servers">—</div><div id="stat-servers-label" class="hero-stat-label">Servidores Ativos</div></div>
+          <div class="hero-stat"><div class="hero-stat-num">24/7</div><div id="stat-uptime-label" class="hero-stat-label">Disponibilidade</div></div>
+        </div>
+      </div>
+      <div class="hero-right" id="hero-servers">
+        <div class="skeleton" style="height:90px;border-radius:6px;"></div>
+        <div class="skeleton" style="height:90px;border-radius:6px;"></div>
+        <div class="skeleton" style="height:90px;border-radius:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- News strip -->
+  <div style="background:rgba(200,68,10,.08); border-top:1px solid rgba(200,68,10,.2); border-bottom:1px solid rgba(200,68,10,.2); padding:1rem 0;">
+    <div class="section" style="padding:0 2rem;">
+      <div style="display:flex; gap:2rem; overflow-x:auto; padding:.5rem 0;" id="home-news"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SERVERS ═══ -->
+<div id="page-servers" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Network Status</div>
+      <h2 id="sec-servers" class="section-title">Servidores</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="servers-grid" id="servers-grid">
+      <div class="skeleton" style="height:200px;border-radius:6px;"></div>
+      <div class="skeleton" style="height:200px;border-radius:6px;"></div>
+      <div class="skeleton" style="height:200px;border-radius:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STORE ═══ -->
+<div id="page-store" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Planos & Benefícios</div>
+      <h2 id="sec-store" class="section-title">Loja VIP</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+      <div class="store-filters" id="store-filters">
+        <button id="filter-vip" class="filter-btn active" onclick="filterStore('vip',this)">👑 Planos VIP</button>
+      </div>
+      <div style="font-size:.85rem; color:var(--text-muted)">
+        Seu saldo: <span id="store-balance" style="color:var(--rust-orange); font-family:'Share Tech Mono';">—</span>
+      </div>
+    </div>
+    <div class="store-grid" id="store-grid"></div>
+  </div>
+</div>
+
+<!-- ═══ LEADERBOARD ═══ -->
+<div id="page-leaderboard" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Melhores Jogadores</div>
+      <h2 id="sec-lb" class="section-title">Ranking</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="lb-filters">
+      <button class="filter-btn active" onclick="sortLB('kills',this)">Kills</button>
+      <button class="filter-btn" onclick="sortLB('deaths',this)">Mortes</button>
+      <button class="filter-btn" onclick="sortLB('hours_played',this)">Horas</button>
+      <button class="filter-btn" onclick="sortLB('resources_gathered',this)">Recursos</button>
+      <button class="filter-btn" onclick="sortLB('raids_won',this)">Raids</button>
+    </div>
+    <div class="lb-table-wrap">
+      <table class="lb-table" id="lb-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Jogador</th><th id="lb-col-kills">Kills</th>
+            <th id="lb-col-deaths">Mortes</th><th id="lb-col-hours">Horas</th>
+            <th id="lb-col-raids">Raids</th>
+          </tr>
+        </thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NEWS ═══ -->
+<div id="page-news" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Atualizações & Eventos</div>
+      <h2 id="sec-news" class="section-title">Notícias</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="news-grid" id="news-grid"></div>
+  </div>
+</div>
+
+<!-- ═══ PROFILE ═══ -->
+<div id="page-profile" class="page">
+  <div class="section">
+    <div id="profile-content">
+      <div class="empty-state"><div class="icon">🪖</div><p>Faça login para ver seu perfil.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN ═══ -->
+<div id="page-admin" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Painel de Controle</div>
+      <h2 id="sec-admin" class="section-title">Administração</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="admin-grid" id="admin-stats-grid"></div>
+    <div class="admin-tabs">
+      <button id="tab-users" class="admin-tab active" onclick="adminTab('users',this)">Usuários</button>
+      <button id="tab-servers" class="admin-tab" onclick="adminTab('servers',this)">Servidores</button>
+    </div>
+    <div id="admin-tab-users"></div>
+    <div id="admin-tab-servers" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ── SUPPORT PAGE ── -->
+<div id="page-support" class="page">
+  <div class="section">
+    <div class="section-header">
+      <div class="section-tag">// Central de Ajuda</div>
+      <h2 class="section-title">Suporte</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    <!-- Tabs: Meus Tickets | Novo Ticket | (admin) Todos -->
+    <div class="support-tabs" id="support-tabs">
+      <button class="support-tab active" id="stab-list"   onclick="supportTab('list',this)">📋 Meus Tickets</button>
+      <button class="support-tab"        id="stab-new"    onclick="supportTab('new',this)">➕ Novo Ticket</button>
+      <button class="support-tab admin-only" id="stab-admin" onclick="supportTab('admin',this)" style="display:none">🛡️ Admin — Todos</button>
+    </div>
+
+    <!-- Lista de tickets do usuário -->
+    <div id="support-panel-list">
+      <div id="support-ticket-list"><div class="empty-state"><div class="icon">🎫</div><p>Carregando tickets...</p></div></div>
+    </div>
+
+    <!-- Novo ticket -->
+    <div id="support-panel-new" style="display:none">
+      <div class="support-form-wrap">
+        <div class="form-group">
+          <label class="form-label">Categoria</label>
+          <select id="ticket-category" class="form-input">
+            <option value="">Selecione uma categoria...</option>
+            <option>Compra / Pagamento</option>
+            <option>Problema no servidor</option>
+            <option>Bug / Erro</option>
+            <option>Conta / Acesso</option>
+            <option>Abuso / Report</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assunto</label>
+          <input type="text" id="ticket-subject" class="form-input" placeholder="Descreva brevemente o problema...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mensagem</label>
+          <textarea id="ticket-message" class="form-input" rows="6" placeholder="Detalhe o seu problema com o máximo de informações possível..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="submitTicket()">🎫 Abrir Ticket</button>
+      </div>
+    </div>
+
+    <!-- Admin: todos os tickets -->
+    <div id="support-panel-admin" style="display:none">
+      <div class="support-admin-stats" id="support-admin-stats"></div>
+      <div class="support-filter-row">
+        <button class="filter-btn active" onclick="loadAdminTickets('all',this)">Todos</button>
+        <button class="filter-btn" onclick="loadAdminTickets('open',this)">Abertos</button>
+        <button class="filter-btn" onclick="loadAdminTickets('in_progress',this)">Em Andamento</button>
+        <button class="filter-btn" onclick="loadAdminTickets('closed',this)">Fechados</button>
+      </div>
+      <div id="admin-ticket-list"></div>
+    </div>
+
+    <!-- Visualização de ticket individual -->
+    <div id="support-panel-thread" style="display:none">
+      <button class="btn btn-outline btn-sm" onclick="backToTicketList()" style="margin-bottom:1rem">← Voltar</button>
+      <div id="ticket-thread-content"></div>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <div class="footer-logo">Fire<span>Throne</span></div>
+  <p>© 2024 FireThrone Network. Todos os direitos reservados.</p>
+  <p style="margin-top:.3rem; font-size:.7rem;">Este servidor não é afiliado à Facepunch Studios.</p>
+</footer>
+
+<!-- ═══ MODALS ═══ -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('login')">✕</button>
+    <div id="login-title" class="modal-title">Entrar</div>
+    <div id="login-sub" class="modal-sub">Acesse sua conta FireThrone</div>
+
+    <!-- Steam login -->
+    <a href="/api/auth/steam" class="btn-steam" id="btn-steam-login">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.606 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.298-.249-1.878-.03l1.523.63c.956.4 1.409 1.497 1.009 2.455-.397.957-1.497 1.41-2.455 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.252 0-2.265-1.014-2.265-2.265z"/></svg>
+      Entrar com Steam
+    </a>
+
+    <div class="auth-divider"><span>ou</span></div>
+
+    <div class="form-group">
+      <label id="login-field-label" class="form-label">Email</label>
+      <input class="form-input" id="login-identifier" type="email" placeholder="seu@email.com">
+    </div>
+    <div class="form-group">
+      <label id="login-pass-label" class="form-label">Senha</label>
+      <input class="form-input" id="login-password" type="password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <div id="login-msg"></div>
+    <button id="login-btn" class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="doLogin()">Entrar</button>
+    <div id="login-switch" class="form-switch">Não tem conta? <a onclick="switchModal('login','register')">Cadastre-se</a></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-register">
+  <div class="modal" style="max-width:460px;">
+    <button class="modal-close" onclick="closeModal('register')">✕</button>
+    <div id="reg-title" class="modal-title">Criar Conta</div>
+    <div id="reg-sub" class="modal-sub">Junte-se ao FireThrone Network</div>
+
+    <!-- Steam -->
+    <a href="/api/auth/steam" class="btn-steam" id="btn-steam-register">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.606 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.298-.249-1.878-.03l1.523.63c.956.4 1.409 1.497 1.009 2.455-.397.957-1.497 1.41-2.455 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.252 0-2.265-1.014-2.265-2.265z"/></svg>
+      Cadastrar com Steam
+    </a>
+
+    <div class="auth-divider"><span>ou cadastre com email</span></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-input" id="reg-firstname" type="text" placeholder="João">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sobrenome</label>
+        <input class="form-input" id="reg-lastname" type="text" placeholder="Silva">
+      </div>
+    </div>
+    <div class="form-group">
+      <label id="reg-email-label" class="form-label">Email</label>
+      <input class="form-input" id="reg-email" type="email" placeholder="joao@email.com"
+        oninput="checkEmailAvailable(this.value)">
+      <div id="reg-email-status" style="font-size:.72rem;margin-top:.25rem;"></div>
+    </div>
+    <div class="form-group">
+      <label id="reg-pass-label" class="form-label">Senha</label>
+      <input class="form-input" id="reg-password" type="password" placeholder="Mínimo 6 caracteres"
+        oninput="checkPassMatch()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirmar Senha</label>
+      <input class="form-input" id="reg-password2" type="password" placeholder="Repita a senha"
+        oninput="checkPassMatch()">
+      <div id="reg-pass-status" style="font-size:.72rem;margin-top:.25rem;"></div>
+    </div>
+    <div id="reg-msg"></div>
+    <button id="reg-btn" class="btn btn-primary" style="width:100%; margin-top:.5rem;" onclick="doRegister()">Criar Conta</button>
+    <div id="reg-switch" class="form-switch">Já tem conta? <a onclick="switchModal('register','login')">Entre aqui</a></div>
+  </div>
+</div>
+
+<!-- Email verification notice modal -->
+<div class="modal-overlay" id="modal-verify-email">
+  <div class="modal" style="text-align:center;max-width:400px;">
+    <div style="font-size:3rem;margin-bottom:1rem;">📧</div>
+    <div class="modal-title" style="font-size:1.4rem;">Verifique seu Email</div>
+    <div class="modal-sub" style="margin-bottom:1.5rem;">
+      Enviamos um link de confirmação para <strong id="verify-email-addr"></strong>.<br>
+      Clique no link para ativar sua conta.
+    </div>
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.5rem;">Não recebeu? Verifique a pasta de spam.</p>
+    <button class="btn btn-outline" onclick="closeModal('verify-email')">Fechar</button>
+  </div>
+</div>
+
+
+<!-- KIT ITEMS MODAL -->
+<div class="modal-overlay" id="modal-kit-items">
+  <div class="modal" style="max-width:920px; width:97%; padding:1.25rem 1.5rem;">
+    <button class="modal-close" onclick="closeModal('kit-items')">✕</button>
+    <div class="modal-kit-header">
+      <img id="kit-modal-image" class="modal-kit-image" src="" alt="" onerror="this.style.display='none'">
+      <div>
+        <div class="modal-title" id="kit-modal-name" style="margin-bottom:0.25rem;"></div>
+        <div class="modal-sub" id="kit-modal-desc"></div>
+      </div>
+    </div>
+    <div id="kit-modal-items" class="kit-inventory-wrapper"></div>
+    <div style="margin-top:1.5rem; display:flex; gap:.75rem;">
+      <button class="btn btn-outline" style="flex:1;" onclick="closeModal('kit-items')">Fechar</button>
+      <button class="btn btn-primary" style="flex:1;" id="kit-modal-buy-btn">Comprar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+
+// ── I18N ─────────────────────────────────────────────────
+const LANGS = {
+  pt: {
+    flag:'🇧🇷', label:'Português (BR)',
+    nav_home:'Início', nav_servers:'Servidores', nav_store:'Loja VIP',
+    nav_leaderboard:'Ranking', nav_news:'Notícias', nav_admin:'Admin',
+    btn_login:'Entrar', btn_register:'Cadastrar', btn_logout:'Sair',
+    hero_tag:'🔴 Servidores Online',
+    hero_sub:'FireThrone é a rede de servidores de Rust mais competitiva do Brasil. Servidores vanilla e modificados com economia balanceada e comunidade ativa.',
+    hero_btn_servers:'🎮 Ver Servidores', hero_btn_store:'🛒 Loja VIP',
+    stat_players:'Jogadores Online', stat_servers:'Servidores Ativos', stat_uptime:'Disponibilidade',
+    sec_servers:'Servidores', sec_store:'Loja VIP', sec_leaderboard:'Ranking', sec_news:'Notícias', sec_admin:'Administração',
+    filter_vip:'👑 Planos VIP',
+    status_online:'Online', status_offline:'Offline', status_restarting:'Reiniciando',
+    wipe:'Wipe', players:'jogadores', copy_ip:'Copiar IP',
+    buy:'Comprar', free:'Grátis', credits:'créditos', view_items:'📦 Itens', save_price:'Salvar', price_label:'💰 Preço', close:'Fechar',
+    login_title:'Entrar', login_sub:'Acesse sua conta FireThrone', login_field:'Usuário ou Email', login_pass:'Senha', login_btn:'Entrar',
+    login_switch:'Não tem conta?', login_switch_link:'Cadastre-se',
+    reg_title:'Cadastrar', reg_sub:'Crie sua conta e entre para a batalha', reg_user:'Usuário', reg_email:'Email', reg_pass:'Senha', reg_btn:'Criar Conta',
+    reg_switch:'Já tem conta?', reg_switch_link:'Entre aqui',
+    empty_servers:'Nenhum servidor encontrado.', empty_store:'Sem itens disponíveis.',
+    tab_users:'Usuários', tab_servers:'Servidores', get_kit:'Pegar Kit',
+  },
+  pt_pt: {
+    flag:'🇵🇹', label:'Português (PT)',
+    nav_home:'Início', nav_servers:'Servidores', nav_store:'Loja VIP',
+    nav_leaderboard:'Classificação', nav_news:'Notícias', nav_admin:'Admin',
+    btn_login:'Entrar', btn_register:'Registar', btn_logout:'Sair',
+    hero_tag:'🔴 Servidores Online',
+    hero_sub:'FireThrone é a rede de servidores de Rust mais competitiva. Servidores vanilla e modificados com economia equilibrada e comunidade activa.',
+    hero_btn_servers:'🎮 Ver Servidores', hero_btn_store:'🛒 Loja VIP',
+    stat_players:'Jogadores Online', stat_servers:'Servidores Activos', stat_uptime:'Disponibilidade',
+    sec_servers:'Servidores', sec_store:'Loja VIP', sec_leaderboard:'Classificação', sec_news:'Notícias', sec_admin:'Administração',
+    filter_vip:'👑 Planos VIP',
+    status_online:'Online', status_offline:'Offline', status_restarting:'A Reiniciar',
+    wipe:'Wipe', players:'jogadores', copy_ip:'Copiar IP',
+    buy:'Comprar', free:'Grátis', credits:'créditos', view_items:'📦 Itens', save_price:'Guardar', price_label:'💰 Preço', close:'Fechar',
+    login_title:'Entrar', login_sub:'Aceda à sua conta FireThrone', login_field:'Utilizador ou Email', login_pass:'Palavra-passe', login_btn:'Entrar',
+    login_switch:'Não tem conta?', login_switch_link:'Registar',
+    reg_title:'Registar', reg_sub:'Crie a sua conta e entre na batalha', reg_user:'Utilizador', reg_email:'Email', reg_pass:'Palavra-passe', reg_btn:'Criar Conta',
+    reg_switch:'Já tem conta?', reg_switch_link:'Entrar aqui',
+    empty_servers:'Nenhum servidor encontrado.', empty_store:'Sem itens disponíveis.',
+    tab_users:'Utilizadores', tab_servers:'Servidores', get_kit:'Obter Kit',
+  },
+  en: {
+    flag:'🇺🇸', label:'English',
+    nav_home:'Home', nav_servers:'Servers', nav_store:'VIP Store',
+    nav_leaderboard:'Leaderboard', nav_news:'News', nav_admin:'Admin',
+    btn_login:'Login', btn_register:'Register', btn_logout:'Logout',
+    hero_tag:'🔴 Servers Online',
+    hero_sub:'FireThrone is the most competitive Rust server network. Vanilla and modded servers with balanced economy and active community.',
+    hero_btn_servers:'🎮 View Servers', hero_btn_store:'🛒 VIP Store',
+    stat_players:'Online Players', stat_servers:'Active Servers', stat_uptime:'Uptime',
+    sec_servers:'Servers', sec_store:'VIP Store', sec_leaderboard:'Leaderboard', sec_news:'News', sec_admin:'Administration',
+    filter_vip:'👑 VIP Plans',
+    status_online:'Online', status_offline:'Offline', status_restarting:'Restarting',
+    wipe:'Wipe', players:'players', copy_ip:'Copy IP',
+    buy:'Buy', free:'Free', credits:'credits', view_items:'📦 Items', save_price:'Save', price_label:'💰 Price', close:'Close',
+    login_title:'Login', login_sub:'Access your FireThrone account', login_field:'Username or Email', login_pass:'Password', login_btn:'Login',
+    login_switch:"Don't have an account?", login_switch_link:'Register',
+    reg_title:'Register', reg_sub:'Create your account and join the battle', reg_user:'Username', reg_email:'Email', reg_pass:'Password', reg_btn:'Create Account',
+    reg_switch:'Already have an account?', reg_switch_link:'Login here',
+    empty_servers:'No servers found.', empty_store:'No items available.',
+    tab_users:'Users', tab_servers:'Servers', get_kit:'Get Kit',
+  },
+  de: {
+    flag:'🇩🇪', label:'Deutsch',
+    nav_home:'Start', nav_servers:'Server', nav_store:'VIP-Shop',
+    nav_leaderboard:'Rangliste', nav_news:'Neuigkeiten', nav_admin:'Admin',
+    btn_login:'Anmelden', btn_register:'Registrieren', btn_logout:'Abmelden',
+    hero_tag:'🔴 Server Online',
+    hero_sub:'FireThrone ist das wettbewerbsfähigste Rust-Servernetzwerk. Vanilla- und modifizierte Server mit ausgeglichener Wirtschaft und aktiver Community.',
+    hero_btn_servers:'🎮 Server ansehen', hero_btn_store:'🛒 VIP-Shop',
+    stat_players:'Spieler Online', stat_servers:'Aktive Server', stat_uptime:'Verfügbarkeit',
+    sec_servers:'Server', sec_store:'VIP-Shop', sec_leaderboard:'Rangliste', sec_news:'Neuigkeiten', sec_admin:'Administration',
+    filter_vip:'👑 VIP-Pläne',
+    status_online:'Online', status_offline:'Offline', status_restarting:'Neustart',
+    wipe:'Wipe', players:'Spieler', copy_ip:'IP kopieren',
+    buy:'Kaufen', free:'Kostenlos', credits:'Credits', view_items:'📦 Items', save_price:'Speichern', price_label:'💰 Preis', close:'Schließen',
+    login_title:'Anmelden', login_sub:'Auf dein FireThrone-Konto zugreifen', login_field:'Benutzername oder E-Mail', login_pass:'Passwort', login_btn:'Anmelden',
+    login_switch:'Kein Konto?', login_switch_link:'Registrieren',
+    reg_title:'Registrieren', reg_sub:'Konto erstellen und in den Kampf einsteigen', reg_user:'Benutzername', reg_email:'E-Mail', reg_pass:'Passwort', reg_btn:'Konto erstellen',
+    reg_switch:'Bereits ein Konto?', reg_switch_link:'Hier anmelden',
+    empty_servers:'Keine Server gefunden.', empty_store:'Keine Artikel verfügbar.',
+    tab_users:'Benutzer', tab_servers:'Server', get_kit:'Kit holen',
+  },
+  ru: {
+    flag:'🇷🇺', label:'Русский',
+    nav_home:'Главная', nav_servers:'Серверы', nav_store:'VIP Магазин',
+    nav_leaderboard:'Рейтинг', nav_news:'Новости', nav_admin:'Админ',
+    btn_login:'Войти', btn_register:'Регистрация', btn_logout:'Выйти',
+    hero_tag:'🔴 Серверы онлайн',
+    hero_sub:'FireThrone — самая конкурентная сеть серверов Rust. Ванильные и модифицированные серверы со сбалансированной экономикой и активным сообществом.',
+    hero_btn_servers:'🎮 Серверы', hero_btn_store:'🛒 VIP Магазин',
+    stat_players:'Игроки онлайн', stat_servers:'Активных серверов', stat_uptime:'Доступность',
+    sec_servers:'Серверы', sec_store:'VIP Магазин', sec_leaderboard:'Рейтинг', sec_news:'Новости', sec_admin:'Администрация',
+    filter_vip:'👑 VIP Планы',
+    status_online:'Онлайн', status_offline:'Оффлайн', status_restarting:'Перезапуск',
+    wipe:'Вайп', players:'игроков', copy_ip:'Копировать IP',
+    buy:'Купить', free:'Бесплатно', credits:'кредитов', view_items:'📦 Предметы', save_price:'Сохранить', price_label:'💰 Цена', close:'Закрыть',
+    login_title:'Войти', login_sub:'Войдите в свой аккаунт FireThrone', login_field:'Логин или Email', login_pass:'Пароль', login_btn:'Войти',
+    login_switch:'Нет аккаунта?', login_switch_link:'Зарегистрироваться',
+    reg_title:'Регистрация', reg_sub:'Создайте аккаунт и вступите в бой', reg_user:'Имя пользователя', reg_email:'Email', reg_pass:'Пароль', reg_btn:'Создать аккаунт',
+    reg_switch:'Уже есть аккаунт?', reg_switch_link:'Войти',
+    empty_servers:'Серверы не найдены.', empty_store:'Нет доступных товаров.',
+    tab_users:'Пользователи', tab_servers:'Серверы', get_kit:'Получить кит',
+  }
+};
+
+let currentLang = localStorage.getItem('ft_lang') || 'pt';
+
+function t(key) { return (LANGS[currentLang] || LANGS['pt'])[key] || key; }
+
+function applyLang() {
+  const T = LANGS[currentLang] || LANGS['pt'];
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  const setHtml = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
+  set('nav-home', T.nav_home); set('nav-servers', T.nav_servers); set('nav-store', T.nav_store);
+  set('nav-leaderboard', T.nav_leaderboard); set('nav-news', T.nav_news); set('nav-admin', T.nav_admin);
+  set('btn-login', T.btn_login); set('btn-register', T.btn_register); set('btn-logout', T.btn_logout);
+  set('hero-tag', T.hero_tag); set('hero-sub', T.hero_sub);
+  set('hero-btn-servers', T.hero_btn_servers); set('hero-btn-store', T.hero_btn_store);
+  set('stat-players-label', T.stat_players); set('stat-servers-label', T.stat_servers); set('stat-uptime-label', T.stat_uptime);
+  set('sec-servers', T.sec_servers); set('sec-store', T.sec_store); set('sec-lb', T.sec_leaderboard);
+  set('sec-news', T.sec_news); set('sec-admin', T.sec_admin); set('filter-vip', T.filter_vip);
+  set('login-title', T.login_title); set('login-sub', T.login_sub);
+  set('login-field-label', T.login_field); set('login-pass-label', T.login_pass); set('login-btn', T.login_btn);
+  setHtml('login-switch', T.login_switch + ` <a onclick="switchModal('login','register')">${T.login_switch_link}</a>`);
+  set('reg-title', T.reg_title); set('reg-sub', T.reg_sub);
+  set('reg-user-label', T.reg_user); set('reg-email-label', T.reg_email); set('reg-pass-label', T.reg_pass); set('reg-btn', T.reg_btn);
+  setHtml('reg-switch', T.reg_switch + ` <a onclick="switchModal('register','login')">${T.reg_switch_link}</a>`);
+  set('tab-users', T.tab_users); set('tab-servers', T.tab_servers);
+  set('lang-current', T.flag + ' ' + T.label);
+  document.querySelectorAll('.lang-option').forEach(el => el.classList.toggle('active', el.dataset.lang === currentLang));
+  if (window.allStoreItems?.length) renderStore(window.allStoreItems);
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('ft_lang', lang);
+  applyLang();
+  const dd = document.getElementById('lang-dropdown');
+  if(dd) dd.classList.remove('open');
+}
+
+function toggleLangDropdown() {
+  document.getElementById('lang-dropdown').classList.toggle('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.lang-selector')) {
+    const dd = document.getElementById('lang-dropdown');
+    if(dd) dd.classList.remove('open');
+  }
+});
+
+
+// ── KIT IMAGE MAP ─────────────────────────────────────────
+const KIT_IMAGES = {
+  'DAILY':         '/static/kit_images/DAILY.svg',
+  'STEAM GROUP':   '/static/kit_images/STEAM_GROUP.svg',
+  'DISCORD NITRO': '/static/kit_images/DISCORD_NITRO.svg',
+  'DISCORD':       '/static/kit_images/DISCORD.svg',
+  'WIPE':          '/static/kit_images/WIPE.svg',
+  'VIP1':          '/static/kit_images/VIP1.svg',
+  'VIP2':          '/static/kit_images/VIP2.svg',
+  'VIP3':          '/static/kit_images/VIP3.svg',
+  'VIP4':          '/static/kit_images/VIP4.svg',
+};
+function getKitImage(name) {
+  // Tenta match exato, depois uppercase, depois parcial
+  return KIT_IMAGES[name] || KIT_IMAGES[name?.toUpperCase()] || 
+    Object.entries(KIT_IMAGES).find(([k]) => name?.toUpperCase().includes(k))?.[1] || '';
+}
+
+const API = '/api';
+let currentUser = null;
+let allStoreItems = [];
+let lbSort = 'kills';
+
+// ── NAVIGATION ────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const navEl = document.getElementById('nav-'+name);
+  if(navEl) navEl.classList.add('active');
+  window.scrollTo(0,0);
+  if(name==='servers') loadServers();
+  if(name==='store') loadStore();
+  if(name==='leaderboard') loadLeaderboard();
+  if(name==='news') loadNews();
+  if(name==='profile') loadProfile();
+  if(name==='admin') loadAdmin();
+  if(name==='support') {
+    // Mostrar tab admin se for admin
+    if(currentUser?.role === 'admin') {
+      document.getElementById('stab-admin').style.display = 'inline-flex';
+    }
+    supportTab('list', document.getElementById('stab-list'));
+  }
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+async function checkAuth() {
+  try {
+    const r = await fetch(`${API}/auth/me`, {credentials:'include'});
+    const d = await r.json();
+    if(d.user) setUser(d.user);
+  } catch(e) {}
+}
+
+function setUser(user) {
+  currentUser = user;
+  document.getElementById('auth-buttons').style.display = 'none';
+  document.getElementById('user-menu').style.display = 'flex';
+  document.getElementById('nav-username').textContent = user.username;
+  document.getElementById('nav-balance').textContent = user.balance + ' CR';
+  document.getElementById('nav-avatar').textContent = '🪖';
+  document.getElementById('store-balance').textContent = user.balance + ' CR';
+  if(user.role === 'admin') {
+    document.getElementById('nav-admin-link').style.display = 'block';
+    const stabAdmin = document.getElementById('stab-admin');
+    if(stabAdmin) stabAdmin.style.display = 'inline-flex';
+  }
+}
+
+function clearUser() {
+  currentUser = null;
+  document.getElementById('auth-buttons').style.display = 'flex';
+  document.getElementById('user-menu').style.display = 'none';
+  document.getElementById('nav-admin-link').style.display = 'none';
+  document.getElementById('store-balance').textContent = '—';
+}
+
+function checkEmailAvailable(val) {
+  const st = document.getElementById('reg-email-status');
+  if (!val) { st.innerHTML = ''; return; }
+  // Validação local de formato (endpoint check-email removido do backend por segurança)
+  const valid = /^[^\@\s]+@[^\@\s]+\.[^\@\s]+$/.test(val);
+  if (!valid) st.innerHTML = '<span style="color:var(--red)">❌ Email inválido</span>';
+  else        st.innerHTML = '<span style="color:var(--green)">✅ Formato válido</span>';
+}
+
+function checkPassMatch() {
+  const p1 = document.getElementById('reg-password')?.value || '';
+  const p2 = document.getElementById('reg-password2')?.value || '';
+  const st = document.getElementById('reg-pass-status');
+  if (!p2) { st.innerHTML=''; return; }
+  if (p1 === p2) st.innerHTML = '<span style="color:var(--green)">✅ Senhas coincidem</span>';
+  else           st.innerHTML = '<span style="color:var(--red)">❌ Senhas não coincidem</span>';
+}
+
+async function doLogin() {
+  const identifier = document.getElementById('login-identifier').value.trim();
+  const password   = document.getElementById('login-password').value;
+  const msg        = document.getElementById('login-msg');
+  if (!identifier || !password) { msg.innerHTML='<div class="form-error">Preencha todos os campos</div>'; return; }
+  try {
+    const r = await fetch(`${API}/auth/login`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({identifier, password})
+    });
+    const d = await r.json();
+    if (!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
+    if (d.need_verify) {
+      msg.innerHTML = '<div class="form-error">⚠️ Confirme seu email antes de entrar. Verifique sua caixa de entrada.</div>';
+      return;
+    }
+    setUser(d.user);
+    closeModal('login');
+    toast('Bem-vindo de volta, ' + d.user.username + '!', 'success');
+  } catch(e) { msg.innerHTML = '<div class="form-error">Erro de conexão com o servidor</div>'; }
+}
+
+async function doRegister() {
+  const firstname = document.getElementById('reg-firstname').value.trim();
+  const lastname  = document.getElementById('reg-lastname').value.trim();
+  const email     = document.getElementById('reg-email').value.trim();
+  const password  = document.getElementById('reg-password').value;
+  const password2 = document.getElementById('reg-password2').value;
+  const msg       = document.getElementById('reg-msg');
+
+  if (!firstname || !lastname || !email || !password || !password2) {
+    msg.innerHTML = '<div class="form-error">Preencha todos os campos</div>'; return;
+  }
+  if (password !== password2) {
+    msg.innerHTML = '<div class="form-error">As senhas não coincidem</div>'; return;
+  }
+  if (password.length < 6) {
+    msg.innerHTML = '<div class="form-error">Senha deve ter no mínimo 6 caracteres</div>'; return;
+  }
+  try {
+    const r = await fetch(`${API}/auth/register`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({firstname, lastname, email, password})
+    });
+    const d = await r.json();
+    if (!r.ok) { msg.innerHTML = `<div class="form-error">${d.error}</div>`; return; }
+    closeModal('register');
+    document.getElementById('verify-email-addr').textContent = email;
+    openModal('verify-email');
+  } catch(e) { msg.innerHTML = '<div class="form-error">Erro de conexão com o servidor</div>'; }
+}
+
+// Verificar se veio de login Steam com erro
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('steam_error')) toast('Erro ao autenticar com Steam. Tente novamente.', 'error');
+  if (params.get('email_verified')) toast('Email confirmado! Você já pode entrar.', 'success');
+  if (params.get('already_verified')) toast('Email já confirmado anteriormente.', 'info');
+  if (params.get('steam_ok')) { checkAuth(); toast('Login com Steam realizado!', 'success'); }
+  // Limpar params da URL sem recarregar
+  if ([...params].length) window.history.replaceState({}, '', '/');
+});
+
+async function logout() {
+  await fetch(`${API}/auth/logout`, {method:'POST', credentials:'include'});
+  clearUser();
+  showPage('home');
+  toast('Você saiu da conta', 'info');
+}
+
+// ── MODALS ────────────────────────────────────────────────
+function openModal(name) {
+  document.getElementById('modal-'+name).classList.add('open');
+}
+function closeModal(name) {
+  document.getElementById('modal-'+name).classList.remove('open');
+}
+function switchModal(from, to) {
+  closeModal(from); openModal(to);
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+
+// ── SERVERS ───────────────────────────────────────────────
+async function loadServers() {
+  try {
+    const r = await fetch(`${API}/servers`, {credentials:'include'});
+    const d = await r.json();
+    renderServers(d.servers);
+    renderHeroServers(d.servers);
+    updateHeroStats(d.servers);
+  } catch(e) { console.error(e); }
+}
+
+function renderServers(servers) {
+  const grid = document.getElementById('servers-grid');
+  if(!servers?.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">🖥️</div><p>Nenhum servidor encontrado.</p></div>'; return; }
+  grid.innerHTML = servers.map(s => {
+    const pct = Math.round(s.current_players/s.max_players*100);
+    const tags = safeParseJSON(s.tags, []);
+    return `
+    <div class="server-card ${s.modded?'modded':''}" onclick="">
+      <div class="s-header">
+        <div>
+          <div class="s-title">${s.name}</div>
+          <div class="s-map">🗺️ ${s.map}</div>
+        </div>
+        <div>
+          <div class="s-players">${s.current_players}<span>/ ${s.max_players}</span></div>
+          <div style="text-align:right; margin-top:.3rem; font-size:.7rem;">
+            <span class="status-dot ${s.status}"></span>${s.status==='online'?'Online':s.status==='restarting'?'Reiniciando':'Offline'}
+          </div>
+        </div>
+      </div>
+      <div class="s-bar"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
+      <div class="s-tags">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="s-footer">
+        <div class="wipe-info">🔄 Wipe: <strong>${s.wipe_schedule}</strong></div>
+        <button class="connect-btn" onclick="copyConnect('${s.ip}',${s.port})">▶ Conectar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHeroServers(servers) {
+  const el = document.getElementById('hero-servers');
+  el.innerHTML = servers.slice(0,3).map(s => {
+    const pct = Math.round(s.current_players/s.max_players*100);
+    return `
+    <div class="live-server-card" onclick="showPage('servers')">
+      <div class="s-header" style="margin-bottom:0">
+        <div>
+          <div class="s-name">${s.name}</div>
+          <div class="s-meta">
+            <span><span class="status-dot ${s.status}"></span>${s.status}</span>
+            <span>🗺️ ${s.map}</span>
+          </div>
+        </div>
+        <div style="font-family:'Bebas Neue';font-size:1.3rem;color:var(--rust-orange)">
+          ${s.current_players}<span style="font-family:'Rajdhani';font-size:.7rem;color:var(--text-muted)">/${s.max_players}</span>
+        </div>
+      </div>
+      <div class="s-bar"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
+    </div>`;
+  }).join('');
+}
+
+function updateHeroStats(servers) {
+  const online = servers.filter(s=>s.status==='online');
+  const players = online.reduce((a,s)=>a+s.current_players,0);
+  document.getElementById('stat-players').textContent = players;
+  document.getElementById('stat-servers').textContent = online.length;
+}
+
+function copyConnect(ip, port) {
+  const addr = `client.connect ${ip}:${port}`;
+  navigator.clipboard.writeText(addr).then(()=>toast(`Copiado: ${addr}`, 'success'));
+}
+
+// ── STORE ─────────────────────────────────────────────────
+async function loadStore() {
+  try {
+    const r = await fetch(`${API}/store`, {credentials:'include'});
+    const d = await r.json();
+    allStoreItems = d.items;
+    const vipItems = allStoreItems.filter(i=>i.category==='vip');
+    renderStore(vipItems);
+    if(currentUser) document.getElementById('store-balance').textContent = currentUser.balance + ' CR';
+  } catch(e) {}
+}
+
+const itemEmojis = { vip:'👑', kits:'⚔️', cosmetics:'🎨', credits:'💰' };
+const itemColors = { vip:'gold', kits:'#cc3300', cosmetics:'#7c3aed', credits:'var(--rust-orange)' };
+
+function renderStore(items) {
+  const grid = document.getElementById('store-grid');
+  if(!items?.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">🛒</div><p>Sem itens disponíveis.</p></div>'; return; }
+  grid.innerHTML = items.map(item => `
+    <div class="store-item ${item.featured?'featured':''}" data-category="${item.category}">
+      <div class="item-img" style="color:${itemColors[item.category]||'var(--rust-orange)'}">
+        ${(item.image || getKitImage(item.name)) ? `<img src="${item.image || getKitImage(item.name)}" style="width:100%;height:100%;object-fit:contain;padding:8px;" onerror="this.parentElement.innerHTML='👑'">` : '👑'}
+      </div>
+      <div class="item-body">
+        <div class="item-name">${item.name}</div>
+        <div class="item-desc">${item.description}</div>
+        ${currentUser?.role === 'admin' ? `
+        <div class="admin-price-edit">
+          <label>💰 Preço</label>
+          <input type="number" id="price-${item.id}" value="${item.price}" min="0">
+          <button onclick="saveItemPrice('${item.id}')">Salvar</button>
+        </div>
+        <div class="admin-img-edit">
+          <label>🖼️ Imagem do Kit</label>
+          <div class="admin-img-edit-row">
+            ${item.image ? `<img class="admin-img-preview" id="img-preview-${item.id}" src="${item.image}" onerror="this.src=''">` : `<img class="admin-img-preview" id="img-preview-${item.id}" src="" style="opacity:.3">`}
+            <input type="text" id="img-url-${item.id}" placeholder="URL da imagem..." value="${item.image||''}">
+            <button class="img-btn" onclick="document.getElementById('img-file-${item.id}').click()">📁</button>
+            <input type="file" id="img-file-${item.id}" accept="image/*" onchange="previewImgFile('${item.id}', this)">
+            <button class="img-btn" onclick="saveItemImage('${item.id}')">Salvar</button>
+          </div>
+        </div>` : ''}
+        <div class="item-footer">
+          <div class="item-price">
+            ${item.price > 0 ? item.price.toLocaleString() + '<small>créditos</small>' : '<small>Grátis</small>'}
+          </div>
+          <div style="display:flex;gap:0.4rem;">
+            ${(item.items && item.items.length > 0) ? `<button class="btn btn-outline btn-sm" onclick="openKitModal(${JSON.stringify(item).replace(/"/g,'&quot;')})" title="Ver itens do kit">📦 Itens</button>` : ''}
+            <button class="btn btn-primary btn-sm" onclick="buyItem('${item.id}','${item.name}',${item.price})">Comprar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── RUST ITEM CLASSIFICATION ─────────────────────────────
+
+// Roupas e mochilas → Clothing
+const CLOTHING_SNS = new Set([
+  'metal.facemask','metal.plate.torso','roadsign.jacket','roadsign.kilt',
+  'coffeecan.helmet','hoodie','pants','shoes.boots','tactical.gloves','burlap.shoes',
+  'attire.hide.poncho','attire.hide.vest','attire.hide.pants','wood.armor.helmet',
+  'wood.armor.pants','mask.bandana','hat.beenie','hat.boonie','burlap.headwrap',
+  'burlap.shirt','burlap.trousers','burlap.gloves','deer.skull.mask','bone.armor.suit',
+  'heavy.plate.helmet','heavy.plate.jacket','heavy.plate.pants','attire.hide.boots',
+  'attire.hide.helterneck','shirt.collared','shirt.tanktop','pants.shorts','mask.balaclava',
+  'nightvisiongoggles','hazmatsuit','hazmatsuit.nomadsuit','attire.banditguard',
+  'largebackpack','smallbackpack','burlap.suit','halloween.mummy.suit','scarecrow.suit',
+  'scarecrow.gloves','ghost.costume','clatter.helmet','riot.helmet','jumpsuit',
+]);
+const CLOTHING_KEYWORDS = [
+  'helmet','jacket','pants','shirt','boots','gloves','kilt','vest','poncho',
+  'backpack','facemask','hazmat','hoodie','balaclava','costume','suit','goggles',
+];
+
+// Armas, médicos e comida → Hotbar (prioridade)
+const HOTBAR_SNS = new Set([
+  // Rifles
+  'rifle.ak','rifle.lr300','rifle.bolt','rifle.semiauto','lmg.m249','rifle.l96',
+  // SMGs
+  'smg.thompson','smg.mp5','smg.2',
+  // Pistols
+  'pistol.semiauto','pistol.revolver','pistol.python','pistol.eoka','pistol.nailgun',
+  // Shotguns
+  'shotgun.pump','shotgun.spas12','shotgun.double','shotgun.waterpipe',
+  // Lançadores / explosivos
+  'rocket.launcher','multiplegrenadelauncher','grenade.f1','grenade.beancan','explosive.timed',
+  // Arcos
+  'crossbow','bow.hunting','bow.compound',
+  // Corpo-a-corpo
+  'salvaged.sword','longsword','mace','machete','knife.combat','bone.club','salvaged.cleaver',
+  // Ferramentas ofensivas
+  'chainsaw','jackhammer','flamethrower',
+  // Médicos
+  'syringe.medical','largemedkit','bandage','antiradpills',
+  // Comida
+  'can.tuna','can.beans','chocolate','grub','apple','orange','pumpkin','corn',
+  'chicken.cooked','chicken.raw','chicken.burned','bearmeat.cooked','bearmeat',
+  'deermeat.cooked','deermeat.raw','wolfmeat.cooked','wolfmeat.raw',
+  'humanmeat.cooked','humanmeat.raw','fish.cooked','fish.raw','fish.minnows','fish.troutsmall',
+  'smallwaterbottle','waterjug','water.purified','water.salt','black.raspberries',
+  'mushroom','corn.clone','potato','potato.clone','pumpkin.seed',
+  // Utilitários hotbar
+  'torch','supply.signal','fun.guitar','fun.trumpet',
+]);
+const HOTBAR_KEYWORDS = [
+  'rifle','pistol','shotgun','smg','lmg','revolver','launcher','grenade',
+  'crossbow','bow','sword','machete','mace','knife','chainsaw','flamethrower',
+  'syringe','medkit','bandage','antirad',
+  'cooked','can.tuna','can.beans','chocolate','apple','orange','mushroom','corn',
+  'chicken','bearmeat','deermeat','wolfmeat','humanmeat','fish','water bottle','waterjug',
+];
+
+function getItemSection(item) {
+  const sn   = (item.shortname || item.Shortname || item.sn || '').toLowerCase();
+  const name = (item.name || item.Name || '').toLowerCase();
+  const cont = (item.Container || item.container || '').toLowerCase();
+
+  // Container explícito tem prioridade máxima
+  if (cont === 'wear') return 'Clothing';
+  if (cont === 'belt') return 'Hotbar';
+  if (cont === 'main') {
+    // Mesmo vindo como main, arma/med/comida vai pra hotbar
+    if (sn && HOTBAR_SNS.has(sn)) return 'Hotbar';
+    if (HOTBAR_KEYWORDS.some(k => name.includes(k) || sn.includes(k))) return 'Hotbar';
+    return 'Inventory';
+  }
+
+  // Sem container — auto-detectar por shortname
+  if (sn && CLOTHING_SNS.has(sn)) return 'Clothing';
+  if (sn && HOTBAR_SNS.has(sn))   return 'Hotbar';
+
+  // Auto-detectar por keywords no nome
+  if (CLOTHING_KEYWORDS.some(k => name.includes(k) || sn.includes(k))) return 'Clothing';
+  if (HOTBAR_KEYWORDS.some(k => name.includes(k) || sn.includes(k)))   return 'Hotbar';
+
+  return 'Inventory';
+}
+
+function classifyKitItems(items) {
+  const HOTBAR_SLOTS = 6;
+  const clothing = [], hotbarExplicit = [], hotbarPromoted = [], inventory = [];
+
+  items.forEach(i => {
+    const section = getItemSection(i);
+    if      (section === 'Clothing') clothing.push(i);
+    else if (section === 'Hotbar') {
+      const cont = (i.Container || i.container || '').toLowerCase();
+      if (cont === 'belt') hotbarExplicit.push(i); // belt sempre vai
+      else hotbarPromoted.push(i);                 // promovidos da main
+    }
+    else inventory.push(i);
+  });
+
+  // Belt explícito sempre entra; promovidos preenchem até 6 slots
+  const hotbar = [...hotbarExplicit];
+  const free   = Math.max(0, HOTBAR_SLOTS - hotbar.length);
+  hotbar.push(...hotbarPromoted.slice(0, free));
+  // Excedente vai pro inventory
+  inventory.unshift(...hotbarPromoted.slice(free));
+
+  return { clothing, hotbar, inventory };
+}
+
+function openKitModal(item) {
+  document.getElementById('kit-modal-name').textContent = item.name;
+  document.getElementById('kit-modal-desc').textContent = item.description || '';
+  const img = document.getElementById('kit-modal-image');
+  if (item.image) { img.src = item.image; img.style.display = 'block'; }
+  else img.style.display = 'none';
+
+  const container = document.getElementById('kit-modal-items');
+  if (item.items && item.items.length > 0) {
+    const { clothing, hotbar, inventory } = classifyKitItems(item.items);
+    const CLOTHING_SLOTS = 8;
+    const HOTBAR_SLOTS   = 6;
+
+    function itemCard(i) {
+      const name   = i.name || i.Name || i.shortname || '';
+      const amount = i.amount || i.Amount || 1;
+      const image  = i.image || i.Image || '';
+      return `<div class="kit-item-card" title="${name} x${amount}">
+        <img src="${image}" alt="${name}" onerror="this.src='https://rustlabs.com/img/items180/supply.signal.png'">
+        <div class="item-label">${name}</div>
+        <div class="item-amount">x${Number(amount).toLocaleString()}</div>
+      </div>`;
+    }
+    function emptySlots(n) { return Array(n).fill('<div class="kit-slot-empty"></div>').join(''); }
+
+    let html = '';
+
+    if (clothing.length) {
+      const empties = Math.max(0, CLOTHING_SLOTS - clothing.length);
+      html += `<div class="kit-section kit-section-clothing">
+        <div class="kit-section-title">👕 CLOTHING<span class="section-count">${clothing.length}/${CLOTHING_SLOTS} SLOTS</span></div>
+        <div class="kit-items-row">${clothing.map(itemCard).join('')}${emptySlots(empties)}</div>
+      </div>`;
+    }
+
+    if (inventory.length) {
+      html += `<div class="kit-section kit-section-inventory">
+        <div class="kit-section-title">🎒 INVENTORY<span class="section-count">${inventory.length} ITENS</span></div>
+        <div class="kit-items-grid">${inventory.map(itemCard).join('')}</div>
+      </div>`;
+    }
+
+    if (hotbar.length) {
+      const empties = Math.max(0, HOTBAR_SLOTS - hotbar.length);
+      html += `<div class="kit-section kit-section-hotbar">
+        <div class="kit-section-title">⚡ HOTBAR<span class="section-count">${hotbar.length}/${HOTBAR_SLOTS} SLOTS</span></div>
+        <div class="kit-items-row">${hotbar.map(itemCard).join('')}${emptySlots(empties)}</div>
+      </div>`;
+    }
+
+    container.innerHTML = html;
+  } else {
+
+    container.innerHTML = '<p style="color:var(--rust-light);text-align:center;padding:2rem 0;">Nenhum item encontrado.</p>';
+  }
+
+  const buyBtn = document.getElementById('kit-modal-buy-btn');
+  buyBtn.onclick = () => { closeModal('kit-items'); buyItem(item.id, item.name, item.price); };
+  buyBtn.textContent = item.price > 0 ? `Comprar — ${item.price.toLocaleString()} créditos` : 'Pegar Kit';
+
+  openModal('kit-items');
+}
+
+
+
+function previewImgFile(itemId, input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const url = e.target.result;
+    document.getElementById(`img-url-${itemId}`).value = url;
+    const preview = document.getElementById(`img-preview-${itemId}`);
+    if (preview) { preview.src = url; preview.style.opacity = '1'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveItemImage(itemId) {
+  const input = document.getElementById(`img-url-${itemId}`);
+  const image = input.value.trim();
+  if (!image) { toast('Cole uma URL ou selecione um arquivo', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/admin/store/${itemId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({ image })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      toast('Imagem atualizada!', 'success');
+      const idx = allStoreItems.findIndex(i => i.id === itemId);
+      if (idx !== -1) { allStoreItems[idx].image = image; }
+      const preview = document.getElementById(`img-preview-${itemId}`);
+      if (preview) { preview.src = image; preview.style.opacity = '1'; }
+    } else {
+      toast(d.error || 'Erro ao salvar', 'error');
+    }
+  } catch(e) {
+    toast('Erro de conexão', 'error');
+  }
+}
+
+async function saveItemPrice(itemId) {
+  const input = document.getElementById(`price-${itemId}`);
+  const price = parseInt(input.value);
+  if (isNaN(price) || price < 0) { toast('Preço inválido!', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/admin/store/${itemId}`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({ price })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      toast(`Preço atualizado para ${price.toLocaleString()} créditos!`, 'success');
+      // Atualiza o item na lista local
+      const idx = allStoreItems.findIndex(i => i.id === itemId);
+      if (idx !== -1) allStoreItems[idx].price = price;
+    } else {
+      toast(d.error || 'Erro ao salvar', 'error');
+    }
+  } catch(e) {
+    toast('Erro de conexão', 'error');
+  }
+}
+
+function filterStore(cat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = cat==='all' ? allStoreItems : allStoreItems.filter(i=>i.category===cat);
+  renderStore(filtered);
+}
+
+async function buyItem(id, name, price) {
+  if(!currentUser) { openModal('login'); toast('Faça login para comprar', 'info'); return; }
+  if(currentUser.balance < price) { toast('Saldo insuficiente!', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/store/buy`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({item_id:id})
+    });
+    const d = await r.json();
+    if(!r.ok) { toast(d.error, 'error'); return; }
+    currentUser.balance = d.new_balance;
+    document.getElementById('nav-balance').textContent = d.new_balance + ' CR';
+    document.getElementById('store-balance').textContent = d.new_balance + ' CR';
+    toast(d.message, 'success');
+  } catch(e) { toast('Erro ao processar compra', 'error'); }
+}
+
+// ── LEADERBOARD ───────────────────────────────────────────
+async function loadLeaderboard(sort) {
+  lbSort = sort || lbSort;
+  try {
+    const r = await fetch(`${API}/leaderboard?sort=${lbSort}`, {credentials:'include'});
+    const d = await r.json();
+    renderLeaderboard(d.leaderboard);
+  } catch(e) {}
+}
+
+function sortLB(by, btn) {
+  document.querySelectorAll('.lb-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadLeaderboard(by);
+}
+
+const rankEmojis = ['🥇','🥈','🥉'];
+function renderLeaderboard(rows) {
+  const tbody = document.getElementById('lb-body');
+  if(!rows?.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted)">Sem dados disponíveis.</td></tr>'; return; }
+  tbody.innerHTML = rows.map((r,i) => {
+    const rankClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const role = r.role !== 'player' ? `<span class="role-badge ${r.role}">${r.role.toUpperCase()}</span>` : '';
+    return `
+    <tr>
+      <td class="lb-rank ${rankClass}">${i<3 ? rankEmojis[i] : '#'+(i+1)}</td>
+      <td><div class="lb-player">
+        <div class="lb-avatar">${r.username[0].toUpperCase()}</div>
+        <div><span class="lb-username">${r.username}</span>${role}</div>
+      </div></td>
+      <td class="lb-num" style="color:var(--red)">${r.kills.toLocaleString()}</td>
+      <td class="lb-num" style="color:var(--text-muted)">${r.deaths.toLocaleString()}</td>
+      <td class="lb-num">${r.hours_played.toFixed(0)}h</td>
+      <td class="lb-num" style="color:var(--rust-orange)">${r.raids_won}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── NEWS ──────────────────────────────────────────────────
+async function loadNews() {
+  try {
+    const r = await fetch(`${API}/news`, {credentials:'include'});
+    const d = await r.json();
+    renderNews(d.news);
+    renderHomeNews(d.news);
+  } catch(e) {}
+}
+
+function renderNews(news) {
+  const grid = document.getElementById('news-grid');
+  if(!news?.length) { grid.innerHTML = '<div class="empty-state"><div class="icon">📰</div><p>Nenhuma notícia.</p></div>'; return; }
+  grid.innerHTML = news.map(n => `
+    <div class="news-card">
+      <div class="news-badge ${n.category}">${n.category.toUpperCase()}</div>
+      <div class="news-title">${n.title}</div>
+      <div class="news-content">${n.content}</div>
+      <div class="news-footer">
+        <span>Por ${n.author_name}</span>
+        <span>${new Date(n.created_at).toLocaleDateString('pt-BR')}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderHomeNews(news) {
+  const el = document.getElementById('home-news');
+  if(!news?.length) return;
+  el.innerHTML = news.map(n => `
+    <div style="min-width:280px; padding:.5rem 1rem; border-left:2px solid rgba(200,68,10,.3); cursor:pointer;" onclick="showPage('news')">
+      <div style="font-size:.65rem; color:var(--rust-orange); font-family:'Share Tech Mono'; letter-spacing:2px; margin-bottom:.2rem">${n.category.toUpperCase()}</div>
+      <div style="font-size:.85rem; font-weight:700;">${n.title}</div>
+    </div>`).join('');
+}
+
+// ── PROFILE ───────────────────────────────────────────────
+async function loadProfile() {
+  if(!currentUser) return;
+  try {
+    const [meR, lbR] = await Promise.all([
+      fetch(`${API}/auth/me`, {credentials:'include'}),
+      fetch(`${API}/leaderboard?sort=kills`, {credentials:'include'})
+    ]);
+    const meD = await meR.json();
+    const lbD = await lbR.json();
+    const user = meD.user;
+    const myStats = lbD.leaderboard?.find(r=>r.user_id===user.id);
+    const el = document.getElementById('profile-content');
+    el.innerHTML = `
+      <div class="profile-header">
+        <div class="profile-avatar">${user.username[0].toUpperCase()}</div>
+        <div class="profile-info">
+          <h2>${user.username} ${user.role!=='player'?`<span class="role-badge ${user.role}" style="vertical-align:middle">${user.role.toUpperCase()}</span>`:''}</h2>
+          <p>📧 ${user.email}</p>
+          <p style="margin-top:.2rem">📅 Membro desde ${new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
+          <div class="profile-stats">
+            <div><div class="profile-stat-num">${user.balance.toLocaleString()}</div><div class="profile-stat-label">Créditos</div></div>
+            ${myStats?`
+            <div><div class="profile-stat-num">${myStats.kills}</div><div class="profile-stat-label">Kills</div></div>
+            <div><div class="profile-stat-num">${myStats.raids_won}</div><div class="profile-stat-label">Raids</div></div>
+            <div><div class="profile-stat-num">${myStats.hours_played.toFixed(0)}h</div><div class="profile-stat-label">Horas</div></div>
+            `:''}
+          </div>
+        </div>
+      </div>
+      ${myStats?`
+      <div style="background:rgba(13,11,9,.6);border:1px solid var(--border);border-radius:6px;padding:1.5rem;">
+        <div style="font-family:'Bebas Neue';font-size:1.2rem;letter-spacing:2px;margin-bottom:1rem;">Estatísticas de Combate</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:1rem;">
+          ${[['⚔️ Kills',myStats.kills,'var(--red)'],['💀 Mortes',myStats.deaths,'var(--text-muted)'],
+             ['⏰ Horas',myStats.hours_played.toFixed(1)+'h','var(--rust-light)'],
+             ['🪨 Recursos',myStats.resources_gathered.toLocaleString(),'var(--rust-tan)'],
+             ['🏚️ Raids',myStats.raids_won,'var(--rust-orange)'],
+             ['K/D',myStats.deaths>0?(myStats.kills/myStats.deaths).toFixed(2):'∞','var(--green)']
+          ].map(([l,v,c])=>`
+          <div style="background:rgba(42,26,14,.4);border:1px solid var(--border);border-radius:4px;padding:1rem;text-align:center;">
+            <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem">${l}</div>
+            <div style="font-family:'Bebas Neue';font-size:1.6rem;color:${c}">${v}</div>
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+    `;
+  } catch(e) {}
+}
+
+// ── ADMIN ─────────────────────────────────────────────────
+async function loadAdmin() {
+  if(!currentUser || currentUser.role !== 'admin') {
+    document.getElementById('page-admin').innerHTML = '<div class="section"><div class="empty-state"><div class="icon">🔒</div><p>Acesso negado.</p></div></div>';
+    return;
+  }
+  try {
+    const r = await fetch(`${API}/admin/stats`, {credentials:'include'});
+    const d = await r.json();
+    const statsEl = document.getElementById('admin-stats-grid');
+    statsEl.innerHTML = [
+      ['👥','Total de Usuários', d.stats.total_users],
+      ['🛒','Compras Realizadas', d.stats.total_purchases],
+      ['💰','Receita Total', 'R$ ' + (d.stats.total_revenue/100).toFixed(2)],
+      ['🖥️','Servidores Online', d.stats.online_servers],
+      ['🎮','Jogadores Agora', d.stats.total_players],
+    ].map(([icon,label,val])=>`
+      <div class="stat-card">
+        <div class="stat-card-icon">${icon}</div>
+        <div class="stat-card-num">${val}</div>
+        <div class="stat-card-label">${label}</div>
+      </div>`).join('');
+    loadAdminUsers();
+  } catch(e) {}
+}
+
+async function loadAdminUsers() {
+  try {
+    const r = await fetch(`${API}/admin/users`, {credentials:'include'});
+    const d = await r.json();
+    document.getElementById('admin-tab-users').innerHTML = `
+      <div style="overflow-x:auto;background:rgba(13,11,9,.6);border:1px solid var(--border);border-radius:6px;">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Usuário</th><th>Email</th><th>Role</th><th>Saldo</th><th>Cadastro</th><th>Ações</th></tr></thead>
+          <tbody>
+            ${d.users.map(u=>`
+            <tr>
+              <td style="color:var(--text-muted)">${u.id}</td>
+              <td style="font-weight:700">${u.username}</td>
+              <td style="color:var(--text-muted);font-size:.8rem">${u.email}</td>
+              <td><span class="role-badge ${u.role}">${u.role.toUpperCase()}</span></td>
+              <td style="font-family:'Share Tech Mono';color:var(--rust-orange)">${u.balance.toLocaleString()}</td>
+              <td style="color:var(--text-muted);font-size:.8rem">${new Date(u.created_at).toLocaleDateString('pt-BR')}</td>
+              <td>
+                <select onchange="updateUserRole(${u.id},this.value,${u.balance})" style="background:var(--rust-dark);border:1px solid var(--border);color:var(--rust-light);padding:.2rem .4rem;border-radius:3px;font-size:.75rem;">
+                  <option value="player" ${u.role==='player'?'selected':''}>Player</option>
+                  <option value="vip" ${u.role==='vip'?'selected':''}>VIP</option>
+                  <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+                </select>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) {}
+}
+
+async function updateUserRole(uid, role, balance) {
+  try {
+    await fetch(`${API}/admin/users/${uid}`, {
+      method:'PUT', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({role, balance})
+    });
+    toast('Usuário atualizado!', 'success');
+  } catch(e) {}
+}
+
+function adminTab(tab, btn) {
+  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('admin-tab-users').style.display = tab==='users'?'block':'none';
+  document.getElementById('admin-tab-servers').style.display = tab==='servers'?'block':'none';
+  if(tab==='servers') loadAdminServers();
+}
+
+async function loadAdminServers() {
+  try {
+    const r = await fetch(`${API}/admin/servers`, {credentials:'include'});
+    const d = await r.json();
+    document.getElementById('admin-tab-servers').innerHTML = `
+      <div style="overflow-x:auto;background:rgba(13,11,9,.6);border:1px solid var(--border);border-radius:6px;">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Nome</th><th>IP:Porta</th><th>Mapa</th><th>Players</th><th>Status</th></tr></thead>
+          <tbody>
+            ${d.servers.map(s=>`
+            <tr>
+              <td style="color:var(--text-muted)">${s.id}</td>
+              <td style="font-weight:700">${s.name}</td>
+              <td style="font-family:'Share Tech Mono';font-size:.8rem;color:var(--text-muted)">${s.ip}:${s.port}</td>
+              <td>${s.map}</td>
+              <td>${s.current_players}/${s.max_players}</td>
+              <td><span class="status-dot ${s.status}"></span>${s.status}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch(e) {}
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const container = document.getElementById('toasts');
+  const icons = {success:'✅', error:'❌', info:'🔥'};
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type]||'🔥'}</span> ${msg}`;
+  container.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function safeParseJSON(str, fallback) {
+  try { return JSON.parse(str); } catch(e) { return fallback; }
+}
+
+// ── SUPPORT ───────────────────────────────────────────────
+let currentSupportTab = 'list';
+let currentTicketId   = null;
+
+function supportTab(tab, btn) {
+  document.querySelectorAll('.support-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSupportTab = tab;
+  ['list','new','admin','thread'].forEach(p => {
+    const el = document.getElementById('support-panel-' + p);
+    if (el) el.style.display = p === tab ? 'block' : 'none';
+  });
+  if (tab === 'list')  loadMyTickets();
+  if (tab === 'admin') { loadAdminTicketStats(); loadAdminTickets('all'); }
+}
+
+async function loadMyTickets() {
+  const el = document.getElementById('support-ticket-list');
+  el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>';
+  try {
+    const r = await fetch(`${API}/tickets`, {credentials:'include'});
+    const d = await r.json();
+    if (!d.tickets?.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">🎫</div><p>Nenhum ticket aberto ainda. Clique em <strong>Novo Ticket</strong> para começar.</p></div>';
+      return;
+    }
+    el.innerHTML = d.tickets.map(t => ticketCardHTML(t)).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Erro ao carregar tickets.</p></div>';
+  }
+}
+
+function ticketCardHTML(t) {
+  const statusLabel = {open:'Aberto', in_progress:'Em Andamento', closed:'Fechado'};
+  const prioLabel   = {normal:'', high:'⚠️ HIGH', urgent:'🚨 URGENTE'};
+  return `<div class="ticket-card" onclick="openTicketThread('${t.id}')">
+    <div class="t-status-dot ${t.status}"></div>
+    <div class="t-main">
+      <div class="t-subject">${t.subject}</div>
+      <div class="t-meta">
+        <span>📁 ${t.category}</span>
+        <span>💬 ${t.message_count} mensagem${t.message_count !== 1 ? 's' : ''}</span>
+        <span>${new Date(t.updated_at).toLocaleDateString('pt-BR')}</span>
+        ${t.username ? `<span>👤 ${t.username}</span>` : ''}
+        ${t.priority !== 'normal' ? `<span class="priority-badge ${t.priority}">${prioLabel[t.priority]}</span>` : ''}
+      </div>
+    </div>
+    <span class="t-badge ${t.status}">${statusLabel[t.status] || t.status}</span>
+  </div>`;
+}
+
+async function openTicketThread(ticketId) {
+  currentTicketId = ticketId;
+  const panels = ['list','new','admin','thread'];
+  panels.forEach(p => {
+    const el = document.getElementById('support-panel-' + p);
+    if (el) el.style.display = p === 'thread' ? 'block' : 'none';
+  });
+  document.querySelectorAll('.support-tab').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('ticket-thread-content');
+  el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>';
+  try {
+    const r = await fetch(`${API}/tickets/${ticketId}`, {credentials:'include'});
+    const d = await r.json();
+    renderTicketThread(d.ticket);
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Erro ao carregar ticket.</p></div>';
+  }
+}
+
+function renderTicketThread(t) {
+  const isAdmin = currentUser?.role === 'admin';
+  const statusLabel = {open:'Aberto', in_progress:'Em Andamento', closed:'Fechado'};
+
+  const adminControls = isAdmin ? `
+    <div class="ticket-admin-controls">
+      <select onchange="updateTicketStatus('${t.id}','status',this.value)" title="Status">
+        <option value="open"        ${t.status==='open'?'selected':''}>🔴 Aberto</option>
+        <option value="in_progress" ${t.status==='in_progress'?'selected':''}>🟡 Em Andamento</option>
+        <option value="closed"      ${t.status==='closed'?'selected':''}>⚫ Fechado</option>
+      </select>
+      <select onchange="updateTicketStatus('${t.id}','priority',this.value)" title="Prioridade">
+        <option value="normal" ${t.priority==='normal'?'selected':''}>Normal</option>
+        <option value="high"   ${t.priority==='high'?'selected':''}>⚠️ Alta</option>
+        <option value="urgent" ${t.priority==='urgent'?'selected':''}>🚨 Urgente</option>
+      </select>
+    </div>` : '';
+
+  const messagesHtml = (t.messages || []).map(msg => {
+    const isAdminMsg = msg.author_role === 'admin';
+    const time = new Date(msg.created_at).toLocaleString('pt-BR');
+    return `<div class="ticket-msg ${isAdminMsg ? 'is-admin' : 'is-user'}">
+      <div class="msg-avatar">${isAdminMsg ? '🛡️' : '🪖'}</div>
+      <div class="msg-bubble">
+        <div class="msg-author">${isAdminMsg ? '🛡️ ' : ''}${msg.username || 'Usuário'}${isAdminMsg ? ' — Suporte' : ''}</div>
+        <div class="msg-text">${msg.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+        <div class="msg-time">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const replyBox = t.status !== 'closed' || isAdmin ? `
+    <div class="ticket-reply-box">
+      <textarea id="reply-text" placeholder="${isAdmin ? 'Responder como suporte...' : 'Escreva sua mensagem...'}" rows="3"></textarea>
+      <div class="ticket-reply-actions">
+        ${isAdmin && t.status !== 'closed' ? `<button class="btn btn-outline btn-sm" onclick="updateTicketStatus('${t.id}','status','closed')">✅ Fechar Ticket</button>` : ''}
+        <button class="btn btn-primary btn-sm" onclick="sendReply('${t.id}')">📨 Enviar</button>
+      </div>
+    </div>` : `<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:.85rem;">⚫ Ticket fechado — sem novas respostas.</div>`;
+
+  document.getElementById('ticket-thread-content').innerHTML = `
+    <div class="ticket-thread-header">
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+        <h3>${t.subject}</h3>
+        <span class="t-badge ${t.status}">${statusLabel[t.status]}</span>
+        ${t.priority !== 'normal' ? `<span class="priority-badge ${t.priority}">${{high:'⚠️ Alta',urgent:'🚨 Urgente'}[t.priority]}</span>` : ''}
+      </div>
+      <div class="ticket-thread-meta">
+        <span>📁 ${t.category}</span>
+        <span>👤 ${t.username}</span>
+        <span>📅 ${new Date(t.created_at).toLocaleDateString('pt-BR')}</span>
+      </div>
+      ${adminControls}
+    </div>
+    <div class="ticket-messages" id="ticket-messages-${t.id}">${messagesHtml}</div>
+    ${replyBox}
+  `;
+}
+
+async function sendReply(ticketId) {
+  const text = document.getElementById('reply-text')?.value?.trim();
+  if (!text) return;
+  try {
+    const r = await fetch(`${API}/tickets/${ticketId}/reply`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text})
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.error || 'Erro ao enviar', 'error'); return; }
+    toast('Resposta enviada!', 'success');
+    openTicketThread(ticketId);
+  } catch(e) { toast('Erro de conexão', 'error'); }
+}
+
+async function updateTicketStatus(ticketId, field, value) {
+  try {
+    const body = field === 'status' ? {status: value} : {priority: value};
+    const r = await fetch(`${API}/tickets/${ticketId}/status`, {
+      method:'PUT', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.error || 'Erro', 'error'); return; }
+    toast('Ticket atualizado!', 'success');
+    if (field === 'status' && value === 'closed') {
+      backToTicketList();
+    } else {
+      openTicketThread(ticketId);
+    }
+    if (currentSupportTab === 'admin') loadAdminTicketStats();
+  } catch(e) { toast('Erro de conexão', 'error'); }
+}
+
+function backToTicketList() {
+  document.getElementById('support-panel-thread').style.display = 'none';
+  if (currentUser?.role === 'admin' && currentSupportTab === 'admin') {
+    document.getElementById('support-panel-admin').style.display = 'block';
+    document.getElementById('stab-admin').classList.add('active');
+  } else {
+    document.getElementById('support-panel-list').style.display = 'block';
+    document.getElementById('stab-list').classList.add('active');
+    loadMyTickets();
+  }
+}
+
+async function submitTicket() {
+  const category = document.getElementById('ticket-category').value;
+  const subject  = document.getElementById('ticket-subject').value.trim();
+  const message  = document.getElementById('ticket-message').value.trim();
+  if (!category || !subject || !message) { toast('Preencha todos os campos!', 'error'); return; }
+  try {
+    const r = await fetch(`${API}/tickets`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({category, subject, message})
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.error || 'Erro ao abrir ticket', 'error'); return; }
+    toast('Ticket aberto com sucesso!', 'success');
+    document.getElementById('ticket-category').value = '';
+    document.getElementById('ticket-subject').value  = '';
+    document.getElementById('ticket-message').value  = '';
+    supportTab('list', document.getElementById('stab-list'));
+  } catch(e) { toast('Erro de conexão', 'error'); }
+}
+
+async function loadAdminTicketStats() {
+  try {
+    const r = await fetch(`${API}/admin/tickets/stats`, {credentials:'include'});
+    const d = await r.json();
+    document.getElementById('support-admin-stats').innerHTML = `
+      <div class="support-stat-card"><div class="s-num">${d.total}</div><div class="s-label">Total</div></div>
+      <div class="support-stat-card"><div class="s-num" style="color:var(--rust-orange)">${d.open}</div><div class="s-label">Abertos</div></div>
+      <div class="support-stat-card"><div class="s-num" style="color:var(--yellow)">${d.in_progress}</div><div class="s-label">Em Andamento</div></div>
+      <div class="support-stat-card"><div class="s-num" style="color:var(--text-muted)">${d.closed}</div><div class="s-label">Fechados</div></div>
+    `;
+  } catch(e) {}
+}
+
+async function loadAdminTickets(status, btn) {
+  if (btn) {
+    document.querySelectorAll('.support-filter-row .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const el = document.getElementById('admin-ticket-list');
+  el.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Carregando...</p></div>';
+  try {
+    const r = await fetch(`${API}/tickets?status=${status}`, {credentials:'include'});
+    const d = await r.json();
+    if (!d.tickets?.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>Nenhum ticket encontrado.</p></div>';
+      return;
+    }
+    el.innerHTML = d.tickets.map(t => ticketCardHTML(t)).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Erro ao carregar.</p></div>';
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────
+async function init() {
+  applyLang();
+  await checkAuth();
+  loadServers();
+  loadNews();
+}
+
+init();
+setInterval(()=>{ if(document.getElementById('page-home').classList.contains('active')) loadServers(); }, 30000);
+</script>
+</body>
+</html>
